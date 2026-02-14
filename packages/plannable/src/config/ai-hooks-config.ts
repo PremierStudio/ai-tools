@@ -11,7 +11,7 @@ export function generateConfigSource(language: string, features: FeatureToggles)
   const hooksSource = generateHooksSource(language, features);
 
   return `${MARKER_COMMENT}
-// Do not edit manually — re-run \`npx plannable setup\` to regenerate.
+// Do not edit manually — re-run \`npx @premierstudio/plannable setup\` to regenerate.
 
 import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-hooks";
 

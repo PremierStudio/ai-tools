@@ -22,10 +22,10 @@ OPTIONS:
                    Also configurable via PLANNABLE_SERVER env var
 
 EXAMPLES:
-  npx plannable                          # Setup with production server
-  npx plannable --server https://plannable.dev   # Staging
-  npx plannable status                   # Check connection
-  npx plannable remove                   # Clean removal
+  npx @premierstudio/plannable                          # Setup with production server
+  npx @premierstudio/plannable --server https://plannable.dev   # Staging
+  npx @premierstudio/plannable status                   # Check connection
+  npx @premierstudio/plannable remove                   # Clean removal
 `;
 
 export { registry };

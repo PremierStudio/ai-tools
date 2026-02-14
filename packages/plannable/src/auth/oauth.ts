@@ -3,7 +3,7 @@ import { createHash, randomBytes } from "node:crypto";
 import { exec } from "node:child_process";
 import { platform } from "node:os";
 import * as p from "@clack/prompts";
-import { saveAuth, loadAuth, isTokenExpired } from "./token-store.js";
+import { saveAuth, loadAuth, clearAuth, isTokenExpired } from "./token-store.js";
 import type { StoredAuth } from "./token-store.js";
 
 const REDIRECT_PORT = 21347;
@@ -283,9 +283,52 @@ export async function login(serverUrl: string): Promise<StoredAuth> {
   let registrationAccessToken: string;
 
   if (existing?.client_id && existing.server_url === serverUrl) {
-    clientId = existing.client_id;
-    registrationAccessToken = existing.registration_access_token;
-    p.log.info("Using existing client registration");
+    const expired = isTokenExpired(existing);
+    const dim = "\x1b[2m";
+    const r = "\x1b[0m";
+    p.log.info(
+      [
+        "Found existing credentials:",
+        `  ${dim}client${r}   ${existing.client_id.slice(0, 8)}...`,
+        `  ${dim}server${r}   ${existing.server_url}`,
+        `  ${dim}status${r}   ${expired ? "expired" : "active"}`,
+      ].join("\n"),
+    );
+
+    const action = await p.select({
+      message: "What would you like to do?",
+      options: [
+        {
+          value: "reuse",
+          label: "Use existing credentials",
+          hint: "skip re-auth if still valid on server",
+        },
+        {
+          value: "fresh",
+          label: "Start fresh",
+          hint: "clear cached credentials and re-register",
+        },
+      ],
+    });
+
+    if (p.isCancel(action)) {
+      p.cancel("Setup cancelled.");
+      process.exit(0);
+    }
+
+    if (action === "fresh") {
+      await clearAuth();
+      p.log.info("Cleared cached credentials");
+      const regSpin = p.spinner();
+      regSpin.start("Registering new OAuth client...");
+      const registered = await registerClient(metadata.registration_endpoint);
+      clientId = registered.client_id;
+      registrationAccessToken = registered.registration_access_token;
+      regSpin.stop("OAuth client registered");
+    } else {
+      clientId = existing.client_id;
+      registrationAccessToken = existing.registration_access_token;
+    }
   } else {
     const regSpin = p.spinner();
     regSpin.start("Registering OAuth client...");
@@ -370,8 +413,11 @@ export async function ensureAuthenticated(serverUrl: string): Promise<StoredAuth
     await saveAuth(refreshed);
     return refreshed;
   } catch {
-    // Refresh failed, need full re-auth
-    p.log.warn("Session expired. Re-authenticating...");
+    // Refresh failed — client may have been revoked on the server
+    p.log.warn(
+      "Token refresh failed. The client may have been removed from the server.",
+    );
+    await clearAuth();
     return login(serverUrl);
   }
 }

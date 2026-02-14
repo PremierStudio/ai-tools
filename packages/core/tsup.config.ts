@@ -15,7 +15,7 @@ export default defineConfig([
     sourcemap: true,
     target: "node22",
     outDir: "dist",
-    splitting: false,
+    splitting: true,
     treeshake: true,
   },
   {

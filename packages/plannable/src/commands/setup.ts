@@ -1,3 +1,5 @@
+declare const PKG_VERSION: string;
+
 import * as p from "@clack/prompts";
 import { registry } from "@premierstudio/ai-hooks/adapters";
 import type { Adapter } from "@premierstudio/ai-hooks";
@@ -15,7 +17,7 @@ import type { McpScope } from "../config/mcp-config.js";
 import { writeConfig } from "../config/ai-hooks-config.js";
 
 export async function setupCommand(serverUrl: string): Promise<void> {
-  showBanner("0.1.0");
+  showBanner(PKG_VERSION);
 
   p.log.info(`Server: ${serverUrl}`);
 
@@ -116,7 +118,7 @@ export async function setupCommand(serverUrl: string): Promise<void> {
     "",
     `  ${dim}1.${r} Restart your AI tool to pick up the MCP connection`,
     `  ${dim}2.${r} ${serverUrl}/dashboard`,
-    `  ${dim}3.${r} ${dim}npx plannable status${r}`,
+    `  ${dim}3.${r} ${dim}npx @premierstudio/plannable status${r}`,
   ].join("\n");
   p.log.message(summary);
 

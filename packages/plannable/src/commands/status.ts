@@ -10,7 +10,7 @@ export async function statusCommand(): Promise<void> {
   // Check authentication
   const auth = await loadAuth();
   if (!auth) {
-    p.log.warn("Not authenticated. Run `npx plannable setup` to connect.");
+    p.log.warn("Not authenticated. Run `npx @premierstudio/plannable setup` to connect.");
     p.outro("");
     return;
   }
