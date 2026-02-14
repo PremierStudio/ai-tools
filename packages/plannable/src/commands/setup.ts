@@ -1,5 +1,6 @@
-declare const PKG_VERSION: string;
-
+import { readFileSync } from "node:fs";
+import { dirname, join } from "node:path";
+import { fileURLToPath } from "node:url";
 import * as p from "@clack/prompts";
 import { registry } from "@premierstudio/ai-hooks/adapters";
 import type { Adapter } from "@premierstudio/ai-hooks";
@@ -16,8 +17,20 @@ import { installMcpEntry } from "../config/mcp-config.js";
 import type { McpScope } from "../config/mcp-config.js";
 import { writeConfig } from "../config/ai-hooks-config.js";
 
+function getVersion(): string {
+  try {
+    const dir = dirname(fileURLToPath(import.meta.url));
+    const pkg = JSON.parse(readFileSync(join(dir, "..", "package.json"), "utf-8")) as {
+      version: string;
+    };
+    return pkg.version;
+  } catch {
+    return "0.0.0";
+  }
+}
+
 export async function setupCommand(serverUrl: string): Promise<void> {
-  showBanner(PKG_VERSION);
+  showBanner(getVersion());
 
   p.log.info(`Server: ${serverUrl}`);
 
