@@ -16,6 +16,13 @@ const packagesDir = "packages";
 const npmToken = process.env.NPM_TOKEN;
 const failed = [];
 
+// Write .npmrc at the workspace root where npm resolves per-project config.
+// semantic-release's npm plugin may clean up its own .npmrc after publishing core,
+// so we need to ensure auth is available for workspace package publishes.
+if (npmToken) {
+  writeFileSync(".npmrc", `//registry.npmjs.org/:_authToken=${npmToken}\n`);
+}
+
 for (const entry of readdirSync(packagesDir)) {
   const pkgPath = join(packagesDir, entry, "package.json");
   try {
@@ -29,22 +36,11 @@ for (const entry of readdirSync(packagesDir)) {
   // Skip core (published by @semantic-release/npm) and private packages
   if (pkg.name === "@premierstudio/ai-hooks" || pkg.private) continue;
 
-  const pkgDir = resolve(packagesDir, entry);
-
-  // Write .npmrc directly in the package directory so it takes precedence
-  // over any .npmrc that semantic-release may have left behind.
-  if (npmToken) {
-    writeFileSync(
-      join(pkgDir, ".npmrc"),
-      `//registry.npmjs.org/:_authToken=${npmToken}\n`,
-    );
-  }
-
   console.log(`Publishing ${pkg.name}...`);
   try {
     execSync(`npm publish --access public`, {
       stdio: "inherit",
-      cwd: pkgDir,
+      cwd: resolve(packagesDir, entry),
     });
     console.log(`  ✓ Published ${pkg.name}`);
   } catch (err) {
