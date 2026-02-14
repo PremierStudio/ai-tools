@@ -8,20 +8,12 @@
  * All other workspace packages are private and skipped.
  */
 
-import { readdirSync, readFileSync, writeFileSync, statSync } from "node:fs";
+import { readdirSync, readFileSync, statSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { join, resolve } from "node:path";
 
 const packagesDir = "packages";
-const npmToken = process.env.NPM_TOKEN;
 const failed = [];
-
-// Write .npmrc at the workspace root where npm resolves per-project config.
-// semantic-release's npm plugin may clean up its own .npmrc after publishing core,
-// so we need to ensure auth is available for workspace package publishes.
-if (npmToken) {
-  writeFileSync(".npmrc", `//registry.npmjs.org/:_authToken=${npmToken}\n`);
-}
 
 for (const entry of readdirSync(packagesDir)) {
   const pkgPath = join(packagesDir, entry, "package.json");
