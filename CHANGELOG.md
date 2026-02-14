@@ -1,3 +1,10 @@
+## [1.1.6](https://github.com/PremierStudio/ai-hooks/compare/v1.1.5...v1.1.6) (2026-02-14)
+
+
+### Bug Fixes
+
+* correct README tool table and remove staging URLs ([69b2c14](https://github.com/PremierStudio/ai-hooks/commit/69b2c1458f4f0ee84762e0eb5af53bfc05bc77a8))
+
 ## [1.1.5](https://github.com/PremierStudio/ai-hooks/compare/v1.1.4...v1.1.5) (2026-02-14)
 
 
