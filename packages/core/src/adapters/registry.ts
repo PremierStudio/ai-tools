@@ -80,4 +80,9 @@ class AdapterRegistry {
   }
 }
 
-export const registry = new AdapterRegistry();
+declare global {
+  // eslint-disable-next-line no-var
+  var __premierstudio_ai_hooks_registry: AdapterRegistry | undefined;
+}
+
+export const registry = (globalThis.__premierstudio_ai_hooks_registry ??= new AdapterRegistry());

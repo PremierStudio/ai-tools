@@ -289,7 +289,7 @@ export async function login(serverUrl: string): Promise<StoredAuth> {
     p.log.info(
       [
         "Found existing credentials:",
-        `  ${dim}client${r}   ${existing.client_id.slice(0, 8)}...`,
+        `  ${dim}client${r}   ${existing.client_id}`,
         `  ${dim}server${r}   ${existing.server_url}`,
         `  ${dim}status${r}   ${expired ? "expired" : "active"}`,
       ].join("\n"),
