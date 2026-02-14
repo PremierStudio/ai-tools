@@ -1,6 +1,6 @@
 {
   "name": "@premierstudio/plannable",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "CLI for connecting AI coding tools to Plannable's MCP server",
   "license": "MIT",
   "repository": {

@@ -1,3 +1,10 @@
+## [1.1.1](https://github.com/PremierStudio/ai-hooks/compare/v1.1.0...v1.1.1) (2026-02-14)
+
+
+### Bug Fixes
+
+* write npmrc in package directory for workspace publish auth ([75b9f11](https://github.com/PremierStudio/ai-hooks/commit/75b9f11dd89b028e3bd7b85418db98acd8aca305))
+
 # [1.1.0](https://github.com/PremierStudio/ai-hooks/compare/v1.0.7...v1.1.0) (2026-02-14)
 
 
