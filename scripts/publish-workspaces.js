@@ -11,19 +11,9 @@
 import { readdirSync, readFileSync, writeFileSync, statSync } from "node:fs";
 import { execSync } from "node:child_process";
 import { join, resolve } from "node:path";
-import { homedir } from "node:os";
 
 const packagesDir = "packages";
-
-// Ensure .npmrc exists with the token for workspace publishes.
-// semantic-release only configures auth for the core package publish;
-// workspace packages need auth too.
 const npmToken = process.env.NPM_TOKEN;
-if (npmToken) {
-  const npmrcPath = join(homedir(), ".npmrc");
-  writeFileSync(npmrcPath, `//registry.npmjs.org/:_authToken=${npmToken}\n`);
-}
-
 const failed = [];
 
 for (const entry of readdirSync(packagesDir)) {
@@ -39,11 +29,22 @@ for (const entry of readdirSync(packagesDir)) {
   // Skip core (published by @semantic-release/npm) and private packages
   if (pkg.name === "@premierstudio/ai-hooks" || pkg.private) continue;
 
+  const pkgDir = resolve(packagesDir, entry);
+
+  // Write .npmrc directly in the package directory so it takes precedence
+  // over any .npmrc that semantic-release may have left behind.
+  if (npmToken) {
+    writeFileSync(
+      join(pkgDir, ".npmrc"),
+      `//registry.npmjs.org/:_authToken=${npmToken}\n`,
+    );
+  }
+
   console.log(`Publishing ${pkg.name}...`);
   try {
     execSync(`npm publish --access public`, {
       stdio: "inherit",
-      cwd: resolve(packagesDir, entry),
+      cwd: pkgDir,
     });
     console.log(`  ✓ Published ${pkg.name}`);
   } catch (err) {
