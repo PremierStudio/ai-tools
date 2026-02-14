@@ -39,8 +39,17 @@ for (const entry of entries) {
   const pkg = JSON.parse(readFileSync(pkgPath, "utf-8"));
   pkg.version = version;
 
-  // workspace:* deps are resolved automatically by npm during publish
-  // No manual conversion needed — npm replaces workspace:* with ^version in the tarball
+  // Pin workspace:* deps to the release version for npm publish compatibility
+  for (const depType of ["dependencies", "devDependencies", "peerDependencies"]) {
+    const deps = pkg[depType];
+    if (!deps) continue;
+    for (const [name, range] of Object.entries(deps)) {
+      if (name.startsWith("@premierstudio/") && (range === "workspace:*" || range === "*")) {
+        deps[name] = `^${version}`;
+        console.log(`    ${pkg.name} dep ${name} → ^${version}`);
+      }
+    }
+  }
 
   writeFileSync(pkgPath, JSON.stringify(pkg, null, 2) + "\n");
   console.log(`  ${pkg.name} → ${version}`);
