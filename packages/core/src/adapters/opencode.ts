@@ -1,0 +1,304 @@
+import { BaseAdapter, registry } from "./index.js";
+import type {
+  AdapterCapabilities,
+  GeneratedConfig,
+  HookDefinition,
+  HookEventType,
+} from "../types/index.js";
+import { existsSync } from "node:fs";
+import { resolve } from "node:path";
+
+/**
+ * Event mapping: ai-hooks universal events -> OpenCode plugin hooks.
+ *
+ * OpenCode (by SST) uses a plugin system with lifecycle hooks.
+ * Plugins are JS/TS modules in `.opencode/plugins/` that export
+ * hook handlers keyed by event name.
+ *
+ * Reference: https://opencode.ai/docs/plugins/
+ */
+const EVENT_MAP: Record<string, string[]> = {
+  "session:start": ["session.created"],
+  "session:end": ["session.idle"],
+  "prompt:submit": ["message.updated"],
+  "prompt:response": ["message.part.updated"],
+  "tool:before": ["tool.execute.before"],
+  "tool:after": ["tool.execute.after"],
+  "file:read": ["tool.execute.before"],
+  "file:write": ["tool.execute.before", "file.edited"],
+  "file:edit": ["tool.execute.before", "file.edited"],
+  "file:delete": ["tool.execute.before"],
+  "shell:before": ["tool.execute.before"],
+  "shell:after": ["tool.execute.after"],
+  "mcp:before": ["tool.execute.before"],
+  "mcp:after": ["tool.execute.after"],
+  notification: ["tui.toast.show"],
+};
+
+const REVERSE_MAP: Record<string, HookEventType[]> = {
+  "session.created": ["session:start"],
+  "session.idle": ["session:end"],
+  "message.updated": ["prompt:submit"],
+  "message.part.updated": ["prompt:response"],
+  "tool.execute.before": [
+    "tool:before",
+    "file:read",
+    "file:write",
+    "file:edit",
+    "file:delete",
+    "shell:before",
+    "mcp:before",
+  ],
+  "tool.execute.after": ["tool:after", "shell:after", "mcp:after"],
+  "file.edited": ["file:write", "file:edit"],
+  "tui.toast.show": ["notification"],
+};
+
+/**
+ * OpenCode adapter for ai-hooks.
+ *
+ * Generates an OpenCode plugin in `.opencode/plugins/` that hooks into
+ * the tool.execute.before/after and other lifecycle events. OpenCode
+ * plugins receive context objects and can block tool execution by
+ * returning a modified output from tool.execute.before.
+ *
+ * Reference: https://opencode.ai/docs/plugins/
+ */
+class OpenCodeAdapter extends BaseAdapter {
+  readonly id = "opencode";
+  readonly name = "OpenCode";
+  readonly version = "1.0";
+
+  readonly capabilities: AdapterCapabilities = {
+    beforeHooks: true,
+    afterHooks: true,
+    mcp: true,
+    configFile: true,
+    supportedEvents: [
+      "session:start",
+      "session:end",
+      "prompt:submit",
+      "prompt:response",
+      "tool:before",
+      "tool:after",
+      "file:read",
+      "file:write",
+      "file:edit",
+      "file:delete",
+      "shell:before",
+      "shell:after",
+      "mcp:before",
+      "mcp:after",
+      "notification",
+    ],
+    blockableEvents: [
+      "tool:before",
+      "file:read",
+      "file:write",
+      "file:edit",
+      "file:delete",
+      "shell:before",
+      "mcp:before",
+    ],
+  };
+
+  async detect(): Promise<boolean> {
+    const hasCommand = await this.commandExists("opencode");
+    const hasDir = existsSync(resolve(process.cwd(), ".opencode"));
+    return hasCommand || hasDir;
+  }
+
+  async generate(hooks: HookDefinition[]): Promise<GeneratedConfig[]> {
+    const configs: GeneratedConfig[] = [];
+
+    // Collect needed native events
+    const neededEvents = new Set<string>();
+    for (const hook of hooks) {
+      for (const event of hook.events) {
+        const nativeEvents = this.mapEvent(event);
+        for (const ne of nativeEvents) {
+          neededEvents.add(ne);
+        }
+      }
+    }
+
+    // Generate the OpenCode plugin
+    configs.push({
+      path: ".opencode/plugins/ai-hooks-plugin.js",
+      content: this.generatePlugin(neededEvents),
+      format: "js",
+    });
+
+    // Generate opencode.json config that registers the plugin
+    configs.push({
+      path: ".opencode/plugins/package.json",
+      content:
+        JSON.stringify(
+          {
+            name: "ai-hooks-opencode-plugin",
+            version: "1.0.0",
+            type: "module",
+            main: "ai-hooks-plugin.js",
+            dependencies: {
+              "@premierstudio/ai-hooks": "*",
+            },
+          },
+          null,
+          2,
+        ) + "\n",
+      format: "json",
+    });
+
+    return configs;
+  }
+
+  mapEvent(event: HookEventType): string[] {
+    return EVENT_MAP[event] ?? [];
+  }
+
+  mapNativeEvent(nativeEvent: string): HookEventType[] {
+    return REVERSE_MAP[nativeEvent] ?? [];
+  }
+
+  async uninstall(): Promise<void> {
+    await this.removeFile(".opencode/plugins/ai-hooks-plugin.js");
+    await this.removeFile(".opencode/plugins/package.json");
+  }
+
+  private generatePlugin(neededEvents: Set<string>): string {
+    const hookEntries = [...neededEvents]
+      .map((event) => {
+        return `    "${event}": async (input, output) => {
+      await handleHook("${event}", input, output);
+    }`;
+      })
+      .join(",\n");
+
+    return `/**
+ * ai-hooks plugin for OpenCode.
+ * Generated by: ai-hooks generate
+ *
+ * This plugin hooks into OpenCode's lifecycle events and delegates
+ * to the ai-hooks engine for unified hook management.
+ *
+ * DO NOT EDIT - regenerate with: ai-hooks generate
+ */
+import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
+
+let engine;
+
+async function getEngine() {
+  if (!engine) {
+    const config = await loadConfig();
+    engine = new HookEngine(config);
+  }
+  return engine;
+}
+
+async function handleHook(hookName, input, output) {
+  const eng = await getEngine();
+  const toolInfo = { name: "opencode", version: "1.0" };
+  const timestamp = Date.now();
+  const metadata = {};
+
+  let event;
+  switch (hookName) {
+    case "session.created":
+      event = { type: "session:start", tool: "opencode", version: "1.0", workingDirectory: process.cwd(), timestamp, metadata };
+      break;
+    case "session.idle":
+      event = { type: "session:end", tool: "opencode", duration: 0, timestamp, metadata };
+      break;
+    case "tool.execute.before":
+      event = resolveToolBefore(input, timestamp, metadata);
+      break;
+    case "tool.execute.after":
+      event = resolveToolAfter(input, timestamp, metadata);
+      break;
+    case "file.edited":
+      event = { type: "file:edit", path: input.path ?? "", oldContent: "", newContent: "", timestamp, metadata };
+      break;
+    case "message.updated":
+      event = { type: "prompt:submit", prompt: input.content ?? "", timestamp, metadata };
+      break;
+    case "message.part.updated":
+      event = { type: "prompt:response", response: input.content ?? "", model: "unknown", tokens: { input: 0, output: 0 }, timestamp, metadata };
+      break;
+    case "tui.toast.show":
+      event = { type: "notification", level: "info", message: input.message ?? "", timestamp, metadata };
+      break;
+    default:
+      return output;
+  }
+
+  const results = await eng.emit(event, toolInfo);
+  const blocked = results.find((r) => r.blocked);
+
+  if (blocked && hookName === "tool.execute.before") {
+    return { ...output, blocked: true, reason: blocked.reason ?? "Blocked by ai-hooks" };
+  }
+
+  return output;
+}
+
+function resolveToolBefore(input, timestamp, metadata) {
+  const toolName = input.tool ?? input.name ?? "unknown";
+  const toolInput = input.input ?? input.args ?? {};
+
+  switch (toolName) {
+    case "file_write":
+    case "write":
+      return { type: "file:write", path: toolInput.path ?? "", content: toolInput.content ?? "", timestamp, metadata };
+    case "file_edit":
+    case "edit":
+      return { type: "file:edit", path: toolInput.path ?? "", oldContent: toolInput.old ?? "", newContent: toolInput.new ?? "", timestamp, metadata };
+    case "file_read":
+    case "read":
+      return { type: "file:read", path: toolInput.path ?? "", timestamp, metadata };
+    case "bash":
+    case "shell":
+      return { type: "shell:before", command: toolInput.command ?? "", cwd: process.cwd(), timestamp, metadata };
+    default:
+      return { type: "tool:before", toolName, input: toolInput, timestamp, metadata };
+  }
+}
+
+function resolveToolAfter(input, timestamp, metadata) {
+  const toolName = input.tool ?? input.name ?? "unknown";
+  const toolInput = input.input ?? input.args ?? {};
+  const toolOutput = input.output ?? input.result ?? {};
+
+  switch (toolName) {
+    case "bash":
+    case "shell":
+      return {
+        type: "shell:after",
+        command: toolInput.command ?? "",
+        cwd: process.cwd(),
+        exitCode: toolOutput.exitCode ?? 0,
+        stdout: toolOutput.stdout ?? "",
+        stderr: toolOutput.stderr ?? "",
+        duration: 0,
+        timestamp,
+        metadata,
+      };
+    default:
+      return { type: "tool:after", toolName, input: toolInput, output: toolOutput, duration: 0, timestamp, metadata };
+  }
+}
+
+export const AiHooksPlugin = async ({ project, directory }) => {
+  return {
+${hookEntries}
+  };
+};
+`;
+  }
+}
+
+// Auto-register
+const adapter = new OpenCodeAdapter();
+registry.register(adapter);
+
+export { OpenCodeAdapter };
+export default adapter;

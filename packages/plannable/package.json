@@ -1,0 +1,40 @@
+{
+  "name": "@premierstudio/plannable",
+  "version": "1.0.6",
+  "description": "CLI for connecting AI coding tools to Plannable's MCP server",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PremierStudio/ai-hooks"
+  },
+  "bin": {
+    "plannable": "dist/bin.js"
+  },
+  "files": [
+    "dist"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public",
+    "provenance": true
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@clack/prompts": "^0.10.0",
+    "@premierstudio/ai-hooks": "*"
+  }
+}

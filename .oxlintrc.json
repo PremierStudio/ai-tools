@@ -1,0 +1,42 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "categories": {
+    "correctness": "error",
+    "suspicious": "warn",
+    "pedantic": "off"
+  },
+  "plugins": ["typescript", "unicorn", "oxc"],
+  "rules": {
+    "no-console": "off",
+    "no-unused-vars": "error",
+    "no-var": "error",
+    "prefer-const": "error",
+    "eqeqeq": "error",
+    "no-eval": "error",
+    "no-implied-eval": "error",
+    "no-new-func": "error",
+    "no-with": "error",
+    "no-debugger": "error",
+    "no-empty": "warn",
+    "no-extra-boolean-cast": "error",
+    "no-self-compare": "error",
+    "no-template-curly-in-string": "warn",
+    "no-throw-literal": "error",
+    "typescript/no-explicit-any": "error",
+    "typescript/no-non-null-assertion": "warn",
+    "unicorn/no-null": "off",
+    "unicorn/prefer-top-level-await": "off",
+    "unicorn/no-process-exit": "off"
+  },
+  "ignorePatterns": ["dist/", "node_modules/", "*.d.ts", "*.js"],
+  "overrides": [
+    {
+      "files": ["**/*.test.ts"],
+      "rules": {
+        "no-unused-vars": "off",
+        "typescript/no-non-null-assertion": "off",
+        "no-template-curly-in-string": "off"
+      }
+    }
+  ]
+}
