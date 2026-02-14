@@ -23,7 +23,7 @@ OPTIONS:
 
 EXAMPLES:
   npx @premierstudio/plannable                          # Setup with production server
-  npx @premierstudio/plannable --server https://plannable.dev   # Staging
+  npx @premierstudio/plannable --server https://your-instance.example.com
   npx @premierstudio/plannable status                   # Check connection
   npx @premierstudio/plannable remove                   # Clean removal
 `;

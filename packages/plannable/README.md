@@ -32,17 +32,17 @@ npx @premierstudio/plannable remove          # Clean removal
 
 ## Supported AI Tools
 
-| Tool        | Detection                            | MCP | Hooks   |
-| ----------- | ------------------------------------ | --- | ------- |
-| Claude Code | `.claude/` directory or `claude` CLI | Yes | Yes     |
-| Cursor      | `.cursor/` directory                 | Yes | Yes     |
-| Gemini CLI  | `gemini` CLI                         | Yes | Planned |
-| Codex       | `codex` CLI                          | Yes | Planned |
-| Cline       | `.cline/` directory                  | Yes | Planned |
-| Kiro        | `.kiro/` directory                   | Yes | Planned |
-| Amp         | `amp` CLI                            | Yes | Planned |
-| OpenCode    | `.opencode/` directory               | Yes | Planned |
-| Droid       | `droid` CLI                          | Yes | Planned |
+| Tool        | Detection                                         | MCP | Hooks   |
+| ----------- | ------------------------------------------------- | --- | ------- |
+| Claude Code | `claude` CLI or `.claude/` directory              | Yes | Yes     |
+| Cursor      | `cursor` CLI or `.cursor/` directory              | Yes | Yes     |
+| Gemini CLI  | `gemini` CLI or `.gemini/` directory              | Yes | Yes     |
+| Codex       | `codex` CLI, `codex.json`, or `.codex/` directory | Yes | Yes     |
+| Cline       | `cline` CLI or `.clinerules/` directory           | Yes | Yes     |
+| Kiro        | `kiro` CLI or `.kiro/` directory                  | Yes | Yes     |
+| OpenCode    | `opencode` CLI or `.opencode/` directory          | Yes | Yes     |
+| Droid       | `droid` CLI or `.factory/` directory              | Yes | Yes     |
+| Amp         | `amp` CLI or `.amp/` directory                    | Yes | Planned |
 
 ## What Are PM-AI Hooks?
 
@@ -55,14 +55,14 @@ Hooks are lightweight middleware that run inside your AI tool. They let Plannabl
 
 Hooks are installed via [ai-hooks](https://github.com/PremierStudio/ai-hooks), a universal hooks framework for AI coding tools.
 
-## Self-Hosted / Staging
+## Self-Hosted
 
 ```bash
 # Use a custom server
-npx @premierstudio/plannable --server https://plannable.dev
+npx @premierstudio/plannable --server https://your-instance.example.com
 
 # Or set via environment variable
-PLANNABLE_SERVER=https://plannable.dev npx @premierstudio/plannable
+PLANNABLE_SERVER=https://your-instance.example.com npx @premierstudio/plannable
 ```
 
 ## Requirements
