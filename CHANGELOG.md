@@ -1,3 +1,10 @@
+## [1.1.5](https://github.com/PremierStudio/ai-hooks/compare/v1.1.4...v1.1.5) (2026-02-14)
+
+
+### Bug Fixes
+
+* read version at runtime instead of build-time define ([6a94951](https://github.com/PremierStudio/ai-hooks/commit/6a9495150d97408b65ada407155ef5caf15123ce))
+
 ## [1.1.4](https://github.com/PremierStudio/ai-hooks/compare/v1.1.3...v1.1.4) (2026-02-14)
 
 

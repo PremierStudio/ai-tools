@@ -1,6 +1,6 @@
 {
   "name": "@premierstudio/ai-hooks",
-  "version": "1.1.4",
+  "version": "1.1.5",
   "description": "Universal hooks framework for AI coding tools. What Express.js is to HTTP, ai-hooks is to AI.",
   "keywords": [
     "ai",
