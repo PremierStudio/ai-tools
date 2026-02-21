@@ -4,6 +4,7 @@ const { Adapter: ClaudeCodeAgentAdapter, adapter } = createMarkdownAdapter({
   id: "claude-code",
   name: "Claude Code",
   configDir: ".claude/agents",
+  command: "claude",
 });
 
 export { ClaudeCodeAgentAdapter };

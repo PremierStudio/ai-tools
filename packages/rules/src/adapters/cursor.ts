@@ -10,6 +10,7 @@ export class CursorRuleAdapter extends BaseRuleAdapter {
   readonly name = "Cursor";
   readonly nativeSupport = true;
   readonly configDir = ".cursor/rules";
+  readonly command = "cursor";
 
   async generate(rules: RuleDefinition[]): Promise<GeneratedFile[]> {
     return rules.map((rule) => ({

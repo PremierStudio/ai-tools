@@ -9,6 +9,7 @@ export type MarkdownAdapterConfig = {
   id: string;
   name: string;
   configDir: string;
+  command?: string;
 };
 
 export function createMarkdownAdapter(config: MarkdownAdapterConfig) {
@@ -17,6 +18,7 @@ export function createMarkdownAdapter(config: MarkdownAdapterConfig) {
     readonly name = config.name;
     readonly nativeSupport = true;
     readonly configDir = config.configDir;
+    override readonly command = config.command;
 
     async generate(agents: AgentDefinition[]): Promise<GeneratedFile[]> {
       return agents.map((agent) => ({
@@ -47,7 +49,10 @@ export function createMarkdownAdapter(config: MarkdownAdapterConfig) {
 
   const adapter = new MarkdownAgentAdapter();
   registry.register(adapter);
-  return { Adapter: MarkdownAgentAdapter, adapter };
+  return {
+    Adapter: MarkdownAgentAdapter as unknown as typeof BaseAgentAdapter,
+    adapter: adapter as BaseAgentAdapter,
+  };
 }
 
 function formatAgent(agent: AgentDefinition): string {

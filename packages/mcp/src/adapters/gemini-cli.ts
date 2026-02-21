@@ -10,6 +10,7 @@ class GeminiCliMCPAdapter extends BaseMCPAdapter {
   readonly name = "Gemini CLI";
   readonly nativeSupport = true;
   readonly configPath = ".gemini/settings.json";
+  readonly command = "gemini";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

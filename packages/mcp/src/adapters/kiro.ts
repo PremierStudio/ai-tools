@@ -10,6 +10,7 @@ class KiroMCPAdapter extends BaseMCPAdapter {
   readonly name = "Kiro";
   readonly nativeSupport = true;
   readonly configPath = ".kiro/mcp.json";
+  readonly command = "kiro";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

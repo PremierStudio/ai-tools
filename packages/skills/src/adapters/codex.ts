@@ -10,6 +10,7 @@ class CodexSkillAdapter extends BaseSkillAdapter {
   readonly name = "Codex";
   readonly nativeSupport = true;
   readonly configDir = ".codex/prompts";
+  readonly command = "codex";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

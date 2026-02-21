@@ -10,6 +10,7 @@ class KiroSkillAdapter extends BaseSkillAdapter {
   readonly name = "Kiro";
   readonly nativeSupport = true;
   readonly configDir = ".kiro/prompts";
+  readonly command = "kiro";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

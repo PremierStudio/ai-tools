@@ -2,21 +2,14 @@ import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 import type { RuleDefinition, GeneratedFile } from "../types/index.js";
 import type { BaseRuleAdapter } from "../adapters/base.js";
 
-const {
-  mockRegistryDetectAll,
-  mockRegistryList,
-  mockRegistryGet,
-  mockRegistryGetAll,
-  mockWriteFile,
-  mockMkdir,
-} = vi.hoisted(() => ({
-  mockRegistryDetectAll: vi.fn(),
-  mockRegistryList: vi.fn(),
-  mockRegistryGet: vi.fn(),
-  mockRegistryGetAll: vi.fn(),
-  mockWriteFile: vi.fn(),
-  mockMkdir: vi.fn(),
-}));
+const { mockRegistryDetectAll, mockRegistryList, mockRegistryGet, mockWriteFile, mockMkdir } =
+  vi.hoisted(() => ({
+    mockRegistryDetectAll: vi.fn(),
+    mockRegistryList: vi.fn(),
+    mockRegistryGet: vi.fn(),
+    mockWriteFile: vi.fn(),
+    mockMkdir: vi.fn(),
+  }));
 
 vi.mock("../adapters/all.js", () => ({}));
 
@@ -25,7 +18,6 @@ vi.mock("../adapters/registry.js", () => ({
     detectAll: (...args: unknown[]) => mockRegistryDetectAll(...args),
     list: () => mockRegistryList(),
     get: (id: string) => mockRegistryGet(id),
-    getAll: () => mockRegistryGetAll(),
     register: vi.fn(),
   },
 }));
@@ -263,8 +255,8 @@ describe("run() - detect command", () => {
 });
 
 describe("run() - generate command", () => {
-  it("prints message when no tools specified (no --tools, getAll empty)", async () => {
-    mockRegistryGetAll.mockReturnValue([]);
+  it("prints message when no tools detected (no --tools, detectAll empty)", async () => {
+    mockRegistryDetectAll.mockResolvedValue([]);
     await run(["generate"]);
     expect(allLog()).toContain("No tools specified");
   });
@@ -281,10 +273,10 @@ describe("run() - generate command", () => {
     expect(adapter.generate).toHaveBeenCalled();
   });
 
-  it("generates for all registered adapters when no --tools flag", async () => {
+  it("generates for all detected adapters when no --tools flag", async () => {
     const adapter1 = makeAdapter({ id: "claude-code", name: "Claude Code" });
     const adapter2 = makeAdapter({ id: "cursor", name: "Cursor" });
-    mockRegistryGetAll.mockReturnValue([adapter1, adapter2]);
+    mockRegistryDetectAll.mockResolvedValue([adapter1, adapter2]);
 
     await run(["generate"]);
     expect(allLog()).toContain("Generating rules for 2 tool(s)");
@@ -314,8 +306,8 @@ describe("run() - generate command", () => {
 });
 
 describe("run() - install command", () => {
-  it("prints message when no tools specified", async () => {
-    mockRegistryGetAll.mockReturnValue([]);
+  it("prints message when no tools detected", async () => {
+    mockRegistryDetectAll.mockResolvedValue([]);
     await run(["install"]);
     expect(allLog()).toContain("No tools specified");
   });
@@ -332,15 +324,54 @@ describe("run() - install command", () => {
     expect(allLog()).toContain("\u2713 Claude Code");
   });
 
-  it("installs for all registered adapters when no --tools flag", async () => {
+  it("installs for all detected adapters when no --tools flag", async () => {
     const adapter1 = makeAdapter({ id: "claude-code", name: "Claude Code" });
     const adapter2 = makeAdapter({ id: "cursor", name: "Cursor" });
-    mockRegistryGetAll.mockReturnValue([adapter1, adapter2]);
+    mockRegistryDetectAll.mockResolvedValue([adapter1, adapter2]);
 
     await run(["install"]);
     expect(allLog()).toContain("Installing rules into 2 tool(s)");
     expect(allLog()).toContain("\u2713 Claude Code");
     expect(allLog()).toContain("\u2713 Cursor");
+  });
+});
+
+describe("run() - install guard", () => {
+  it("skips undetected tool in --tools and warns", async () => {
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+    });
+
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["install", "--tools=kiro"]);
+    expect(allLog()).toContain("No tools specified");
+  });
+
+  it("--force bypasses detection check for --tools", async () => {
+    const installFn = vi
+      .fn<(files: GeneratedFile[]) => Promise<void>>()
+      .mockResolvedValue(undefined);
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+      install: installFn,
+    });
+
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["install", "--tools=kiro", "--force"]);
+    expect(installFn).toHaveBeenCalled();
+    expect(allLog()).toContain("Installing rules into 1 tool(s)");
   });
 });
 
@@ -455,7 +486,7 @@ describe("run() - sync command", () => {
       if (id === "cursor") return target;
       return undefined;
     });
-    mockRegistryGetAll.mockReturnValue([source, target]);
+    mockRegistryDetectAll.mockResolvedValue([source, target]);
 
     await run(["sync", "--from=claude-code"]);
     expect(importFn).toHaveBeenCalled();
@@ -490,7 +521,7 @@ describe("run() - sync command", () => {
       if (id === "cursor") return target;
       return undefined;
     });
-    mockRegistryGetAll.mockReturnValue([source, target]);
+    mockRegistryDetectAll.mockResolvedValue([source, target]);
 
     await run(["sync", "--from=claude-code", "--dry-run"]);
     expect(installFn).not.toHaveBeenCalled();
@@ -517,8 +548,8 @@ describe("run() - sync command", () => {
       if (id === "claude-code") return source;
       return undefined;
     });
-    // When only source is registered, it should be excluded as a target
-    mockRegistryGetAll.mockReturnValue([source]);
+    // When only source is detected, it should be excluded as a target
+    mockRegistryDetectAll.mockResolvedValue([source]);
 
     await run(["sync", "--from=claude-code"]);
     expect(sourceInstallFn).not.toHaveBeenCalled();
@@ -565,6 +596,21 @@ describe("run() - flag parsing", () => {
 
     await run(["generate", "--tools=claude-code,cursor"]);
     expect(allLog()).toContain("Generating rules for 2 tool(s)");
+  });
+
+  it("parses --force flag", async () => {
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+    });
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["generate", "--tools=kiro", "--force"]);
+    expect(allLog()).toContain("Generating rules for 1 tool(s)");
   });
 
   it("trims whitespace in --tools values", async () => {
@@ -615,7 +661,7 @@ describe("run() - error propagation", () => {
       if (id === "cursor") return target;
       return undefined;
     });
-    mockRegistryGetAll.mockReturnValue([source, target]);
+    mockRegistryDetectAll.mockResolvedValue([source, target]);
 
     await expect(run(["sync", "--from=claude-code"])).rejects.toThrow("generate failed");
   });

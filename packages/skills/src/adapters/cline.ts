@@ -10,6 +10,7 @@ class ClineSkillAdapter extends BaseSkillAdapter {
   readonly name = "Cline";
   readonly nativeSupport = true;
   readonly configDir = ".cline/prompts";
+  readonly command = "cline";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

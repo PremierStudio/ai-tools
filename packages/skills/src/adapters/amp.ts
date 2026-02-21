@@ -10,6 +10,7 @@ class AmpSkillAdapter extends BaseSkillAdapter {
   readonly name = "Amp";
   readonly nativeSupport = true;
   readonly configDir = ".amp/prompts";
+  readonly command = "amp";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

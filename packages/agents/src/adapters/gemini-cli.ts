@@ -4,6 +4,7 @@ const { Adapter: GeminiCliAgentAdapter, adapter } = createMarkdownAdapter({
   id: "gemini-cli",
   name: "Gemini CLI",
   configDir: ".gemini/agents",
+  command: "gemini",
 });
 
 export { GeminiCliAgentAdapter };

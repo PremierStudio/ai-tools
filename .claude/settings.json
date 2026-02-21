@@ -30,6 +30,28 @@
             "command": "file_path=$(echo \"$TOOL_INPUT\" | node -e \"process.stdout.write(JSON.parse(require('fs').readFileSync('/dev/stdin','utf8')).file_path||'')\" 2>/dev/null); [[ \"$file_path\" == *.ts ]] && [[ -f \"$file_path\" ]] && npx oxfmt \"$file_path\" 2>/dev/null; exit 0"
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/ai-hooks-runner.js",
+            "timeout": 10,
+            "description": "ai-hooks: PostToolUse"
+          }
+        ]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node .claude/hooks/ai-hooks-runner.js",
+            "timeout": 10,
+            "description": "ai-hooks: PreToolUse"
+          }
+        ]
       }
     ]
   },

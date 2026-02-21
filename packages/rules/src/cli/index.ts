@@ -25,6 +25,7 @@ OPTIONS:
   --from      Source tool for import/sync (e.g., --from=claude-code)
   --config    Path to config file (default: ai-rules.config.ts)
   --dry-run   Show what would be generated without writing files
+  --force     Skip detection checks for --tools (install even if tool not found)
 
 EXAMPLES:
   ai-rules init                          # Create config file
@@ -38,6 +39,7 @@ type Flags = {
   from?: string;
   config?: string;
   dryRun?: boolean;
+  force?: boolean;
 };
 
 export async function run(args: string[]): Promise<void> {
@@ -128,7 +130,7 @@ async function cmdDetect(): Promise<void> {
 }
 
 async function cmdGenerate(flags: Flags): Promise<void> {
-  const adapters = resolveAdapters(flags);
+  const adapters = await resolveAdapters(flags);
 
   if (adapters.length === 0) {
     console.log("No tools specified. Use --tools to specify tools.");
@@ -159,7 +161,7 @@ async function cmdGenerate(flags: Flags): Promise<void> {
 }
 
 async function cmdInstall(flags: Flags): Promise<void> {
-  const adapters = resolveAdapters(flags);
+  const adapters = await resolveAdapters(flags);
 
   if (adapters.length === 0) {
     console.log("No tools specified. Use --tools to specify tools.");
@@ -223,7 +225,7 @@ async function cmdSync(flags: Flags): Promise<void> {
   const rules = await source.import();
   console.log(`Imported ${rules.length} rule(s) from ${source.name}`);
 
-  const targets = resolveAdapters(flags).filter((a) => a.id !== fromId);
+  const targets = (await resolveAdapters(flags)).filter((a) => a.id !== fromId);
 
   for (const target of targets) {
     const files = await target.generate(rules);
@@ -266,6 +268,8 @@ function parseFlags(args: string[]): Flags {
       flags.config = arg.slice(9);
     } else if (arg === "--dry-run") {
       flags.dryRun = true;
+    } else if (arg === "--force") {
+      flags.force = true;
     }
   }
   return flags;
@@ -288,20 +292,24 @@ async function loadConfig(configPath?: string): Promise<RulesConfig> {
   return mod.default as RulesConfig;
 }
 
-function resolveAdapters(flags: Flags): BaseRuleAdapter[] {
+async function resolveAdapters(flags: Flags): Promise<BaseRuleAdapter[]> {
   if (flags.tools) {
     const ids = flags.tools.split(",").map((t) => t.trim());
     const adapters: BaseRuleAdapter[] = [];
     for (const id of ids) {
       const adapter = registry.get(id);
-      if (adapter) {
-        adapters.push(adapter);
-      } else {
+      if (!adapter) {
         console.warn(`  Warning: Unknown adapter "${id}"`);
+        continue;
       }
+      if (!flags.force && !(await adapter.detect())) {
+        console.warn(`  Warning: ${adapter.name} not detected, skipping (use --force to override)`);
+        continue;
+      }
+      adapters.push(adapter);
     }
     return adapters;
   }
 
-  return registry.getAll();
+  return registry.detectAll();
 }

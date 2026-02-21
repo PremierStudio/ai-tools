@@ -10,6 +10,7 @@ class DroidSkillAdapter extends BaseSkillAdapter {
   readonly name = "Droid";
   readonly nativeSupport = true;
   readonly configDir = ".factory/prompts";
+  readonly command = "droid";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

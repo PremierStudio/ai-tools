@@ -6,6 +6,7 @@ export class OpenCodeRuleAdapter extends SimpleMarkdownRuleAdapter {
   readonly name = "OpenCode";
   readonly nativeSupport = true;
   readonly configDir = ".opencode/instructions";
+  readonly command = "opencode";
 }
 
 const adapter = new OpenCodeRuleAdapter();

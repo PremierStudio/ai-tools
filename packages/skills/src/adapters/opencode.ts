@@ -10,6 +10,7 @@ class OpenCodeSkillAdapter extends BaseSkillAdapter {
   readonly name = "OpenCode";
   readonly nativeSupport = true;
   readonly configDir = ".opencode/prompts";
+  readonly command = "opencode";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

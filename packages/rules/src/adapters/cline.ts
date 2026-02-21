@@ -6,6 +6,7 @@ export class ClineRuleAdapter extends SimpleMarkdownRuleAdapter {
   readonly name = "Cline";
   readonly nativeSupport = true;
   readonly configDir = ".clinerules";
+  readonly command = "cline";
 }
 
 const adapter = new ClineRuleAdapter();

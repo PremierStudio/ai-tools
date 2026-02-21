@@ -27,6 +27,7 @@ OPTIONS:
   --config    Path to config file (default: ai-hooks.config.ts)
   --verbose   Show detailed output
   --dry-run   Show what would be generated without writing files
+  --force     Skip detection checks for --tools (install even if tool not found)
 
 EXAMPLES:
   ai-hooks init                    # Create config file
@@ -40,6 +41,7 @@ type Flags = {
   config?: string;
   verbose?: boolean;
   dryRun?: boolean;
+  force?: boolean;
 };
 
 export async function run(args: string[]): Promise<void> {
@@ -294,6 +296,8 @@ function parseFlags(args: string[]): Flags {
       flags.verbose = true;
     } else if (arg === "--dry-run") {
       flags.dryRun = true;
+    } else if (arg === "--force") {
+      flags.force = true;
     }
   }
 
@@ -306,11 +310,15 @@ async function resolveAdapters(flags: Flags): Promise<Adapter[]> {
     const adapters: Adapter[] = [];
     for (const id of ids) {
       const adapter = registry.get(id);
-      if (adapter) {
-        adapters.push(adapter);
-      } else {
+      if (!adapter) {
         console.warn(`  Warning: Unknown adapter "${id}"`);
+        continue;
       }
+      if (!flags.force && !(await adapter.detect())) {
+        console.warn(`  Warning: ${adapter.name} not detected, skipping (use --force to override)`);
+        continue;
+      }
+      adapters.push(adapter);
     }
     return adapters;
   }

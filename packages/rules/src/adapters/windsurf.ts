@@ -6,6 +6,7 @@ export class WindsurfRuleAdapter extends SimpleMarkdownRuleAdapter {
   readonly name = "Windsurf";
   readonly nativeSupport = true;
   readonly configDir = ".windsurf/rules";
+  readonly command = "windsurf";
 }
 
 const adapter = new WindsurfRuleAdapter();

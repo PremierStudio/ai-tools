@@ -10,6 +10,7 @@ class DroidMCPAdapter extends BaseMCPAdapter {
   readonly name = "Droid";
   readonly nativeSupport = true;
   readonly configPath = ".factory/mcp.json";
+  readonly command = "droid";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

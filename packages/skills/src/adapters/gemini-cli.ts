@@ -10,6 +10,7 @@ class GeminiCliSkillAdapter extends BaseSkillAdapter {
   readonly name = "Gemini CLI";
   readonly nativeSupport = true;
   readonly configDir = ".gemini/prompts";
+  readonly command = "gemini";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

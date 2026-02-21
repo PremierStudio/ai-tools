@@ -4,6 +4,7 @@ const { Adapter: ClineAgentAdapter, adapter } = createMarkdownAdapter({
   id: "cline",
   name: "Cline",
   configDir: ".cline/agents",
+  command: "cline",
 });
 
 export { ClineAgentAdapter };

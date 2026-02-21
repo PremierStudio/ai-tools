@@ -16,6 +16,12 @@ vi.mock("node:fs/promises", () => ({
   rm: vi.fn(),
 }));
 
+vi.mock("node:child_process", () => ({
+  exec: vi.fn((_cmd: string, callback: (error: Error | null) => void) => {
+    callback(new Error("not found"));
+  }),
+}));
+
 import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
 import { ClaudeCodeRuleAdapter } from "./claude-code.js";
@@ -178,9 +184,19 @@ describe("ClaudeCodeRuleAdapter", () => {
       expect(await adapter.detect("/test")).toBe(true);
     });
 
-    it("returns false when configDir missing", async () => {
+    it("returns false when configDir missing and command not found", async () => {
       vi.mocked(existsSync).mockReturnValue(false);
       expect(await adapter.detect("/test")).toBe(false);
+    });
+
+    it("returns true when configDir missing but command exists", async () => {
+      const { exec } = await import("node:child_process");
+      vi.mocked(exec).mockImplementation((_cmd: unknown, callback: unknown) => {
+        (callback as (error: Error | null) => void)(null);
+        return undefined as never;
+      });
+      vi.mocked(existsSync).mockReturnValue(false);
+      expect(await adapter.detect("/test")).toBe(true);
     });
   });
 });

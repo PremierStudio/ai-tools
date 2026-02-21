@@ -10,6 +10,7 @@ class CodexMCPAdapter extends BaseMCPAdapter {
   readonly name = "Codex";
   readonly nativeSupport = true;
   readonly configPath = ".codex/mcp.json";
+  readonly command = "codex";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

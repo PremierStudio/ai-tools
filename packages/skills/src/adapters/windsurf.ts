@@ -10,6 +10,7 @@ class WindsurfSkillAdapter extends BaseSkillAdapter {
   readonly name = "Windsurf";
   readonly nativeSupport = true;
   readonly configDir = ".windsurf/skills";
+  readonly command = "windsurf";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

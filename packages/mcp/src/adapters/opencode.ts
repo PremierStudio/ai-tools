@@ -10,6 +10,7 @@ class OpenCodeMCPAdapter extends BaseMCPAdapter {
   readonly name = "OpenCode";
   readonly nativeSupport = true;
   readonly configPath = ".opencode/mcp.json";
+  readonly command = "opencode";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

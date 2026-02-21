@@ -6,6 +6,7 @@ export class AmpRuleAdapter extends SimpleMarkdownRuleAdapter {
   readonly name = "Amp";
   readonly nativeSupport = true;
   readonly configDir = ".amp/rules";
+  readonly command = "amp";
 }
 
 const adapter = new AmpRuleAdapter();

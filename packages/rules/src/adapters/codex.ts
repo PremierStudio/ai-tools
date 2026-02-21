@@ -6,6 +6,7 @@ export class CodexRuleAdapter extends SimpleMarkdownRuleAdapter {
   readonly name = "Codex";
   readonly nativeSupport = true;
   readonly configDir = ".codex/instructions";
+  readonly command = "codex";
 }
 
 const adapter = new CodexRuleAdapter();

@@ -10,6 +10,7 @@ class CursorMCPAdapter extends BaseMCPAdapter {
   readonly name = "Cursor";
   readonly nativeSupport = true;
   readonly configPath = ".cursor/mcp.json";
+  readonly command = "cursor";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

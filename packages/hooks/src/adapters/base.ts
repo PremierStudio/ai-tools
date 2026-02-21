@@ -73,9 +73,9 @@ export abstract class BaseAdapter implements Adapter {
    */
   protected async commandExists(command: string): Promise<boolean> {
     const { exec } = await import("node:child_process");
-    return new Promise((resolve) => {
+    return new Promise((ok) => {
       exec(`which ${command}`, (error) => {
-        resolve(!error);
+        ok(!error);
       });
     });
   }

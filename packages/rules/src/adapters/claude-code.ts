@@ -10,6 +10,7 @@ export class ClaudeCodeRuleAdapter extends BaseRuleAdapter {
   readonly name = "Claude Code";
   readonly nativeSupport = true;
   readonly configDir = ".claude/rules";
+  readonly command = "claude";
 
   async generate(rules: RuleDefinition[]): Promise<GeneratedFile[]> {
     return rules.map((rule) => ({

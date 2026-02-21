@@ -10,6 +10,7 @@ class AmpMCPAdapter extends BaseMCPAdapter {
   readonly name = "Amp";
   readonly nativeSupport = true;
   readonly configPath = ".amp/mcp.json";
+  readonly command = "amp";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

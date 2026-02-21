@@ -658,6 +658,47 @@ describe("run() - install command", () => {
     expect(installFn).toHaveBeenCalled();
     expect(mockRegistryDetectAll).not.toHaveBeenCalled();
   });
+
+  it("skips undetected tool in --tools and warns", async () => {
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+    });
+
+    mockLoadConfig.mockResolvedValue(defaultConfig);
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["install", "--tools=kiro"]);
+    expect(allWarn()).toContain("Kiro not detected, skipping");
+    expect(allWarn()).toContain("--force");
+    expect(allLog()).toContain("No AI tools detected");
+  });
+
+  it("--force bypasses detection check for --tools", async () => {
+    const installFn = vi
+      .fn<(configs: GeneratedConfig[]) => Promise<void>>()
+      .mockResolvedValue(undefined);
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+      install: installFn,
+    });
+
+    mockLoadConfig.mockResolvedValue(defaultConfig);
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["install", "--tools=kiro", "--force"]);
+    expect(installFn).toHaveBeenCalled();
+    expect(allLog()).toContain("Installing hooks into 1 tool(s)");
+  });
 });
 
 describe("run() - uninstall command", () => {
@@ -999,6 +1040,22 @@ describe("run() - flag parsing", () => {
     await run(["generate", "--tools=claude-code", "--dry-run", "--verbose", "--config=/custom.ts"]);
     expect(mockLoadConfig).toHaveBeenCalledWith("/custom.ts");
     expect(allLog()).toContain("[dry-run]");
+  });
+
+  it("parses --force flag", async () => {
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+    });
+    mockLoadConfig.mockResolvedValue({ hooks: [] });
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["generate", "--tools=kiro", "--force"]);
+    expect(allLog()).toContain("Generating configs for 1 tool(s)");
   });
 });
 

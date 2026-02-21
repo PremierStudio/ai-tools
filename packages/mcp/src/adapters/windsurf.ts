@@ -10,6 +10,7 @@ class WindsurfMCPAdapter extends BaseMCPAdapter {
   readonly name = "Windsurf";
   readonly nativeSupport = true;
   readonly configPath = "mcp_config.json";
+  readonly command = "windsurf";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

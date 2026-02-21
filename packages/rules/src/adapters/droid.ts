@@ -6,6 +6,7 @@ export class DroidRuleAdapter extends SimpleMarkdownRuleAdapter {
   readonly name = "Droid";
   readonly nativeSupport = true;
   readonly configDir = ".factory/instructions";
+  readonly command = "droid";
 }
 
 const adapter = new DroidRuleAdapter();

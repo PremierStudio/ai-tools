@@ -411,6 +411,45 @@ describe("run() - install command", () => {
     expect(mockRegistryDetectAll).not.toHaveBeenCalled();
   });
 
+  it("skips undetected tool in --tools and warns", async () => {
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+    });
+
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["install", "--tools=kiro"]);
+    expect(allWarn()).toContain("Kiro not detected, skipping");
+    expect(allWarn()).toContain("--force");
+    expect(allLog()).toContain("No AI tools detected");
+  });
+
+  it("--force bypasses detection check for --tools", async () => {
+    const installFn = vi
+      .fn<(files: GeneratedFile[]) => Promise<void>>()
+      .mockResolvedValue(undefined);
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+      install: installFn,
+    });
+
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["install", "--tools=kiro", "--force"]);
+    expect(installFn).toHaveBeenCalled();
+    expect(allLog()).toContain("Installing agents into 1 tool(s)");
+  });
+
   it("shows dry-run output for multiple generated files", async () => {
     const adapter = makeAdapter({
       id: "multi",
@@ -645,6 +684,21 @@ describe("run() - flag parsing", () => {
 
     await run(["generate", "--tools=claude-code", "--dry-run", "--verbose"]);
     expect(allLog()).toContain("[dry-run]");
+  });
+
+  it("parses --force flag", async () => {
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+    });
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["generate", "--tools=kiro", "--force"]);
+    expect(allLog()).toContain("Generating agent configs for 1 tool(s)");
   });
 });
 

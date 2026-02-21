@@ -6,6 +6,7 @@ export class GeminiCliRuleAdapter extends SimpleMarkdownRuleAdapter {
   readonly name = "Gemini CLI";
   readonly nativeSupport = true;
   readonly configDir = ".gemini/rules";
+  readonly command = "gemini";
 }
 
 const adapter = new GeminiCliRuleAdapter();

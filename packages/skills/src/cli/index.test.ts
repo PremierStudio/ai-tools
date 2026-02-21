@@ -297,6 +297,45 @@ describe("run() - sync command", () => {
   });
 });
 
+describe("run() - install guard", () => {
+  it("skips undetected tool in --tools and warns", async () => {
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+    });
+
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["install", "--tools=kiro"]);
+    expect(allLog()).toContain("No AI tools detected");
+  });
+
+  it("--force bypasses detection check for --tools", async () => {
+    const installFn = vi
+      .fn<(files: GeneratedFile[]) => Promise<void>>()
+      .mockResolvedValue(undefined);
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+      install: installFn,
+    });
+
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["install", "--tools=kiro", "--force"]);
+    expect(installFn).toHaveBeenCalled();
+    expect(allLog()).toContain("Installing skills into 1 tool(s)");
+  });
+});
+
 describe("run() - flag parsing", () => {
   it("parses --tools flag with = syntax", async () => {
     const adapter = makeAdapter({ id: "claude-code", name: "Claude Code" });
@@ -308,5 +347,20 @@ describe("run() - flag parsing", () => {
     await run(["import", "--tools=claude-code"]);
     expect(mockRegistryGet).toHaveBeenCalledWith("claude-code");
     expect(mockRegistryDetectAll).not.toHaveBeenCalled();
+  });
+
+  it("parses --force flag", async () => {
+    const adapter = makeAdapter({
+      id: "kiro",
+      name: "Kiro",
+      detect: vi.fn<() => Promise<boolean>>().mockResolvedValue(false),
+    });
+    mockRegistryGet.mockImplementation((id: string) => {
+      if (id === "kiro") return adapter;
+      return undefined;
+    });
+
+    await run(["generate", "--tools=kiro", "--force"]);
+    expect(allLog()).toContain("Generating skills for 1 tool(s)");
   });
 });

@@ -10,6 +10,7 @@ class ClaudeCodeSkillAdapter extends BaseSkillAdapter {
   readonly name = "Claude Code";
   readonly nativeSupport = true;
   readonly configDir = ".claude/commands";
+  readonly command = "claude";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

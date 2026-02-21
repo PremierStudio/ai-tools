@@ -10,6 +10,7 @@ class ClineMCPAdapter extends BaseMCPAdapter {
   readonly name = "Cline";
   readonly nativeSupport = true;
   readonly configPath = ".cline/mcp_settings.json";
+  readonly command = "cline";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

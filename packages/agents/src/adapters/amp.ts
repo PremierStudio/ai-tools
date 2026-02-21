@@ -4,6 +4,7 @@ const { Adapter: AmpAgentAdapter, adapter } = createMarkdownAdapter({
   id: "amp",
   name: "Amp",
   configDir: ".amp/agents",
+  command: "amp",
 });
 
 export { AmpAgentAdapter };

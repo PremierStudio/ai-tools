@@ -10,6 +10,7 @@ class CursorSkillAdapter extends BaseSkillAdapter {
   readonly name = "Cursor";
   readonly nativeSupport = true;
   readonly configDir = ".cursor/prompts";
+  readonly command = "cursor";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({

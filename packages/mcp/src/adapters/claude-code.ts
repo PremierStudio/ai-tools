@@ -10,6 +10,7 @@ class ClaudeCodeMCPAdapter extends BaseMCPAdapter {
   readonly name = "Claude Code";
   readonly nativeSupport = true;
   readonly configPath = ".mcp.json";
+  readonly command = "claude";
 
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     const mcpServers: Record<string, unknown> = {};

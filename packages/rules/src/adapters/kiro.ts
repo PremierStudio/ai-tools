@@ -6,6 +6,7 @@ export class KiroRuleAdapter extends SimpleMarkdownRuleAdapter {
   readonly name = "Kiro";
   readonly nativeSupport = true;
   readonly configDir = ".kiro/steering";
+  readonly command = "kiro";
 }
 
 const adapter = new KiroRuleAdapter();
