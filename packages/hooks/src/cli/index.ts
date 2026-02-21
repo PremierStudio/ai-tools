@@ -23,7 +23,7 @@ COMMANDS:
   help        Show this help message
 
 OPTIONS:
-  --tools     Comma-separated list of tools (e.g., --tools=claude-code,codex)
+  --tools     Comma-separated list of tools (e.g., --tools=claude-code,cursor)
   --config    Path to config file (default: ai-hooks.config.ts)
   --verbose   Show detailed output
   --dry-run   Show what would be generated without writing files
