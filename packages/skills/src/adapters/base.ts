@@ -9,6 +9,9 @@ export abstract class BaseSkillAdapter {
   abstract readonly nativeSupport: boolean;
   abstract readonly configDir: string;
 
+  /** Whether this adapter can use symlinks ("symlink") or needs file transformation ("transform"). */
+  readonly installStrategy: "symlink" | "transform" = "symlink";
+
   /** CLI binary name for detection (e.g., "claude", "cursor"). Override in subclass. */
   readonly command?: string;
 
@@ -41,7 +44,8 @@ export abstract class BaseSkillAdapter {
     }
   }
 
-  async uninstall(_cwd?: string): Promise<void> {
+  async uninstall(cwd?: string): Promise<void> {
     // Subclass can override
+    void cwd;
   }
 }

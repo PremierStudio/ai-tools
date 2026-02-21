@@ -149,6 +149,9 @@ class GeminiCliAdapter extends BaseAdapter {
  */
 import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
 
+const PROJECT_ROOT = "${resolve(process.cwd())}";
+process.chdir(PROJECT_ROOT);
+
 const input = JSON.parse(process.env.GEMINI_HOOK_INPUT ?? "{}");
 
 async function run() {

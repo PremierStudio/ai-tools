@@ -10,6 +10,8 @@ export default defineConfig({
       "packages/agents/src/**/*.test.ts",
       "packages/rules/src/**/*.test.ts",
       "packages/cli/src/**/*.test.ts",
+      "packages/sessions/src/**/*.test.ts",
+      "packages/ui/src/**/*.test.ts",
     ],
     coverage: {
       provider: "v8",
@@ -20,6 +22,8 @@ export default defineConfig({
         "packages/agents/src/**/*.ts",
         "packages/rules/src/**/*.ts",
         "packages/cli/src/**/*.ts",
+        "packages/sessions/src/**/*.ts",
+        "packages/ui/src/**/*.ts",
       ],
       exclude: [
         "packages/*/src/**/*.test.ts",
@@ -38,6 +42,10 @@ export default defineConfig({
         "packages/rules/src/types/*.ts",
         "packages/rules/src/cli/bin.ts",
         "packages/cli/src/cli/bin.ts",
+        "packages/sessions/src/types/*.ts",
+        "packages/sessions/src/cli/bin.ts",
+        "packages/ui/src/types.ts",
+        "packages/ui/src/cli/bin.ts",
         "**/dist/**",
       ],
     },

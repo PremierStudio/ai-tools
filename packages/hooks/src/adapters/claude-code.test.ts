@@ -332,6 +332,23 @@ describe("ClaudeCodeAdapter", () => {
       expect(runner!.content).toContain("DO NOT EDIT");
     });
 
+    it("runner script embeds PROJECT_ROOT for worktree safety", async () => {
+      const configs = await adapter.generate([testHook]);
+      const runner = configs.find((c) => c.path.includes("runner"));
+      expect(runner!.content).toContain("const PROJECT_ROOT =");
+      expect(runner!.content).toContain("process.chdir(PROJECT_ROOT)");
+    });
+
+    it("settings.json command uses absolute path to runner", async () => {
+      const configs = await adapter.generate([testHook]);
+      const settings = configs.find((c) => c.path.includes("settings"));
+      const parsed = JSON.parse(settings!.content) as Record<string, unknown>;
+      const hooks = parsed.hooks as Record<string, Array<{ hooks: Array<{ command: string }> }>>;
+      const firstEvent = Object.keys(hooks)[0]!;
+      const command = hooks[firstEvent]![0]!.hooks[0]!.command;
+      expect(command).toMatch(/^node \//);
+    });
+
     it("generates settings.json at correct path", async () => {
       const configs = await adapter.generate([testHook]);
       const settings = configs.find((c) => c.path.includes("settings"));

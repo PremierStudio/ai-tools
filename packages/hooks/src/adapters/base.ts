@@ -19,6 +19,9 @@ export abstract class BaseAdapter implements Adapter {
   abstract readonly version: string;
   abstract readonly capabilities: AdapterCapabilities;
 
+  /** Whether this adapter can use symlinks ("symlink") or needs file transformation ("transform"). */
+  readonly installStrategy: "symlink" | "transform" = "transform";
+
   abstract detect(): Promise<boolean>;
   abstract generate(hooks: HookDefinition[]): Promise<GeneratedConfig[]>;
   abstract mapEvent(event: HookEventType): string[];

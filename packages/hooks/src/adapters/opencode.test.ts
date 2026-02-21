@@ -286,6 +286,13 @@ describe("OpenCodeAdapter", () => {
       expect(plugin!.content).toContain("DO NOT EDIT");
     });
 
+    it("plugin embeds PROJECT_ROOT for worktree safety", async () => {
+      const configs = await adapter.generate([testHook]);
+      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      expect(plugin!.content).toContain("const PROJECT_ROOT =");
+      expect(plugin!.content).toContain("process.chdir(PROJECT_ROOT)");
+    });
+
     it("plugin contains handleHook function", async () => {
       const configs = await adapter.generate([testHook]);
       const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));

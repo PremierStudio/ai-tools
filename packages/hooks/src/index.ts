@@ -64,3 +64,7 @@ export type {
   ConfigSettings,
 } from "./types/index.js";
 export { isBeforeEvent } from "./types/index.js";
+
+// Canonical store
+export { CanonicalStore, Linker } from "./store/index.js";
+export type { SerializedHookDefinition, LinkStatus } from "./store/index.js";

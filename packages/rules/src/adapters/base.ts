@@ -9,6 +9,9 @@ export abstract class BaseRuleAdapter {
   abstract readonly nativeSupport: boolean;
   abstract readonly configDir: string;
 
+  /** Whether this adapter can use symlinks ("symlink") or needs file transformation ("transform"). */
+  readonly installStrategy: "symlink" | "transform" = "transform";
+
   /** CLI binary name for detection (e.g., "claude", "cursor"). Override in subclass. */
   readonly command?: string;
 
@@ -41,5 +44,7 @@ export abstract class BaseRuleAdapter {
     }
   }
 
-  async uninstall(_cwd?: string): Promise<void> {}
+  async uninstall(cwd?: string): Promise<void> {
+    void cwd;
+  }
 }

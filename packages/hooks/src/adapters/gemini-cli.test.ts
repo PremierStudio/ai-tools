@@ -287,6 +287,13 @@ describe("GeminiCliAdapter", () => {
       );
     });
 
+    it("event script embeds PROJECT_ROOT for worktree safety", async () => {
+      const configs = await adapter.generate([testHook]);
+      const eventScript = configs.find((c) => c.path.includes("BeforeShell"));
+      expect(eventScript!.content).toContain("const PROJECT_ROOT =");
+      expect(eventScript!.content).toContain("process.chdir(PROJECT_ROOT)");
+    });
+
     it("event script reads GEMINI_HOOK_INPUT env var", async () => {
       const configs = await adapter.generate([testHook]);
       const eventScript = configs.find((c) => c.path.includes("BeforeShell"));

@@ -1,0 +1,50 @@
+{
+  "name": "@premierstudio/ai-tools-ui",
+  "version": "1.1.8",
+  "description": "Interactive terminal dashboard for AI coding tools",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PremierStudio/ai-tools"
+  },
+  "bin": {
+    "ai-tools-ui": "dist/cli/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "import": "./dist/cli/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@premierstudio/ai-sessions": "1.1.8",
+    "@rezi-ui/core": "^0.1.0-alpha.24",
+    "@rezi-ui/node": "^0.1.0-alpha.24",
+    "node-pty": "^1.1.0"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

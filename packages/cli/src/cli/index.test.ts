@@ -5,12 +5,16 @@ const mockMcpRun = vi.fn();
 const mockSkillsRun = vi.fn();
 const mockAgentsRun = vi.fn();
 const mockRulesRun = vi.fn();
+const mockSessionsRun = vi.fn();
+const mockUiRun = vi.fn();
 
 vi.mock("@premierstudio/ai-hooks/cli", () => ({ run: mockHooksRun }));
 vi.mock("@premierstudio/ai-mcp/cli", () => ({ run: mockMcpRun }));
 vi.mock("@premierstudio/ai-skills/cli", () => ({ run: mockSkillsRun }));
 vi.mock("@premierstudio/ai-agents/cli", () => ({ run: mockAgentsRun }));
 vi.mock("@premierstudio/ai-rules/cli", () => ({ run: mockRulesRun }));
+vi.mock("@premierstudio/ai-sessions/cli", () => ({ run: mockSessionsRun }));
+vi.mock("@premierstudio/ai-tools-ui/cli", () => ({ run: mockUiRun }));
 
 import { run } from "./index.js";
 
@@ -85,7 +89,7 @@ describe("run() - help output", () => {
   it("includes all engine names in help text", async () => {
     await run(["help"]);
     const output = allLog();
-    for (const name of ["hooks", "mcp", "skills", "agents", "rules"]) {
+    for (const name of ["hooks", "mcp", "skills", "agents", "rules", "sessions"]) {
       expect(output).toContain(name);
     }
   });
@@ -130,16 +134,35 @@ describe("run() - engine delegation", () => {
     expect(mockRulesRun).toHaveBeenCalledWith(["import"]);
   });
 
+  it("delegates to sessions engine", async () => {
+    await run(["sessions", "list"]);
+    expect(mockSessionsRun).toHaveBeenCalledWith(["list"]);
+  });
+
   it("forwards all remaining args to the engine", async () => {
     await run(["mcp", "install", "--tools=claude-code", "--dry-run"]);
     expect(mockMcpRun).toHaveBeenCalledWith(["install", "--tools=claude-code", "--dry-run"]);
   });
 });
 
+// ── UI delegation ───────────────────────────────────────────
+
+describe("run() - ui delegation", () => {
+  it("delegates to ui package", async () => {
+    await run(["ui"]);
+    expect(mockUiRun).toHaveBeenCalledWith([]);
+  });
+
+  it("forwards flags to ui package", async () => {
+    await run(["ui", "--no-pty"]);
+    expect(mockUiRun).toHaveBeenCalledWith(["--no-pty"]);
+  });
+});
+
 // ── Cross-cutting detect ─────────────────────────────────────
 
 describe("run() - cross-cutting detect", () => {
-  it("calls detect on all 5 engines", async () => {
+  it("calls detect on all 6 engines", async () => {
     await run(["detect"]);
 
     expect(mockHooksRun).toHaveBeenCalledWith(["detect"]);
@@ -147,6 +170,7 @@ describe("run() - cross-cutting detect", () => {
     expect(mockSkillsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockAgentsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockRulesRun).toHaveBeenCalledWith(["detect"]);
+    expect(mockSessionsRun).toHaveBeenCalledWith(["detect"]);
   });
 
   it("prints engine headers", async () => {
@@ -157,6 +181,7 @@ describe("run() - cross-cutting detect", () => {
     expect(output).toContain("── skills ──");
     expect(output).toContain("── agents ──");
     expect(output).toContain("── rules ──");
+    expect(output).toContain("── sessions ──");
   });
 
   it("forwards flags to each engine", async () => {
@@ -177,16 +202,18 @@ describe("run() - cross-cutting detect", () => {
     expect(mockSkillsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockAgentsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockRulesRun).toHaveBeenCalledWith(["detect"]);
+    expect(mockSessionsRun).toHaveBeenCalledWith(["detect"]);
   });
 });
 
 // ── Cross-cutting sync ───────────────────────────────────────
 
 describe("run() - cross-cutting sync", () => {
-  it("calls sync on 4 engines (skips hooks)", async () => {
+  it("calls sync on 4 engines (skips hooks and sessions)", async () => {
     await run(["sync"]);
 
     expect(mockHooksRun).not.toHaveBeenCalled();
+    expect(mockSessionsRun).not.toHaveBeenCalled();
     expect(mockMcpRun).toHaveBeenCalledWith(["sync"]);
     expect(mockSkillsRun).toHaveBeenCalledWith(["sync"]);
     expect(mockAgentsRun).toHaveBeenCalledWith(["sync"]);
@@ -197,6 +224,7 @@ describe("run() - cross-cutting sync", () => {
     await run(["sync"]);
     const output = allLog();
     expect(output).not.toContain("── hooks ──");
+    expect(output).not.toContain("── sessions ──");
     expect(output).toContain("── mcp ──");
     expect(output).toContain("── skills ──");
     expect(output).toContain("── agents ──");

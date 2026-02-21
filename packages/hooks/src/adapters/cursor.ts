@@ -113,7 +113,7 @@ class CursorAdapter extends BaseAdapter {
         hooksConfig[event] = [];
       }
       hooksConfig[event].push({
-        command: `node hooks/ai-hooks-runner.js ${event}`,
+        command: `node ${resolve(process.cwd(), ".cursor/hooks/ai-hooks-runner.js")} ${event}`,
       });
     }
 
@@ -152,6 +152,9 @@ class CursorAdapter extends BaseAdapter {
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
 import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
+
+const PROJECT_ROOT = "${resolve(process.cwd())}";
+process.chdir(PROJECT_ROOT);
 
 async function readStdin() {
   const chunks = [];

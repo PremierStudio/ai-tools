@@ -39,7 +39,9 @@
     "@premierstudio/ai-hooks": "1.1.8",
     "@premierstudio/ai-mcp": "1.1.8",
     "@premierstudio/ai-rules": "1.1.8",
-    "@premierstudio/ai-skills": "1.1.8"
+    "@premierstudio/ai-sessions": "1.1.8",
+    "@premierstudio/ai-skills": "1.1.8",
+    "@premierstudio/ai-tools-ui": "1.1.8"
   },
   "engines": {
     "node": ">=22.0.0"

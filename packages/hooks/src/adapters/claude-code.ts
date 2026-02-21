@@ -143,6 +143,9 @@ class ClaudeCodeAdapter extends BaseAdapter {
 import { loadConfig } from "@premierstudio/ai-hooks";
 import { HookEngine } from "@premierstudio/ai-hooks";
 
+const PROJECT_ROOT = "${resolve(process.cwd())}";
+process.chdir(PROJECT_ROOT);
+
 const hookEvent = process.env.CLAUDE_HOOK_EVENT;
 const toolName = process.env.CLAUDE_TOOL_NAME;
 const inputJson = process.env.CLAUDE_TOOL_INPUT;
@@ -322,7 +325,7 @@ run().catch((err) => {
     for (const event of neededEvents) {
       const hookEntry = {
         type: "command",
-        command: `node .claude/hooks/ai-hooks-runner.js`,
+        command: `node ${resolve(process.cwd(), ".claude/hooks/ai-hooks-runner.js")}`,
         timeout: 10,
         description: `ai-hooks: ${event}`,
       };

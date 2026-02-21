@@ -9,6 +9,9 @@ export abstract class BaseAgentAdapter {
   abstract readonly nativeSupport: boolean;
   abstract readonly configDir: string;
 
+  /** Whether this adapter can use symlinks ("symlink") or needs file transformation ("transform"). */
+  readonly installStrategy: "symlink" | "transform" = "symlink";
+
   /** CLI binary name for detection (e.g., "claude", "cursor"). Override in subclass. */
   readonly command?: string;
 

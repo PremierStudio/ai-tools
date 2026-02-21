@@ -130,7 +130,7 @@ class KiroAdapter extends BaseAdapter {
 
     for (const event of neededEvents) {
       const entry: Record<string, unknown> = {
-        command: "node .kiro/hooks/ai-hooks-runner.js",
+        command: `node ${resolve(process.cwd(), ".kiro/hooks/ai-hooks-runner.js")}`,
       };
 
       // preToolUse and postToolUse support matchers; use wildcard
@@ -178,6 +178,9 @@ class KiroAdapter extends BaseAdapter {
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
 import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
+
+const PROJECT_ROOT = "${resolve(process.cwd())}";
+process.chdir(PROJECT_ROOT);
 
 async function readStdin() {
   const chunks = [];

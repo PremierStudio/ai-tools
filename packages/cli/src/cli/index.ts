@@ -11,11 +11,22 @@ ENGINES:
   skills      Skills/prompts configuration
   agents      Agent configuration
   rules       Project rules configuration
+  sessions    Cross-tool session reading and handoff
 
 CROSS-CUTTING COMMANDS:
   detect      Run detect across all engines
   sync        Run sync across supported engines (hooks excluded)
   help        Show this help message
+
+INTERACTIVE:
+  ui          Launch interactive terminal dashboard
+
+CANONICAL MODE COMMANDS:
+  init        Initialize .ai-tools/ directory (canonical mode)
+  generate    Generate canonical files from engine configs
+  install     Install from canonical store to tool directories
+  status      Show installation mode and health
+  clean       Remove tool-specific directories
 
 ENGINE COMMANDS:
   Pass any command supported by the engine's CLI.
@@ -31,6 +42,11 @@ EXAMPLES:
   ai-tools detect                         # Detect across all engines
   ai-tools sync --dry-run                 # Sync all engines (dry run)
   ai-tools hooks init                     # Initialize hooks config
+  ai-tools init                           # Initialize canonical mode
+  ai-tools generate                       # Generate canonical files
+  ai-tools install                        # Install to tool directories
+  ai-tools status                         # Check installation health
+  ai-tools clean                          # Remove tool directories
 `;
 
 type EngineEntry = {
@@ -45,6 +61,7 @@ const ENGINES: Record<string, EngineEntry> = {
   skills: { name: "skills", pkg: "@premierstudio/ai-skills/cli", hasSync: true },
   agents: { name: "agents", pkg: "@premierstudio/ai-agents/cli", hasSync: true },
   rules: { name: "rules", pkg: "@premierstudio/ai-rules/cli", hasSync: true },
+  sessions: { name: "sessions", pkg: "@premierstudio/ai-sessions/cli", hasSync: false },
 };
 
 const ENGINE_NAMES = Object.keys(ENGINES);
@@ -70,6 +87,30 @@ export async function run(args: string[]): Promise<void> {
 
     case "sync":
       await crossCutSync(args.slice(1));
+      return;
+
+    case "init":
+      await (await import("../canonical/commands.js")).cmdInit(args.slice(1));
+      return;
+
+    case "generate":
+      await (await import("../canonical/commands.js")).cmdGenerate(args.slice(1));
+      return;
+
+    case "install":
+      await (await import("../canonical/commands.js")).cmdInstall(args.slice(1));
+      return;
+
+    case "status":
+      await (await import("../canonical/commands.js")).cmdStatus(args.slice(1));
+      return;
+
+    case "clean":
+      await (await import("../canonical/commands.js")).cmdClean(args.slice(1));
+      return;
+
+    case "ui":
+      await (await import("@premierstudio/ai-tools-ui/cli")).run(args.slice(1));
       return;
 
     default:

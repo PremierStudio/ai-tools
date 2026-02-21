@@ -298,6 +298,12 @@ describe("ClineAdapter", () => {
       expect(configs[0]!.content).toContain("DO NOT EDIT");
     });
 
+    it("hook script embeds PROJECT_ROOT for worktree safety", async () => {
+      const configs = await adapter.generate([testHook]);
+      expect(configs[0]!.content).toContain("const PROJECT_ROOT =");
+      expect(configs[0]!.content).toContain("process.chdir(PROJECT_ROOT)");
+    });
+
     it("hook script handles Cline tool names (write_to_file, replace_in_file, etc.)", async () => {
       const configs = await adapter.generate([testHook]);
       const content = configs[0]!.content;

@@ -175,6 +175,9 @@ class ClineAdapter extends BaseAdapter {
  */
 import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
 
+const PROJECT_ROOT = "${resolve(process.cwd())}";
+process.chdir(PROJECT_ROOT);
+
 async function readStdin() {
   const chunks = [];
   for await (const chunk of process.stdin) {

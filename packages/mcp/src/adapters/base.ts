@@ -9,6 +9,9 @@ export abstract class BaseMCPAdapter {
   abstract readonly nativeSupport: boolean;
   abstract readonly configPath: string;
 
+  /** Whether this adapter can use symlinks ("symlink") or needs file transformation ("transform"). */
+  readonly installStrategy: "symlink" | "transform" = "transform";
+
   /** CLI binary name for detection (e.g., "claude", "cursor"). Override in subclass. */
   readonly command?: string;
 

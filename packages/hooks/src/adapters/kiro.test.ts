@@ -361,6 +361,24 @@ describe("KiroAdapter", () => {
       expect(runner!.content).toContain("DO NOT EDIT");
     });
 
+    it("runner script embeds PROJECT_ROOT for worktree safety", async () => {
+      const configs = await adapter.generate([testHook]);
+      const runner = configs.find((c) => c.path.includes("runner"));
+      expect(runner!.content).toContain("const PROJECT_ROOT =");
+      expect(runner!.content).toContain("process.chdir(PROJECT_ROOT)");
+    });
+
+    it("hooks JSON command uses absolute path to runner", async () => {
+      const configs = await adapter.generate([testHook]);
+      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const parsed = JSON.parse(hooksJson!.content) as {
+        hooks: Record<string, Array<{ command: string }>>;
+      };
+      const firstEvent = Object.keys(parsed.hooks)[0]!;
+      const command = parsed.hooks[firstEvent]![0]!.command;
+      expect(command).toMatch(/^node \//);
+    });
+
     it("generates hooks JSON at correct path", async () => {
       const configs = await adapter.generate([testHook]);
       const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
