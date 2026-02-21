@@ -1,0 +1,47 @@
+{
+  "name": "@premierstudio/ai-tools",
+  "version": "1.1.8",
+  "description": "Unified CLI for all ai-tools engines (hooks, mcp, skills, agents, rules)",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PremierStudio/ai-tools"
+  },
+  "bin": {
+    "ai-tools": "dist/cli/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "dependencies": {
+    "@premierstudio/ai-agents": "1.1.8",
+    "@premierstudio/ai-hooks": "1.1.8",
+    "@premierstudio/ai-mcp": "1.1.8",
+    "@premierstudio/ai-rules": "1.1.8",
+    "@premierstudio/ai-skills": "1.1.8"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

@@ -1,0 +1,52 @@
+{
+  "name": "@premierstudio/ai-skills",
+  "version": "1.1.8",
+  "description": "Universal skills/prompts configuration for AI coding tools",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PremierStudio/ai-tools"
+  },
+  "bin": {
+    "ai-skills": "dist/cli/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.ts",
+      "import": "./dist/adapters/index.js"
+    },
+    "./adapters/all": {
+      "types": "./dist/adapters/all.d.ts",
+      "import": "./dist/adapters/all.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "import": "./dist/cli/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

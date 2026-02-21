@@ -1,5 +1,5 @@
 {
-  "name": "@premierstudio/ai-hooks-monorepo",
+  "name": "@premierstudio/ai-tools-monorepo",
   "private": true,
   "type": "module",
   "workspaces": [

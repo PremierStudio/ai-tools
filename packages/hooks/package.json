@@ -1,0 +1,69 @@
+{
+  "name": "@premierstudio/ai-hooks",
+  "version": "1.1.8",
+  "description": "Universal hooks framework for AI coding tools. What Express.js is to HTTP, ai-hooks is to AI.",
+  "keywords": [
+    "ai",
+    "ai-tools",
+    "claude-code",
+    "codex",
+    "developer-tools",
+    "gemini",
+    "hooks",
+    "middleware",
+    "orchestration",
+    "security"
+  ],
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/PremierStudio/ai-tools"
+  },
+  "bin": {
+    "ai-hooks": "dist/cli/bin.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks/index.d.ts",
+      "import": "./dist/hooks/index.js"
+    },
+    "./adapters": {
+      "types": "./dist/adapters/index.d.ts",
+      "import": "./dist/adapters/index.js"
+    },
+    "./adapters/all": {
+      "types": "./dist/adapters/all.d.ts",
+      "import": "./dist/adapters/all.js"
+    },
+    "./cli": {
+      "types": "./dist/cli/index.d.ts",
+      "import": "./dist/cli/index.js"
+    }
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "clean": "rm -rf dist"
+  },
+  "engines": {
+    "node": ">=22.0.0"
+  }
+}

@@ -31,7 +31,7 @@
       "@semantic-release/npm",
       {
         "npmPublish": true,
-        "pkgRoot": "packages/core",
+        "pkgRoot": "packages/hooks",
         "access": "public"
       }
     ],
