@@ -75,9 +75,10 @@ export abstract class BaseAdapter implements Adapter {
    * Check if a CLI command exists on PATH.
    */
   protected async commandExists(command: string): Promise<boolean> {
-    const { exec } = await import("node:child_process");
+    const { execFile } = await import("node:child_process");
+    const lookupCommand = process.platform === "win32" ? "where" : "which";
     return new Promise((ok) => {
-      exec(`which ${command}`, (error) => {
+      execFile(lookupCommand, [command], (error) => {
         ok(!error);
       });
     });

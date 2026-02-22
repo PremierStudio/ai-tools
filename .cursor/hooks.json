@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "hooks": {
+    "beforeShellExecution": [
+      {
+        "command": "node hooks/ai-hooks-runner.js beforeShellExecution"
+      }
+    ],
+    "afterFileEdit": [
+      {
+        "command": "node hooks/ai-hooks-runner.js afterFileEdit"
+      }
+    ]
+  }
+}

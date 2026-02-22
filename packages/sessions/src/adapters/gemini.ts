@@ -70,12 +70,13 @@ class GeminiSessionAdapter extends BaseSessionAdapter {
 
         const fileStat = await stat(filePath);
         const sessionId = data.id ?? `gemini-${file.replace(".json", "")}`;
+        const title = this.resolveSessionTitle(data.title, messages);
 
         sessions.push({
           id: sessionId,
           tool: this.id,
           toolName: this.name,
-          title: data.title,
+          title,
           startedAt: data.createTime ?? fileStat.birthtime.toISOString(),
           updatedAt: data.updateTime ?? fileStat.mtime.toISOString(),
           messageCount: messages.length,

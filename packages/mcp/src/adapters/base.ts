@@ -27,9 +27,10 @@ export abstract class BaseMCPAdapter {
   }
 
   protected async commandExists(command: string): Promise<boolean> {
-    const { exec } = await import("node:child_process");
+    const { execFile } = await import("node:child_process");
+    const lookupCommand = process.platform === "win32" ? "where" : "which";
     return new Promise((ok) => {
-      exec(`which ${command}`, (error: Error | null) => {
+      execFile(lookupCommand, [command], (error: Error | null) => {
         ok(!error);
       });
     });

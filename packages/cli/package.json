@@ -8,6 +8,7 @@
     "url": "https://github.com/PremierStudio/ai-tools"
   },
   "bin": {
+    "agentful": "dist/cli/bin.js",
     "ai-tools": "dist/cli/bin.js"
   },
   "files": [
@@ -32,7 +33,7 @@
     "dev": "tsup --watch",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "node -e \"const { rmSync } = require('node:fs'); rmSync('dist', { recursive: true, force: true });\""
   },
   "dependencies": {
     "@premierstudio/ai-agents": "1.1.8",

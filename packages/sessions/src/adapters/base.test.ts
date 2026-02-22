@@ -87,7 +87,7 @@ describe("BaseSessionAdapter", () => {
 
       expect(ctx.sessionId).toBe("sess-1");
       expect(ctx.tool).toBe("test");
-      expect(ctx.title).toBe("Test Tool session");
+      expect(ctx.title).toBe("Fix the bug in ./src/parser.ts");
       expect(ctx.summary).toContain("3 messages");
       expect(ctx.keyFiles).toContain("./src/parser.ts");
       expect(ctx.keyFiles).toContain("./src/utils.ts");
@@ -101,10 +101,44 @@ describe("BaseSessionAdapter", () => {
       expect(ctx.title).toBe("Bug Fix Session");
     });
 
-    it("generates fallback title from tool name", async () => {
+    it("normalizes explicit session title", async () => {
+      const session = makeSession({ title: "   `  Tidy    parser errors   `  " });
+      const ctx = await adapter.extractContext(session);
+      expect(ctx.title).toBe("Tidy parser errors");
+    });
+
+    it("generates fallback title from first user message", async () => {
       const session = makeSession({ title: undefined });
       const ctx = await adapter.extractContext(session);
+      expect(ctx.title).toBe("Fix the bug in ./src/parser.ts");
+    });
+
+    it("falls back to tool name when no usable message text", async () => {
+      const session = makeSession({
+        title: undefined,
+        messages: [{ role: "tool", content: "```" }],
+      });
+      const ctx = await adapter.extractContext(session);
       expect(ctx.title).toBe("Test Tool session");
+    });
+
+    it("uses first meaningful line from markdown content", async () => {
+      const session = makeSession({
+        title: undefined,
+        messages: [{ role: "user", content: "\n## Build status\n- Fix failing tests" }],
+      });
+      const ctx = await adapter.extractContext(session);
+      expect(ctx.title).toBe("Build status");
+    });
+
+    it("truncates very long derived titles", async () => {
+      const session = makeSession({
+        title: undefined,
+        messages: [{ role: "user", content: "x".repeat(120) }],
+      });
+      const ctx = await adapter.extractContext(session);
+      expect(ctx.title.length).toBeLessThanOrEqual(80);
+      expect(ctx.title.endsWith("...")).toBe(true);
     });
   });
 

@@ -1,0 +1,28 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/blitz/Development/ai-tools/.factory/hooks/ai-hooks-runner.js",
+            "timeout": 30
+          }
+        ],
+        "matcher": "*"
+      }
+    ],
+    "PostToolUse": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node /Users/blitz/Development/ai-tools/.factory/hooks/ai-hooks-runner.js",
+            "timeout": 30
+          }
+        ],
+        "matcher": "*"
+      }
+    ]
+  }
+}

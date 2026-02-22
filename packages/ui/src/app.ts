@@ -15,47 +15,76 @@ export function createInitialState(): AppState {
 }
 
 /**
- * Detect installed tools using session adapter registry.
- * Returns ToolInfo[] with detection status and session counts.
+ * Detect installed tools in parallel.
+ * Each tool is detected concurrently; session counts are fetched in parallel too.
  */
 export async function detectTools(): Promise<ToolInfo[]> {
   const { registry } = await import("@premierstudio/ai-sessions");
   await import("@premierstudio/ai-sessions/adapters/all");
 
   const adapterIds = registry.list();
-  const tools: ToolInfo[] = [];
 
-  for (const id of adapterIds) {
-    const adapter = registry.get(id);
-    if (!adapter) continue;
-
-    let detected = false;
-    try {
-      detected = await adapter.detect();
-    } catch {
-      // Detection failed
-    }
-
-    let sessionCount = 0;
-    if (detected) {
-      try {
-        const sessions = await adapter.parseSessions();
-        sessionCount = sessions.length;
-      } catch {
-        // Session parse failed
+  const results = await Promise.all(
+    adapterIds.map(async (id): Promise<ToolInfo> => {
+      const adapter = registry.get(id);
+      if (!adapter) {
+        return { id, name: id, command: id, status: "not-installed", sessionCount: 0 };
       }
-    }
 
-    tools.push({
-      id: adapter.id,
-      name: adapter.name,
-      command: adapter.command,
-      status: detected ? "available" : "not-installed",
-      sessionCount,
-    });
-  }
+      let detected = false;
+      try {
+        detected = await adapter.detect();
+      } catch {
+        // Detection failed — treat as not installed
+      }
 
-  return tools;
+      let sessionCount = 0;
+      if (detected) {
+        try {
+          const sessions = await adapter.parseSessions();
+          sessionCount = sessions.length;
+        } catch {
+          // Session parse failed — 0 sessions
+        }
+      }
+
+      return {
+        id: adapter.id,
+        name: adapter.name,
+        command: adapter.command,
+        status: detected ? "available" : "not-installed",
+        sessionCount,
+      };
+    }),
+  );
+
+  return results;
+}
+
+/**
+ * Detect which mode the project is running in.
+ *
+ * - "canonical": .ai-tools/ config directory exists in cwd
+ * - "direct":    no config dir, but tools are detected
+ * - "unknown":   can't determine
+ */
+export async function detectMode(): Promise<"canonical" | "direct" | "unknown"> {
+  const { existsSync } = await import("node:fs");
+  const { resolve } = await import("node:path");
+
+  const configDir = resolve(process.cwd(), ".ai-tools");
+  if (existsSync(configDir)) return "canonical";
+
+  // Check if any tool config file exists in common locations
+  const directMarkers = [
+    resolve(process.cwd(), "CLAUDE.md"),
+    resolve(process.cwd(), ".claude"),
+    resolve(process.cwd(), ".gemini"),
+    resolve(process.cwd(), "codex.md"),
+  ];
+  if (directMarkers.some((p) => existsSync(p))) return "direct";
+
+  return "unknown";
 }
 
 /**

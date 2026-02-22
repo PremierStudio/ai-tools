@@ -61,6 +61,7 @@ describe("ClaudeSessionAdapter", () => {
 
       const sessions = await adapter.parseSessions();
       expect(sessions).toHaveLength(1);
+      expect(sessions[0]?.title).toBe("Hello");
       expect(sessions[0]?.messages).toHaveLength(2);
       expect(sessions[0]?.messages[0]?.role).toBe("user");
       expect(sessions[0]?.messages[0]?.content).toBe("Hello");

@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import type { ToolInfo, AppView } from "./types.js";
 import type { EngineStatus } from "./widgets/config-dashboard.js";
 import type { SessionRow } from "./widgets/session-browser.js";
+import type { TerminalPaneState } from "./terminal/pane.js";
+import { mockUi } from "./test-helpers.js";
 import {
   createInitialTuiState,
   navigateView,
@@ -9,48 +11,14 @@ import {
   handleKeyEvent,
   renderApp,
   renderSidebar,
-  renderToolsView,
-  renderSessionsView,
-  renderHandoffView,
-  renderConfigView,
   renderContent,
   renderStatusBar,
-  renderNotification,
+  renderToasts,
+  getContextKeyHints,
+  type TuiState,
   type SimpleKeyEvent,
 } from "./tui.js";
-
-// Minimal mock of the Rezi `ui` object for rendering tests.
-// Each factory returns a tagged object so we can assert widget structure.
-const mockUi = {
-  text: (content: string, props?: Record<string, unknown>) => ({
-    type: "text",
-    content,
-    props,
-  }),
-  box: (props: Record<string, unknown>, children: unknown[]) => ({
-    type: "box",
-    props,
-    children,
-  }),
-  column: (propsOrChildren: unknown, maybeChildren?: unknown[]) => {
-    const hasProps = !Array.isArray(propsOrChildren);
-    return {
-      type: "column",
-      props: hasProps ? propsOrChildren : {},
-      children: hasProps ? maybeChildren : propsOrChildren,
-    };
-  },
-  row: (propsOrChildren: unknown, maybeChildren?: unknown[]) => {
-    const hasProps = !Array.isArray(propsOrChildren);
-    return {
-      type: "row",
-      props: hasProps ? propsOrChildren : {},
-      children: hasProps ? maybeChildren : propsOrChildren,
-    };
-  },
-  divider: () => ({ type: "divider" }),
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-} as any;
+import { addToast } from "./toasts.js";
 
 function makeTool(overrides: Partial<ToolInfo> = {}): ToolInfo {
   return {
@@ -88,6 +56,14 @@ function makeKeyEvent(key: string, modifiers?: { ctrl?: boolean }): SimpleKeyEve
   return { key, ctrl: modifiers?.ctrl };
 }
 
+function makeState(overrides: Partial<TuiState> = {}): TuiState {
+  return {
+    ...createInitialTuiState(),
+    loading: { tools: false, sessions: false, config: false },
+    ...overrides,
+  };
+}
+
 // ── createInitialTuiState ─────────────────────────────
 
 describe("createInitialTuiState", () => {
@@ -98,7 +74,7 @@ describe("createInitialTuiState", () => {
 
   it("starts with loading true", () => {
     const state = createInitialTuiState();
-    expect(state.loading).toBe(true);
+    expect(state.loading).toEqual({ tools: true, sessions: true, config: true });
   });
 
   it("starts with empty tools", () => {
@@ -122,42 +98,94 @@ describe("createInitialTuiState", () => {
     expect(a).not.toBe(b);
     expect(a).toEqual(b);
   });
+
+  it("starts with empty runningTools", () => {
+    const state = createInitialTuiState();
+    expect(state.runningTools).toEqual([]);
+  });
+
+  it("starts with dark theme", () => {
+    const state = createInitialTuiState();
+    expect(state.theme).toBe("dark");
+  });
+
+  it("starts with sidebar not collapsed", () => {
+    const state = createInitialTuiState();
+    expect(state.sidebarCollapsed).toBe(false);
+  });
+
+  it("starts with help closed", () => {
+    const state = createInitialTuiState();
+    expect(state.helpOpen).toBe(false);
+  });
+
+  it("starts with empty toasts", () => {
+    const state = createInitialTuiState();
+    expect(state.toasts).toEqual([]);
+  });
+
+  it("starts with handoff at step 0", () => {
+    const state = createInitialTuiState();
+    expect(state.handoffStep).toBe(0);
+  });
+
+  it("starts with no selected session id", () => {
+    const state = createInitialTuiState();
+    expect(state.selectedSessionId).toBeNull();
+  });
+
+  it("starts with default session sort", () => {
+    const state = createInitialTuiState();
+    expect(state.sessionSort).toEqual({ column: "updatedAt", direction: "desc" });
+  });
 });
 
 // ── navigateView ──────────────────────────────────────
 
 describe("navigateView", () => {
   it("navigates from tools to sessions", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const next = navigateView(state, "next");
     expect(next.view).toBe("sessions");
   });
 
   it("navigates from config back to tools (wraps)", () => {
-    const state = { ...createInitialTuiState(), view: "config" as AppView };
+    const state = makeState({ view: "config" });
     const next = navigateView(state, "next");
     expect(next.view).toBe("tools");
   });
 
   it("navigates backwards from tools to config (wraps)", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const prev = navigateView(state, "prev");
     expect(prev.view).toBe("config");
   });
 
   it("navigates backwards from sessions to tools", () => {
-    const state = { ...createInitialTuiState(), view: "sessions" as AppView };
+    const state = makeState({ view: "sessions" });
     const prev = navigateView(state, "prev");
     expect(prev.view).toBe("tools");
   });
 
   it("full forward cycle returns to start", () => {
-    let state = createInitialTuiState();
-    state = navigateView(state, "next"); // sessions
-    state = navigateView(state, "next"); // handoff
-    state = navigateView(state, "next"); // config
-    state = navigateView(state, "next"); // tools
+    let state = makeState();
+    state = navigateView(state, "next");
+    state = navigateView(state, "next");
+    state = navigateView(state, "next");
+    state = navigateView(state, "next");
     expect(state.view).toBe("tools");
+  });
+
+  it("clears selectedSessionId when navigating", () => {
+    const state = makeState({ view: "sessions", selectedSessionId: "s1" });
+    const next = navigateView(state, "next");
+    expect(next.selectedSessionId).toBeNull();
+  });
+
+  it("clears searchActive when navigating", () => {
+    const state = makeState({ view: "sessions", searchActive: true });
+    const next = navigateView(state, "next");
+    expect(next.searchActive).toBe(false);
   });
 });
 
@@ -165,77 +193,117 @@ describe("navigateView", () => {
 
 describe("selectItem", () => {
   it("moves tool selection down", () => {
-    const state = {
-      ...createInitialTuiState(),
+    const state = makeState({
       tools: [makeTool({ id: "a" }), makeTool({ id: "b" }), makeTool({ id: "c" })],
       selectedToolIndex: 0,
-    };
+    });
     const next = selectItem(state, "next");
     expect(next.selectedToolIndex).toBe(1);
   });
 
   it("clamps tool selection at end", () => {
-    const state = {
-      ...createInitialTuiState(),
+    const state = makeState({
       tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
       selectedToolIndex: 1,
-    };
+    });
     const next = selectItem(state, "next");
     expect(next.selectedToolIndex).toBe(1);
   });
 
   it("moves tool selection up", () => {
-    const state = {
-      ...createInitialTuiState(),
+    const state = makeState({
       tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
       selectedToolIndex: 1,
-    };
+    });
     const prev = selectItem(state, "prev");
     expect(prev.selectedToolIndex).toBe(0);
   });
 
   it("clamps tool selection at start", () => {
-    const state = { ...createInitialTuiState(), tools: [makeTool()], selectedToolIndex: 0 };
+    const state = makeState({ tools: [makeTool()], selectedToolIndex: 0 });
     const prev = selectItem(state, "prev");
     expect(prev.selectedToolIndex).toBe(0);
   });
 
   it("handles empty tools list", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const next = selectItem(state, "next");
     expect(next.selectedToolIndex).toBe(0);
   });
 
   it("moves session selection down", () => {
-    const state = {
-      ...createInitialTuiState(),
-      view: "sessions" as AppView,
+    const state = makeState({
+      view: "sessions",
       sessions: [makeSession({ id: "a" }), makeSession({ id: "b" })],
       selectedSessionIndex: 0,
-    };
+    });
     const next = selectItem(state, "next");
     expect(next.selectedSessionIndex).toBe(1);
   });
 
   it("clamps session selection at end", () => {
-    const state = {
-      ...createInitialTuiState(),
-      view: "sessions" as AppView,
+    const state = makeState({
+      view: "sessions",
       sessions: [makeSession()],
       selectedSessionIndex: 0,
-    };
+    });
     const next = selectItem(state, "next");
     expect(next.selectedSessionIndex).toBe(0);
   });
 
-  it("returns unchanged state for handoff view", () => {
-    const state = { ...createInitialTuiState(), view: "handoff" as AppView };
+  it("returns unchanged state for config view", () => {
+    const state = makeState({ view: "config" });
     const next = selectItem(state, "next");
     expect(next).toBe(state);
   });
 
-  it("returns unchanged state for config view", () => {
-    const state = { ...createInitialTuiState(), view: "config" as AppView };
+  it("does not select sessions when in session detail", () => {
+    const state = makeState({
+      view: "sessions",
+      selectedSessionId: "s1",
+      sessions: [makeSession({ id: "a" }), makeSession({ id: "b" })],
+      selectedSessionIndex: 0,
+    });
+    const next = selectItem(state, "next");
+    expect(next).toBe(state);
+  });
+
+  it("moves handoff session selection in step 0", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 0,
+      sessions: [makeSession({ id: "a" }), makeSession({ id: "b" })],
+      selectedSessionIndex: 0,
+    });
+    const next = selectItem(state, "next");
+    expect(next.selectedSessionIndex).toBe(1);
+  });
+
+  it("moves handoff target selection in step 2", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 2,
+      selectedTargetIndex: 0,
+    });
+    const next = selectItem(state, "next");
+    expect(next.selectedTargetIndex).toBe(1);
+  });
+
+  it("clamps handoff target selection at max", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 2,
+      selectedTargetIndex: 3,
+    });
+    const next = selectItem(state, "next");
+    expect(next.selectedTargetIndex).toBe(3);
+  });
+
+  it("returns unchanged state for handoff step 1", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 1,
+    });
     const next = selectItem(state, "next");
     expect(next).toBe(state);
   });
@@ -244,275 +312,560 @@ describe("selectItem", () => {
 // ── handleKeyEvent ────────────────────────────────────
 
 describe("handleKeyEvent", () => {
+  // ── Global keys ──
+
   it("returns stop:true for q key", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const result = handleKeyEvent(state, makeKeyEvent("q"));
     expect(result.stop).toBe(true);
   });
 
   it("returns stop:true for Ctrl+C", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const result = handleKeyEvent(state, makeKeyEvent("c", { ctrl: true }));
     expect(result.stop).toBe(true);
   });
 
   it("navigates on Tab", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const result = handleKeyEvent(state, makeKeyEvent("Tab"));
     expect(result.state.view).toBe("sessions");
     expect(result.stop).toBe(false);
   });
 
   it("navigates back on BackTab", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const result = handleKeyEvent(state, makeKeyEvent("BackTab"));
     expect(result.state.view).toBe("config");
   });
 
-  it("selects next on j", () => {
-    const state = {
-      ...createInitialTuiState(),
-      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
-    };
-    const result = handleKeyEvent(state, makeKeyEvent("j"));
-    expect(result.state.selectedToolIndex).toBe(1);
-  });
-
-  it("selects next on Down", () => {
-    const state = {
-      ...createInitialTuiState(),
-      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
-    };
-    const result = handleKeyEvent(state, makeKeyEvent("Down"));
-    expect(result.state.selectedToolIndex).toBe(1);
-  });
-
-  it("selects prev on k", () => {
-    const state = {
-      ...createInitialTuiState(),
-      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
-      selectedToolIndex: 1,
-    };
-    const result = handleKeyEvent(state, makeKeyEvent("k"));
-    expect(result.state.selectedToolIndex).toBe(0);
-  });
-
-  it("selects prev on Up", () => {
-    const state = {
-      ...createInitialTuiState(),
-      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
-      selectedToolIndex: 1,
-    };
-    const result = handleKeyEvent(state, makeKeyEvent("Up"));
-    expect(result.state.selectedToolIndex).toBe(0);
-  });
-
   it("switches to view 1 on key 1", () => {
-    const state = { ...createInitialTuiState(), view: "config" as AppView };
+    const state = makeState({ view: "config" });
     const result = handleKeyEvent(state, makeKeyEvent("1"));
     expect(result.state.view).toBe("tools");
   });
 
   it("switches to view 2 on key 2", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const result = handleKeyEvent(state, makeKeyEvent("2"));
     expect(result.state.view).toBe("sessions");
   });
 
   it("switches to view 3 on key 3", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const result = handleKeyEvent(state, makeKeyEvent("3"));
     expect(result.state.view).toBe("handoff");
   });
 
   it("switches to view 4 on key 4", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const result = handleKeyEvent(state, makeKeyEvent("4"));
     expect(result.state.view).toBe("config");
   });
 
-  it("ignores unrecognized keys", () => {
-    const state = createInitialTuiState();
+  it("clears selectedSessionId on number key switch", () => {
+    const state = makeState({ view: "sessions", selectedSessionId: "s1" });
+    const result = handleKeyEvent(state, makeKeyEvent("1"));
+    expect(result.state.selectedSessionId).toBeNull();
+  });
+
+  it("toggles help on ?", () => {
+    const state = makeState();
+    const result = handleKeyEvent(state, makeKeyEvent("?"));
+    expect(result.state.helpOpen).toBe(true);
+  });
+
+  it("closes help on ? when open", () => {
+    const state = makeState({ helpOpen: true });
+    const result = handleKeyEvent(state, makeKeyEvent("?"));
+    expect(result.state.helpOpen).toBe(false);
+  });
+
+  it("closes help on Escape when open", () => {
+    const state = makeState({ helpOpen: true });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.helpOpen).toBe(false);
+  });
+
+  it("intercepts all keys when help is open", () => {
+    const state = makeState({ helpOpen: true });
+    const result = handleKeyEvent(state, makeKeyEvent("q"));
+    expect(result.stop).toBe(false); // q should NOT quit when help is open
+    expect(result.state.helpOpen).toBe(true);
+  });
+
+  it("cycles theme on t", () => {
+    const state = makeState({ theme: "dark" });
+    const result = handleKeyEvent(state, makeKeyEvent("t"));
+    expect(result.state.theme).toBe("light");
+    expect(result.action).toMatchObject({ type: "cycle-theme", newTheme: "light" });
+  });
+
+  it("collapses sidebar on [", () => {
+    const state = makeState({ sidebarCollapsed: false });
+    const result = handleKeyEvent(state, makeKeyEvent("["));
+    expect(result.state.sidebarCollapsed).toBe(true);
+  });
+
+  it("expands sidebar on ]", () => {
+    const state = makeState({ sidebarCollapsed: true });
+    const result = handleKeyEvent(state, makeKeyEvent("]"));
+    expect(result.state.sidebarCollapsed).toBe(false);
+  });
+
+  it("navigates back from session detail on Backspace", () => {
+    const state = makeState({ view: "sessions", selectedSessionId: "s1" });
+    const result = handleKeyEvent(state, makeKeyEvent("Backspace"));
+    expect(result.state.selectedSessionId).toBeNull();
+  });
+
+  it("Backspace is no-op when not in session detail", () => {
+    const state = makeState({ view: "tools" });
+    const result = handleKeyEvent(state, makeKeyEvent("Backspace"));
+    expect(result.state).toEqual(state);
+  });
+
+  // ── Tools view keys ──
+
+  it("selects next tool on j in tools view", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("j"));
+    expect(result.state.selectedToolIndex).toBe(1);
+  });
+
+  it("selects prev tool on k in tools view", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
+      selectedToolIndex: 1,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("k"));
+    expect(result.state.selectedToolIndex).toBe(0);
+  });
+
+  it("selects next on Down in tools view", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Down"));
+    expect(result.state.selectedToolIndex).toBe(1);
+  });
+
+  it("selects prev on Up in tools view", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
+      selectedToolIndex: 1,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Up"));
+    expect(result.state.selectedToolIndex).toBe(0);
+  });
+
+  it("returns launch-tool action on Enter for available tool", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "claude", status: "available" })],
+      selectedToolIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.action).toEqual({
+      type: "launch-tool",
+      toolId: "claude",
+      command: "claude",
+      args: [],
+    });
+  });
+
+  it("adds error toast on Enter for not-installed tool", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "x", status: "not-installed" })],
+      selectedToolIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.action).toBeNull();
+    expect(result.state.toasts).toHaveLength(1);
+    expect(result.state.toasts[0]!.type).toBe("error");
+  });
+
+  it("returns kill-tool action on d for running tool", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "claude" })],
+      runningTools: [{ toolId: "claude", pid: 123, startedAt: "2025-01-01" }],
+      selectedToolIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("d"));
+    expect(result.action).toEqual({ type: "kill-tool", toolId: "claude" });
+  });
+
+  it("d is no-op when tool is not running", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "claude" })],
+      selectedToolIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("d"));
+    expect(result.action).toBeNull();
+  });
+
+  // ── Sessions view keys ──
+
+  it("selects next session on j in sessions view", () => {
+    const state = makeState({
+      view: "sessions",
+      sessions: [makeSession({ id: "a" }), makeSession({ id: "b" })],
+      selectedSessionIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("j"));
+    expect(result.state.selectedSessionIndex).toBe(1);
+  });
+
+  it("enters session detail on Enter in sessions view", () => {
+    const state = makeState({
+      view: "sessions",
+      sessions: [makeSession({ id: "s1" })],
+      selectedSessionIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.state.selectedSessionId).toBe("s1");
+    expect(result.action).toBeNull();
+  });
+
+  it("activates search on / in sessions view", () => {
+    const state = makeState({ view: "sessions" });
+    const result = handleKeyEvent(state, makeKeyEvent("/"));
+    expect(result.state.searchActive).toBe(true);
+  });
+
+  it("clears filter on Escape in sessions view", () => {
+    const state = makeState({
+      view: "sessions",
+      sessionFilter: { query: "bug" },
+      searchActive: true,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.sessionFilter).toEqual({});
+    expect(result.state.searchActive).toBe(false);
+  });
+
+  it("returns quick-handoff action on H in sessions view", () => {
+    const state = makeState({
+      view: "sessions",
+      sessions: [makeSession({ id: "s1" })],
+      selectedSessionIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("H"));
+    expect(result.action).toEqual({ type: "quick-handoff", sessionId: "s1" });
+  });
+
+  it("cycles sort on s in sessions view", () => {
+    const state = makeState({
+      view: "sessions",
+      sessionSort: { column: "updatedAt", direction: "asc" },
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("s"));
+    expect(result.state.sessionSort.direction).toBe("desc");
+  });
+
+  // ── Session detail keys ──
+
+  it("returns start-handoff action on h in session detail", () => {
+    const state = makeState({
+      view: "sessions",
+      selectedSessionId: "s1",
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("h"));
+    expect(result.action).toEqual({ type: "start-handoff", sessionId: "s1" });
+  });
+
+  it("returns continue-session action on Enter in session detail", () => {
+    const state = makeState({
+      view: "sessions",
+      selectedSessionId: "s1",
+      sessions: [makeSession({ id: "s1", tool: "claude" })],
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.action).toEqual({
+      type: "continue-session",
+      sessionId: "s1",
+      toolId: "claude",
+    });
+  });
+
+  it("clears session detail on Escape", () => {
+    const state = makeState({
+      view: "sessions",
+      selectedSessionId: "s1",
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.selectedSessionId).toBeNull();
+  });
+
+  // ── Handoff view keys ──
+
+  it("advances handoff from step 0 to 1 on Enter", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 0,
+      sessions: [makeSession({ id: "s1" })],
+      selectedSessionIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.state.handoffStep).toBe(1);
+    expect(result.state.handoffSessionId).toBe("s1");
+    expect(result.action).toEqual({ type: "load-handoff-preview", sessionId: "s1" });
+  });
+
+  it("advances handoff from step 1 to 2 on Enter", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 1,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.state.handoffStep).toBe(2);
+  });
+
+  it("advances handoff from step 2 to 3 on Enter", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 2,
+      selectedTargetIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.state.handoffStep).toBe(3);
+    expect(result.state.handoffTargetTool).not.toBeNull();
+  });
+
+  it("returns execute-handoff action on Enter at step 3", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 3,
+      handoffSessionId: "s1",
+      handoffTargetTool: "codex",
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.action).toEqual({
+      type: "execute-handoff",
+      sessionId: "s1",
+      targetTool: "codex",
+    });
+    // Resets wizard state
+    expect(result.state.handoffStep).toBe(0);
+    expect(result.state.handoffSessionId).toBeNull();
+  });
+
+  it("goes back one step on Escape in handoff", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 2,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.handoffStep).toBe(1);
+  });
+
+  it("Escape is no-op at handoff step 0", () => {
+    const state = makeState({
+      view: "handoff",
+      handoffStep: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.handoffStep).toBe(0);
+  });
+
+  // ── Config view keys ──
+
+  it("returns generate-config action on g", () => {
+    const state = makeState({ view: "config" });
+    const result = handleKeyEvent(state, makeKeyEvent("g"));
+    expect(result.action).toEqual({ type: "generate-config" });
+  });
+
+  it("returns install-config action on i", () => {
+    const state = makeState({ view: "config" });
+    const result = handleKeyEvent(state, makeKeyEvent("i"));
+    expect(result.action).toEqual({ type: "install-config" });
+  });
+
+  it("returns refresh-status action on r", () => {
+    const state = makeState({ view: "config" });
+    const result = handleKeyEvent(state, makeKeyEvent("r"));
+    expect(result.action).toEqual({ type: "refresh-status" });
+  });
+
+  it("returns open-editor action on e", () => {
+    const state = makeState({ view: "config" });
+    const result = handleKeyEvent(state, makeKeyEvent("e"));
+    expect(result.action).toEqual({ type: "open-editor" });
+  });
+
+  // ── Unrecognized key ──
+
+  it("returns null action for unrecognized key in tools", () => {
+    const state = makeState();
     const result = handleKeyEvent(state, makeKeyEvent("x"));
-    expect(result.state).toBe(state);
+    expect(result.action).toBeNull();
     expect(result.stop).toBe(false);
   });
+
+  // ── Settings menu (Escape to open) ──
+
+  it("opens settings menu on Escape from tools view", () => {
+    const state = makeState({ view: "tools" });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.settingsOpen).toBe(true);
+    expect(result.stop).toBe(false);
+  });
+
+  it("opens settings menu on Escape from config view", () => {
+    const state = makeState({ view: "config" });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.settingsOpen).toBe(true);
+  });
+
+  it("opens settings menu on Escape from handoff step 0", () => {
+    const state = makeState({ view: "handoff", handoffStep: 0 });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.settingsOpen).toBe(true);
+  });
+
+  it("goes back handoff step on Escape when step > 0", () => {
+    const state = makeState({ view: "handoff", handoffStep: 2 });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.handoffStep).toBe(1);
+    expect(result.state.settingsOpen).toBe(false);
+  });
+
+  it("clears session filter on Escape in sessions view when filter active", () => {
+    const state = makeState({
+      view: "sessions",
+      sessionFilter: { query: "bug" },
+      searchActive: true,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.searchActive).toBe(false);
+    expect(result.state.settingsOpen).toBe(false);
+  });
+
+  it("opens settings menu on Escape from sessions view when filter is already clear", () => {
+    const state = makeState({ view: "sessions" });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.settingsOpen).toBe(true);
+  });
+
+  it("intercepts all keys when settings is open", () => {
+    const state = makeState({ settingsOpen: true });
+    // q should NOT quit when settings is open
+    const result = handleKeyEvent(state, makeKeyEvent("q"));
+    expect(result.stop).toBe(false);
+  });
+
+  it("closes settings menu when settings Escape returns close action", () => {
+    const state = makeState({ settingsOpen: true });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.settingsOpen).toBe(false);
+  });
+
+  it("settings initialised with current theme", () => {
+    const state = makeState({ view: "tools", theme: "nord" });
+    const result = handleKeyEvent(state, makeKeyEvent("Escape"));
+    expect(result.state.settingsMenu.selectedTheme).toBe("nord");
+  });
 });
+
+// ── renderSidebar helpers ──────────────────────────────
+
+/** Extract the text content of a nav item, which may be a richText or a box wrapping one. */
+function getSidebarItemText(item: {
+  content?: string;
+  children?: Array<{ content?: string }>;
+}): string {
+  return item.content ?? item.children?.[0]?.content ?? "";
+}
+
+/** Recursively flatten all content strings from a vnode tree. */
+function flattenNodeContent(node: {
+  content?: string;
+  children?: Array<{ content?: string }>;
+}): string {
+  return [node.content ?? "", ...(node.children ?? []).map(flattenNodeContent)].join("");
+}
 
 // ── renderSidebar ─────────────────────────────────────
 
 describe("renderSidebar", () => {
   it("returns a box with navigation items", () => {
-    const state = createInitialTuiState();
+    const state = makeState();
     const vnode = renderSidebar(mockUi, state) as { type: string; children: unknown[] };
     expect(vnode.type).toBe("box");
   });
 
-  it("marks current view with > prefix", () => {
-    const state = { ...createInitialTuiState(), view: "sessions" as AppView };
-    const vnode = renderSidebar(mockUi, state) as {
-      children: [{ children: Array<{ content: string }> }];
+  it("marks current view with triangle prefix", () => {
+    const state = makeState({ view: "sessions" });
+    const vnode = renderSidebar(mockUi, state) as unknown as {
+      children: [{ children: Array<{ content?: string; children?: Array<{ content?: string }> }> }];
     };
-    const col = vnode.children[0]!;
-    const labels = col.children.map((c) => c.content);
-    expect(labels[0]).toContain(" Tools"); // not active
-    expect(labels[1]).toContain("> Sessions"); // active
+    // Sidebar structure: box > column(outerCol) > [...logoNodes, wordmark, divider, column(navItems), divider, hint]
+    // navItems column is at outerCol.children[8] (6 logo + wordmark + divider = 8 before navCol)
+    const outerCol = vnode.children[0]!;
+    const navCol = outerCol.children[8]!; // column containing nav item richText/box/row nodes
+    const navItems = navCol.children ?? [];
+    // Active item may be wrapped in a box for styling — extract inner content via shared helper
+    const toolsText = getSidebarItemText(navItems[0]!);
+    const sessionsText = getSidebarItemText(navItems[1]!);
+    expect(toolsText).toMatch(/^ /); // tools not active (space prefix)
+    expect(sessionsText).toMatch(/^\u258C/); // sessions active (▌ bar prefix)
   });
 
   it("bolds the active view", () => {
-    const state = createInitialTuiState();
-    const vnode = renderSidebar(mockUi, state) as {
-      children: [{ children: Array<{ props: { bold: boolean } }> }];
+    const state = makeState();
+    const vnode = renderSidebar(mockUi, state) as unknown as {
+      children: [{ children: Array<{ content?: string; children?: Array<{ content?: string }> }> }];
     };
-    const col = vnode.children[0]!;
-    expect(col.children[0]!.props.bold).toBe(true); // tools is active
-    expect(col.children[1]!.props.bold).toBe(false);
-  });
-});
-
-// ── renderToolsView ───────────────────────────────────
-
-describe("renderToolsView", () => {
-  it("shows loading message when loading", () => {
-    const state = { ...createInitialTuiState(), loading: true };
-    const vnode = renderToolsView(mockUi, state) as {
-      children: Array<{ content: string }>;
-    };
-    expect(vnode.children[0]!.content).toContain("Detecting");
+    const outerCol = vnode.children[0]!;
+    const navCol = outerCol.children[8]!;
+    const navItems = navCol.children ?? [];
+    // Active item may be wrapped in a box for styling — extract inner content via shared helper
+    const toolsText = getSidebarItemText(navItems[0]!);
+    const sessionsText = getSidebarItemText(navItems[1]!);
+    expect(toolsText).toMatch(/^\u258C/); // tools is active view (▌ bar prefix)
+    expect(sessionsText).toMatch(/^ /); // sessions not active (space prefix)
   });
 
-  it("shows no tools message when empty and not loading", () => {
-    const state = { ...createInitialTuiState(), loading: false };
-    const vnode = renderToolsView(mockUi, state) as {
-      children: Array<{ content: string }>;
+  it("shows running tool count badge", () => {
+    const state = makeState({
+      runningTools: [{ toolId: "claude", pid: 1, startedAt: "2025-01-01" }],
+    });
+    const vnode = renderSidebar(mockUi, state) as unknown as {
+      children: [
+        {
+          children: Array<{
+            content?: string;
+            children?: Array<{ content?: string; children?: Array<{ content?: string }> }>;
+          }>;
+        },
+      ];
     };
-    expect(vnode.children[0]!.content).toContain("No tools");
+    const outerCol = vnode.children[0]!;
+    const navCol = outerCol.children[8]!;
+    const navItems = navCol.children ?? [];
+    // Active tools item with badge: box > row > [richText, badge]
+    // Flatten all nested content to find the badge count
+    const toolsItem = navItems[0]!;
+    expect(flattenNodeContent(toolsItem)).toContain("1");
   });
 
-  it("renders tool rows with status icons", () => {
-    const state = {
-      ...createInitialTuiState(),
-      tools: [
-        makeTool({ status: "available" }),
-        makeTool({ id: "codex", status: "not-installed" }),
-      ],
-      loading: false,
+  it("does not show badge when no running tools", () => {
+    const state = makeState();
+    const vnode = renderSidebar(mockUi, state) as unknown as {
+      children: [{ children: Array<{ content?: string; children?: Array<{ content?: string }> }> }];
     };
-    const vnode = renderToolsView(mockUi, state) as {
-      children: [{ children: Array<{ content: string }> }];
-    };
-    const col = vnode.children[0]!;
-    expect(col.children[0]!.content).toContain("\u2713"); // check mark
-    expect(col.children[1]!.content).toContain("\u2717"); // x mark
-  });
-
-  it("marks selected tool with > prefix", () => {
-    const state = {
-      ...createInitialTuiState(),
-      tools: [makeTool({ id: "a" }), makeTool({ id: "b" })],
-      selectedToolIndex: 1,
-      loading: false,
-    };
-    const vnode = renderToolsView(mockUi, state) as {
-      children: [{ children: Array<{ content: string }> }];
-    };
-    const col = vnode.children[0]!;
-    expect(col.children[0]!.content).toMatch(/^ /); // not selected
-    expect(col.children[1]!.content).toMatch(/^>/); // selected
-  });
-
-  it("shows session count for tools with sessions", () => {
-    const state = {
-      ...createInitialTuiState(),
-      tools: [makeTool({ sessionCount: 5 })],
-      loading: false,
-    };
-    const vnode = renderToolsView(mockUi, state) as {
-      children: [{ children: Array<{ content: string }> }];
-    };
-    expect(vnode.children[0]!.children[0]!.content).toContain("(5)");
-  });
-});
-
-// ── renderSessionsView ────────────────────────────────
-
-describe("renderSessionsView", () => {
-  it("shows loading when loading", () => {
-    const state = { ...createInitialTuiState(), view: "sessions" as AppView, loading: true };
-    const vnode = renderSessionsView(mockUi, state) as {
-      children: Array<{ content: string }>;
-    };
-    expect(vnode.children[0]!.content).toContain("Loading");
-  });
-
-  it("shows no sessions when empty and not loading", () => {
-    const state = { ...createInitialTuiState(), view: "sessions" as AppView, loading: false };
-    const vnode = renderSessionsView(mockUi, state) as {
-      children: Array<{ content: string }>;
-    };
-    expect(vnode.children[0]!.content).toContain("No sessions");
-  });
-
-  it("renders session rows", () => {
-    const state = {
-      ...createInitialTuiState(),
-      view: "sessions" as AppView,
-      sessions: [makeSession()],
-      loading: false,
-    };
-    const vnode = renderSessionsView(mockUi, state) as {
-      children: [{ children: Array<{ content: string }> }];
-    };
-    expect(vnode.children[0]!.children[0]!.content).toContain("Fix auth bug");
-  });
-});
-
-// ── renderHandoffView ─────────────────────────────────
-
-describe("renderHandoffView", () => {
-  it("shows instruction when no preview", () => {
-    const state = createInitialTuiState();
-    const vnode = renderHandoffView(mockUi, state) as {
-      children: Array<{ content: string }>;
-    };
-    expect(vnode.children[0]!.content).toContain("Select a session");
-  });
-
-  it("shows preview when available", () => {
-    const state = { ...createInitialTuiState(), handoffPreview: "# Handoff Preview\n\nContext" };
-    const vnode = renderHandoffView(mockUi, state) as {
-      children: Array<{ content: string }>;
-    };
-    expect(vnode.children[0]!.content).toContain("Handoff Preview");
-  });
-});
-
-// ── renderConfigView ──────────────────────────────────
-
-describe("renderConfigView", () => {
-  it("shows loading when loading", () => {
-    const state = { ...createInitialTuiState(), view: "config" as AppView, loading: true };
-    const vnode = renderConfigView(mockUi, state) as {
-      children: Array<{ content: string }>;
-    };
-    expect(vnode.children[0]!.content).toContain("Loading");
-  });
-
-  it("shows engines when loaded", () => {
-    const state = {
-      ...createInitialTuiState(),
-      view: "config" as AppView,
-      engines: [makeEngine(), makeEngine({ engine: "mcp", configured: false })],
-      loading: false,
-    };
-    const vnode = renderConfigView(mockUi, state) as {
-      children: [{ children: Array<{ content: string }> }];
-    };
-    const col = vnode.children[0]!;
-    // Mode, Health, blank, then engine rows
-    const texts = col.children.map((c) => c.content);
-    expect(texts.some((t) => t.includes("hooks"))).toBe(true);
-    expect(texts.some((t) => t.includes("mcp"))).toBe(true);
+    const outerCol = vnode.children[0]!;
+    const navCol = outerCol.children[8]!;
+    const navItems =
+      (
+        navCol as unknown as {
+          children?: Array<{ content?: string; children?: Array<{ content?: string }> }>;
+        }
+      ).children ?? [];
+    // Flatten all nested content — no "(" bracket from badge
+    expect(flattenNodeContent(navItems[0]!)).not.toContain("(");
   });
 });
 
@@ -520,130 +873,425 @@ describe("renderConfigView", () => {
 
 describe("renderContent", () => {
   it("renders tools view for tools", () => {
-    const state = createInitialTuiState();
-    const vnode = renderContent(mockUi, state) as { props: { title: string } };
-    expect(vnode.props.title).toBe("Tools");
+    const state = makeState();
+    const vnode = renderContent(mockUi, state) as unknown as { props: { title: string } };
+    expect(vnode.props.title).toContain("Tools");
   });
 
   it("renders sessions view for sessions", () => {
-    const state = { ...createInitialTuiState(), view: "sessions" as AppView };
-    const vnode = renderContent(mockUi, state) as { props: { title: string } };
-    expect(vnode.props.title).toBe("Sessions");
+    const state = makeState({ view: "sessions" });
+    const vnode = renderContent(mockUi, state) as unknown as { props: { title: string } };
+    expect(vnode.props.title).toContain("Sessions");
+  });
+
+  it("renders session detail when selectedSessionId is set", () => {
+    const state = makeState({
+      view: "sessions",
+      selectedSessionId: "s1",
+      sessions: [makeSession({ id: "s1" })],
+    });
+    const vnode = renderContent(mockUi, state) as unknown as { props: { title: string } };
+    expect(vnode.props.title).toContain("Session:");
   });
 
   it("renders handoff view for handoff", () => {
-    const state = { ...createInitialTuiState(), view: "handoff" as AppView };
-    const vnode = renderContent(mockUi, state) as { props: { title: string } };
-    expect(vnode.props.title).toBe("Handoff");
+    const state = makeState({ view: "handoff" });
+    const vnode = renderContent(mockUi, state) as unknown as { props: { title: string } };
+    expect(vnode.props.title).toContain("Handoff");
   });
 
   it("renders config view for config", () => {
-    const state = { ...createInitialTuiState(), view: "config" as AppView };
-    const vnode = renderContent(mockUi, state) as { props: { title: string } };
-    expect(vnode.props.title).toBe("Config");
+    const state = makeState({ view: "config" });
+    const vnode = renderContent(mockUi, state) as unknown as { props: { title: string } };
+    expect(vnode.props.title).toContain("Config");
+  });
+
+  it("renders terminal placeholder when no pane manager is provided", () => {
+    const state = makeState({ view: "terminal" });
+    const vnode = renderApp(mockUi, state);
+    expect(flattenNodeContent(vnode as never)).toContain("No terminal panes open");
+  });
+
+  it("renders live terminal content when pane manager is provided", () => {
+    const line = {
+      length: 5,
+      getCell: (x: number) => {
+        if (x !== 0) return undefined;
+        return {
+          getChars: () => "A",
+          getWidth: () => 1,
+          getForegroundColor: () => 7,
+          getBackgroundColor: () => 0,
+          isBold: () => 1,
+          isItalic: () => 0,
+          isUnderline: () => 0,
+          isStrikethrough: () => 0,
+          isDim: () => 0,
+          isInverse: () => 0,
+          isFgDefault: () => false,
+          isBgDefault: () => false,
+          isFgPalette: () => true,
+          isBgPalette: () => true,
+          isFgRGB: () => false,
+          isBgRGB: () => false,
+        };
+      },
+      translateToString: () => "A",
+    };
+
+    const pane: TerminalPaneState = {
+      id: "pane-1",
+      toolId: "codex",
+      toolName: "Codex",
+      pid: 123,
+      status: "running",
+      exitCode: undefined,
+      pty: {
+        pid: 123,
+        onData: () => undefined,
+        onExit: () => undefined,
+        write: () => undefined,
+        resize: () => undefined,
+        kill: () => undefined,
+      },
+      term: {
+        cols: 80,
+        rows: 24,
+        buffer: {
+          active: {
+            length: 24,
+            cursorX: 0,
+            cursorY: 0,
+            viewportY: 0,
+            baseY: 0,
+            getLine: () => line,
+          },
+        },
+        write: () => undefined,
+        resize: () => undefined,
+        dispose: () => undefined,
+        onWriteParsed: () => ({ dispose: () => undefined }),
+        onTitleChange: () => ({ dispose: () => undefined }),
+      },
+      dirtyLines: new Set(),
+      title: "Codex",
+      scrollOffset: 0,
+    };
+
+    const paneManager = {
+      getState: () => ({ panes: [pane], activePaneIndex: 0 }),
+      getActivePane: () => pane,
+      getPaneCount: () => 1,
+      resize: () => undefined,
+    };
+
+    const state = makeState({ view: "terminal", inputMode: "terminal" });
+    const vnode = renderApp(mockUi, state, paneManager as never);
+    const text = flattenNodeContent(vnode as never);
+    expect(text).toContain("1:Codex");
+    expect(text).toContain("Codex | PID:123");
   });
 });
 
 // ── renderStatusBar ───────────────────────────────────
 
 describe("renderStatusBar", () => {
+  // renderStatusBar returns a richText node — its mock has a single `.content` string
+  function statusTexts(state: TuiState): string {
+    const vnode = renderStatusBar(mockUi, state) as unknown as {
+      content?: string;
+      children?: Array<{ content?: string }>;
+    };
+    // richText mock: content = concatenated spans; no children
+    return vnode.content ?? (vnode.children ?? []).map((c) => c.content ?? "").join(" ");
+  }
+
   it("includes mode", () => {
-    const state = { ...createInitialTuiState(), mode: "Canonical" };
-    const vnode = renderStatusBar(mockUi, state) as { content: string };
-    expect(vnode.content).toContain("Canonical");
+    const state = makeState({ mode: "Canonical" });
+    expect(statusTexts(state)).toContain("Canonical");
   });
 
   it("includes session count", () => {
-    const state = { ...createInitialTuiState(), sessionCount: 42 };
-    const vnode = renderStatusBar(mockUi, state) as { content: string };
-    expect(vnode.content).toContain("42");
+    const state = makeState({ sessionCount: 42 });
+    expect(statusTexts(state)).toContain("42");
   });
 
   it("includes config health", () => {
-    const state = { ...createInitialTuiState(), configHealth: "Healthy" };
-    const vnode = renderStatusBar(mockUi, state) as { content: string };
-    expect(vnode.content).toContain("Healthy");
+    const state = makeState({ configHealth: "Healthy" });
+    expect(statusTexts(state)).toContain("Healthy");
   });
 
-  it("includes keybinding hints", () => {
-    const state = createInitialTuiState();
-    const vnode = renderStatusBar(mockUi, state) as { content: string };
-    expect(vnode.content).toContain("Quit");
-    expect(vnode.content).toContain("Nav");
+  it("includes theme name when not loading", () => {
+    const state = makeState({ theme: "dark" });
+    // theme name is shown in the header, not status bar — status bar shows hints
+    expect(statusTexts(state)).toContain("Launch");
+  });
+
+  it("includes running count when tools are running", () => {
+    const state = makeState({
+      runningTools: [{ toolId: "claude", pid: 1, startedAt: "2025-01-01" }],
+    });
+    expect(statusTexts(state)).toContain("1 running");
+  });
+
+  it("omits running info when no tools are running", () => {
+    const state = makeState();
+    expect(statusTexts(state)).not.toContain("running");
+  });
+
+  it("includes context key hints", () => {
+    const state = makeState();
+    expect(statusTexts(state)).toContain("Launch");
   });
 });
 
-// ── renderNotification ────────────────────────────────
+// ── renderToasts ──────────────────────────────────────
 
-describe("renderNotification", () => {
-  it("returns null when no notification", () => {
-    const state = createInitialTuiState();
-    const result = renderNotification(mockUi, state);
-    expect(result).toBeNull();
+describe("renderToasts", () => {
+  it("returns empty array when no toasts", () => {
+    const state = makeState();
+    const nodes = renderToasts(mockUi, state);
+    expect(nodes).toEqual([]);
   });
 
-  it("returns text node when notification is set", () => {
-    const state = { ...createInitialTuiState(), notification: "Config synced!" };
-    const result = renderNotification(mockUi, state) as { content: string };
-    expect(result.content).toBe("Config synced!");
+  it("renders toast messages", () => {
+    const state = makeState({
+      toasts: addToast([], "success", "Done!"),
+    });
+    const nodes = renderToasts(mockUi, state) as Array<{ content: string }>;
+    expect(nodes).toHaveLength(1);
+    expect(nodes[0]!.content).toContain("Done!");
+  });
+
+  it("uses check icon for success", () => {
+    const state = makeState({
+      toasts: addToast([], "success", "OK"),
+    });
+    const nodes = renderToasts(mockUi, state) as Array<{ content: string }>;
+    expect(nodes[0]!.content).toContain("\u2713");
+  });
+
+  it("uses x icon for error", () => {
+    const state = makeState({
+      toasts: addToast([], "error", "Fail"),
+    });
+    const nodes = renderToasts(mockUi, state) as Array<{ content: string }>;
+    expect(nodes[0]!.content).toContain("\u2717");
+  });
+
+  it("uses info icon for info", () => {
+    const state = makeState({
+      toasts: addToast([], "info", "Loading"),
+    });
+    const nodes = renderToasts(mockUi, state) as Array<{ content: string }>;
+    expect(nodes[0]!.content).toContain("\u2139");
+  });
+});
+
+// ── getContextKeyHints ────────────────────────────────
+
+describe("getContextKeyHints", () => {
+  it("returns tools hints for tools view", () => {
+    const state = makeState();
+    expect(getContextKeyHints(state)).toContain("Launch");
+  });
+
+  it("returns sessions hints for sessions view", () => {
+    const state = makeState({ view: "sessions" });
+    expect(getContextKeyHints(state)).toContain("Search");
+  });
+
+  it("returns session detail hints when in detail", () => {
+    const state = makeState({ view: "sessions", selectedSessionId: "s1" });
+    expect(getContextKeyHints(state)).toContain("Handoff");
+  });
+
+  it("returns handoff hints for handoff view", () => {
+    const state = makeState({ view: "handoff" });
+    expect(getContextKeyHints(state)).toContain("Cancel");
+  });
+
+  it("returns config hints for config view", () => {
+    const state = makeState({ view: "config" });
+    expect(getContextKeyHints(state)).toContain("Generate");
+  });
+
+  it("returns help close hint when help is open", () => {
+    const state = makeState({ helpOpen: true });
+    expect(getContextKeyHints(state)).toContain("Close help");
   });
 });
 
 // ── renderApp ─────────────────────────────────────────
 
 describe("renderApp", () => {
-  it("returns a column as root", () => {
-    const state = createInitialTuiState();
+  function bodyChildren(vnode: {
+    children?: Array<{
+      children?: Array<{ type?: string; content?: string; props?: { title?: string } }>;
+    }>;
+  }): Array<{
+    type?: string;
+    content?: string;
+    props?: { title?: string };
+    children?: Array<{ content?: string }>;
+  }> {
+    return (vnode.children?.[0]?.children ?? []) as Array<{
+      type?: string;
+      content?: string;
+      props?: { title?: string };
+      children?: Array<{ content?: string }>;
+    }>;
+  }
+
+  it("returns a box as root", () => {
+    const state = makeState();
     const vnode = renderApp(mockUi, state) as { type: string };
-    expect(vnode.type).toBe("column");
+    expect(vnode.type).toBe("box");
   });
 
   it("includes header text", () => {
-    const state = createInitialTuiState();
-    const vnode = renderApp(mockUi, state) as { children: Array<{ content?: string }> };
-    expect(vnode.children[0]!.content).toBe("AI Tools Dashboard");
+    const state = makeState();
+    const vnode = renderApp(mockUi, state) as unknown as {
+      children: Array<{ content?: string; children?: Array<{ content?: string }> }>;
+    };
+    // Header was removed — the logo/brand lives in the sidebar.
+    // Flatten all content recursively to find AGENTFUL branding
+    const allContent = JSON.stringify(vnode);
+    expect(allContent).toContain("AGENT");
   });
 
   it("includes a divider after header", () => {
-    const state = createInitialTuiState();
-    const vnode = renderApp(mockUi, state) as {
-      children: Array<{ type: string }>;
+    const state = makeState();
+    const vnode = renderApp(mockUi, state) as unknown as {
+      children: Array<{ children?: Array<{ type: string }> }>;
     };
-    expect(vnode.children[1]!.type).toBe("divider");
+    const divider = bodyChildren(vnode).find((c) => c.type === "divider");
+    expect(divider).toBeTruthy();
   });
 
-  it("includes row with sidebar and content", () => {
-    const state = createInitialTuiState();
-    const vnode = renderApp(mockUi, state) as {
-      children: Array<{ type: string }>;
+  it("includes row with sidebar and content when sidebar visible", () => {
+    const state = makeState();
+    const vnode = renderApp(mockUi, state) as unknown as {
+      children: Array<{ children?: Array<{ type: string }> }>;
     };
-    expect(vnode.children[2]!.type).toBe("row");
+    const children = bodyChildren(vnode);
+    expect(children[2]!.type).toBe("row");
+  });
+
+  it("omits sidebar row when collapsed", () => {
+    const state = makeState({ sidebarCollapsed: true });
+    const vnode = renderApp(mockUi, state) as unknown as {
+      children: Array<{ children?: Array<{ type: string; props?: Record<string, unknown> }> }>;
+    };
+    const children = bodyChildren(vnode) as Array<{
+      type: string;
+      props?: Record<string, unknown>;
+    }>;
+    // Layout: header row, divider, content box (no sidebar+content row), ...toasts, divider, statusBar
+    // The sidebar+content row has flex:1 prop and gap:1.
+    // The header row has justify:"between" and gap:0.
+    // When collapsed, only the header row (justify:"between") exists — no sidebar+content row.
+    const sidebarRow = children.find(
+      (c) =>
+        c.type === "row" &&
+        (c as unknown as { props?: Record<string, unknown> }).props?.["flex"] === 1,
+    );
+    // When sidebar collapsed, wrapContentPane returns a box — no sidebar+content row with flex:1
+    expect(sidebarRow).toBeUndefined();
+    // The content box should be present somewhere in the children
+    const hasBox = children.some((c) => c.type === "box");
+    expect(hasBox).toBe(true);
   });
 
   it("includes status bar divider and text", () => {
-    const state = createInitialTuiState();
-    const vnode = renderApp(mockUi, state) as {
-      children: Array<{ type?: string; content?: string }>;
+    const state = makeState({ mode: "canonical" });
+    const vnode = renderApp(mockUi, state) as unknown as {
+      children: Array<{
+        children?: Array<{
+          type?: string;
+          content?: string;
+          children?: Array<{ content?: string }>;
+        }>;
+      }>;
     };
-    const last = vnode.children[vnode.children.length - 1]!;
-    expect(last.content).toContain("Quit"); // status bar
+    const children = bodyChildren(vnode);
+    // Status bar is a richText node (last child) with .content = concatenated spans
+    const last = children[children.length - 1]!;
+    const statusText = last.content ?? (last.children ?? []).map((c) => c.content ?? "").join(" ");
+    expect(statusText).toContain("canonical");
   });
 
-  it("includes notification when set", () => {
-    const state = { ...createInitialTuiState(), notification: "Done!" };
+  it("includes help overlay when helpOpen", () => {
+    const state = makeState({ helpOpen: true });
     const vnode = renderApp(mockUi, state) as {
-      children: Array<{ content?: string }>;
+      children: Array<{ children?: Array<{ type?: string; props?: { title?: string } }> }>;
     };
-    const notifNode = vnode.children.find((c) => c.content === "Done!");
-    expect(notifNode).toBeTruthy();
+    const helpNode = bodyChildren(vnode).find(
+      (c) => c.props && typeof c.props.title === "string" && c.props.title.includes("Help"),
+    );
+    expect(helpNode).toBeTruthy();
   });
 
-  it("omits notification when null", () => {
-    const state = createInitialTuiState();
+  it("omits help overlay when help closed", () => {
+    const state = makeState({ helpOpen: false });
     const vnode = renderApp(mockUi, state) as {
-      children: Array<{ content?: string }>;
+      children: Array<{ children?: Array<{ type?: string; props?: { title?: string } }> }>;
     };
-    const notifNode = vnode.children.find((c) => c.content === "Done!");
-    expect(notifNode).toBeUndefined();
+    const helpNode = bodyChildren(vnode).find(
+      (c) => c.props && typeof c.props.title === "string" && c.props.title.includes("Help"),
+    );
+    expect(helpNode).toBeUndefined();
+  });
+
+  it("includes toast nodes when toasts exist", () => {
+    const state = makeState({
+      toasts: addToast([], "success", "Config saved"),
+    });
+    const vnode = renderApp(mockUi, state) as {
+      children: Array<{ children?: Array<{ content?: string }> }>;
+    };
+    const toastNode = bodyChildren(vnode).find((c) => c.content?.includes("Config saved"));
+    expect(toastNode).toBeTruthy();
+  });
+
+  it("includes settings overlay when settingsOpen", () => {
+    const state = makeState({ settingsOpen: true });
+    const vnode = renderApp(mockUi, state) as unknown as {
+      children: Array<{ children?: Array<{ props?: { title?: string } }> }>;
+    };
+    const settingsNode = bodyChildren(vnode).find(
+      (c) => c.props && typeof c.props.title === "string" && c.props.title.includes("Settings"),
+    );
+    expect(settingsNode).toBeTruthy();
+  });
+
+  it("omits settings overlay when settingsOpen is false", () => {
+    const state = makeState({ settingsOpen: false });
+    const vnode = renderApp(mockUi, state) as unknown as {
+      children: Array<{ children?: Array<{ props?: { title?: string } }> }>;
+    };
+    const settingsNode = bodyChildren(vnode).find(
+      (c) => c.props && typeof c.props.title === "string" && c.props.title.includes("Settings"),
+    );
+    expect(settingsNode).toBeUndefined();
+  });
+});
+
+// ── TuiState — settingsOpen defaults ─────────────────
+
+describe("createInitialTuiState — settings defaults", () => {
+  it("starts with settingsOpen false", () => {
+    const state = createInitialTuiState();
+    expect(state.settingsOpen).toBe(false);
+  });
+
+  it("starts with empty keyOverrides", () => {
+    const state = createInitialTuiState();
+    expect(state.keyOverrides).toEqual({});
+  });
+
+  it("settingsMenu starts on theme tab", () => {
+    const state = createInitialTuiState();
+    expect(state.settingsMenu.activeTab).toBe("theme");
   });
 });

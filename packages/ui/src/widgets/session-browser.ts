@@ -1,5 +1,19 @@
 import type { UnifiedSession, SessionFilter } from "@premierstudio/ai-sessions";
 
+function sortAndLimitSessions(
+  sessions: UnifiedSession[],
+  filter?: SessionFilter,
+): UnifiedSession[] {
+  const sorted = [...sessions];
+  sorted.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+
+  if (filter?.limit && filter.limit > 0) {
+    return sorted.slice(0, filter.limit);
+  }
+
+  return sorted;
+}
+
 export type SessionRow = {
   id: string;
   tool: string;
@@ -34,14 +48,35 @@ export async function listSessions(filter?: SessionFilter): Promise<UnifiedSessi
     }
   }
 
-  // Sort by updatedAt descending
-  sessions.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+  return sortAndLimitSessions(sessions, filter);
+}
 
-  if (filter?.limit && filter.limit > 0) {
-    return sessions.slice(0, filter.limit);
-  }
+/**
+ * List sessions and emit progressively as each adapter completes.
+ */
+export async function listSessionsIncremental(
+  filter: SessionFilter | undefined,
+  onProgress: (sessions: UnifiedSession[]) => void,
+): Promise<UnifiedSession[]> {
+  const { registry } = await import("@premierstudio/ai-sessions");
+  await import("@premierstudio/ai-sessions/adapters/all");
 
-  return sessions;
+  const detected = await registry.detectAll();
+  const sessions: UnifiedSession[] = [];
+
+  await Promise.allSettled(
+    detected.map(async (adapter) => {
+      try {
+        const parsed = await adapter.parseSessions(filter);
+        sessions.push(...parsed);
+        onProgress(sortAndLimitSessions(sessions, filter));
+      } catch {
+        // Skip failing adapters
+      }
+    }),
+  );
+
+  return sortAndLimitSessions(sessions, filter);
 }
 
 /**

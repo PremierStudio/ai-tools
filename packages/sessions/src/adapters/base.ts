@@ -1,4 +1,9 @@
-import type { UnifiedSession, SessionContext, SessionFilter } from "../types/index.js";
+import type {
+  UnifiedSession,
+  SessionContext,
+  SessionFilter,
+  SessionMessage,
+} from "../types/index.js";
 
 export abstract class BaseSessionAdapter {
   abstract readonly id: string;
@@ -18,7 +23,8 @@ export abstract class BaseSessionAdapter {
     const keyFiles = this.extractFileReferences(session);
     const keyDecisions = this.extractDecisions(session);
     const summary = this.generateSummary(session);
-    const title = session.title ?? `${session.toolName} session`;
+    const title =
+      this.resolveSessionTitle(session.title, session.messages) ?? `${session.toolName} session`;
 
     const partial: Omit<SessionContext, "handoffMarkdown"> = {
       sessionId: session.id,
@@ -131,6 +137,48 @@ export abstract class BaseSessionAdapter {
     }
 
     return lines.join("\n");
+  }
+
+  protected resolveSessionTitle(
+    title: string | undefined,
+    messages?: SessionMessage[],
+  ): string | undefined {
+    const explicitTitle = this.normalizeTitle(title);
+    if (explicitTitle) return explicitTitle;
+    if (!messages) return undefined;
+
+    const rolePriority: Array<SessionMessage["role"]> = ["user", "assistant", "system", "tool"];
+
+    for (const role of rolePriority) {
+      for (const message of messages) {
+        if (message.role !== role) continue;
+        const lines = message.content.split(/\r?\n/);
+        for (const rawLine of lines) {
+          const line = rawLine.trim();
+          if (!line || line.startsWith("```")) continue;
+          const cleaned = line
+            .replace(/^#{1,6}\s+/, "")
+            .replace(/^[-*+]\s+/, "")
+            .replace(/^\d+[.)]\s+/, "");
+          const normalized = this.normalizeTitle(cleaned);
+          if (normalized) return normalized;
+        }
+      }
+    }
+
+    return undefined;
+  }
+
+  private normalizeTitle(input: string | undefined): string | undefined {
+    if (!input) return undefined;
+
+    let title = input.trim().replace(/\s+/g, " ");
+    title = title.replace(/^[`"']+|[`"']+$/g, "");
+    title = title.trim();
+
+    if (!title) return undefined;
+
+    return title.length > 80 ? `${title.slice(0, 77).trimEnd()}...` : title;
   }
 
   protected async commandExists(command: string): Promise<boolean> {

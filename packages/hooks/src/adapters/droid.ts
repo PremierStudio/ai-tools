@@ -144,7 +144,7 @@ class DroidAdapter extends BaseAdapter {
         hooks: [
           {
             type: "command",
-            command: `node ${runnerAbsPath}`,
+            command: `node "${runnerAbsPath}"`,
             timeout: 30,
           },
         ],

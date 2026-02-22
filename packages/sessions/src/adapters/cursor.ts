@@ -89,11 +89,13 @@ class CursorSessionAdapter extends BaseSessionAdapter {
 
     const fileStat = await stat(filePath);
     const sessionId = `cursor-${fileName.replace(".jsonl", "")}`;
+    const title = this.resolveSessionTitle(undefined, messages);
 
     return {
       id: sessionId,
       tool: this.id,
       toolName: this.name,
+      title,
       startedAt: fileStat.birthtime.toISOString(),
       updatedAt: fileStat.mtime.toISOString(),
       messageCount: messages.length,
@@ -127,12 +129,13 @@ class CursorSessionAdapter extends BaseSessionAdapter {
 
     const fileStat = await stat(filePath);
     const sessionId = data.id ?? `cursor-${fileName.replace(".json", "")}`;
+    const title = this.resolveSessionTitle(data.title, messages);
 
     return {
       id: sessionId,
       tool: this.id,
       toolName: this.name,
-      title: data.title,
+      title,
       startedAt: fileStat.birthtime.toISOString(),
       updatedAt: fileStat.mtime.toISOString(),
       messageCount: messages.length,

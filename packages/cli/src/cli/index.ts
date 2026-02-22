@@ -1,9 +1,10 @@
-const HELP = `
-ai-tools - Unified CLI for all ai-hooks engines
+function buildHelp(cliName: string): string {
+  return `
+${cliName} - Unified CLI for all ai-hooks engines
 
 USAGE:
-  ai-tools <engine> <command> [options]
-  ai-tools <cross-cutting-command> [options]
+  ${cliName} <engine> <command> [options]
+  ${cliName} <cross-cutting-command> [options]
 
 ENGINES:
   hooks       Lifecycle hooks for AI coding tools
@@ -30,24 +31,25 @@ CANONICAL MODE COMMANDS:
 
 ENGINE COMMANDS:
   Pass any command supported by the engine's CLI.
-  Example: ai-tools mcp install --tools=claude-code
+  Example: ${cliName} mcp install --tools=claude-code
 
 OPTIONS:
   --tools     Comma-separated list of tools (forwarded to engine)
   --dry-run   Show what would happen without writing files
 
 EXAMPLES:
-  ai-tools mcp detect                     # Detect MCP-capable tools
-  ai-tools skills sync                    # Sync skills across tools
-  ai-tools detect                         # Detect across all engines
-  ai-tools sync --dry-run                 # Sync all engines (dry run)
-  ai-tools hooks init                     # Initialize hooks config
-  ai-tools init                           # Initialize canonical mode
-  ai-tools generate                       # Generate canonical files
-  ai-tools install                        # Install to tool directories
-  ai-tools status                         # Check installation health
-  ai-tools clean                          # Remove tool directories
+  ${cliName} mcp detect                     # Detect MCP-capable tools
+  ${cliName} skills sync                    # Sync skills across tools
+  ${cliName} detect                         # Detect across all engines
+  ${cliName} sync --dry-run                 # Sync all engines (dry run)
+  ${cliName} hooks init                     # Initialize hooks config
+  ${cliName} init                           # Initialize canonical mode
+  ${cliName} generate                       # Generate canonical files
+  ${cliName} install                        # Install to tool directories
+  ${cliName} status                         # Check installation health
+  ${cliName} clean                          # Remove tool directories
 `;
+}
 
 type EngineEntry = {
   name: string;
@@ -71,6 +73,8 @@ async function loadEngine(pkg: string): Promise<{ run: (args: string[]) => Promi
 }
 
 export async function run(args: string[]): Promise<void> {
+  const cliName = process.env.AI_TOOLS_CLI_NAME === "agentful" ? "agentful" : "ai-tools";
+  const help = buildHelp(cliName);
   const command = args[0];
 
   switch (command) {
@@ -78,7 +82,7 @@ export async function run(args: string[]): Promise<void> {
     case "--help":
     case "-h":
     case undefined:
-      console.log(HELP);
+      console.log(help);
       return;
 
     case "detect":
@@ -126,7 +130,7 @@ export async function run(args: string[]): Promise<void> {
 
       // Unknown command
       console.error(`Unknown command: ${command}`);
-      console.log(HELP);
+      console.log(help);
       process.exit(1);
   }
 }

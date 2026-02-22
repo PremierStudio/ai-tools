@@ -35,7 +35,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/ai-hooks-runner.js",
+            "command": "REPO=$(cd \"$(git rev-parse --git-common-dir)/..\" 2>/dev/null && pwd); [ -f \"$REPO/.claude/hooks/ai-hooks-runner.js\" ] && cd \"$REPO\" && node .claude/hooks/ai-hooks-runner.js",
             "timeout": 10,
             "description": "ai-hooks: PostToolUse"
           }
@@ -47,7 +47,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node .claude/hooks/ai-hooks-runner.js",
+            "command": "REPO=$(cd \"$(git rev-parse --git-common-dir)/..\" 2>/dev/null && pwd); [ -f \"$REPO/.claude/hooks/ai-hooks-runner.js\" ] && cd \"$REPO\" && node .claude/hooks/ai-hooks-runner.js",
             "timeout": 10,
             "description": "ai-hooks: PreToolUse"
           }

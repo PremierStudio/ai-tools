@@ -62,6 +62,7 @@ graph TD
 
 | Package | CLI | Description |
 |---------|-----|-------------|
+| [`agentful`](packages/agentful) | `agentful` | Zero-friction wrapper for `npx agentful` |
 | [`@premierstudio/ai-tools`](packages/cli) | `ai-tools` | Unified CLI — routes to all engines |
 | [`@premierstudio/ai-hooks`](packages/hooks) | `ai-hooks` | Hook engine — guardrails, audit trails, runtime control |
 | [`@premierstudio/ai-mcp`](packages/mcp) | `ai-mcp` | MCP server configuration management |
@@ -94,6 +95,9 @@ graph TD
 ### Unified CLI
 
 ```bash
+# Run instantly (recommended)
+npx agentful@latest detect
+
 # Install everything
 npm i -D @premierstudio/ai-tools
 
@@ -104,6 +108,16 @@ ai-tools mcp generate && ai-tools mcp install
 ai-tools skills generate && ai-tools skills install
 ai-tools agents generate && ai-tools agents install
 ai-tools rules generate && ai-tools rules install
+```
+
+Optional convenience installers via `agentful.sh`:
+
+```bash
+# macOS / Linux
+curl -fsSL https://agentful.sh/install | sh
+
+# Windows PowerShell
+irm https://agentful.sh/install.ps1 | iex
 ```
 
 ### Or install individual engines

@@ -69,11 +69,13 @@ class CopilotSessionAdapter extends BaseSessionAdapter {
 
         const fileStat = await stat(filePath);
         const sessionId = data.id ?? `copilot-${file.replace(".json", "")}`;
+        const title = this.resolveSessionTitle(undefined, messages);
 
         sessions.push({
           id: sessionId,
           tool: this.id,
           toolName: this.name,
+          title,
           startedAt: data.createdAt ?? fileStat.birthtime.toISOString(),
           updatedAt: data.updatedAt ?? fileStat.mtime.toISOString(),
           messageCount: messages.length,

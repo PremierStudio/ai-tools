@@ -69,12 +69,13 @@ class OpenCodeSessionAdapter extends BaseSessionAdapter {
 
         const fileStat = await stat(filePath);
         const sessionId = data.id ?? `opencode-${file.replace(".json", "")}`;
+        const title = this.resolveSessionTitle(data.title, messages);
 
         sessions.push({
           id: sessionId,
           tool: this.id,
           toolName: this.name,
-          title: data.title,
+          title,
           projectPath: data.path,
           startedAt: data.createdAt ?? fileStat.birthtime.toISOString(),
           updatedAt: data.updatedAt ?? fileStat.mtime.toISOString(),

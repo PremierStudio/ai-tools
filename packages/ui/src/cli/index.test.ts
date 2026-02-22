@@ -99,8 +99,7 @@ describe("run() - help output", () => {
     expect(output).toContain("ai-tools-ui");
     expect(output).toContain("USAGE:");
     expect(output).toContain("OPTIONS:");
-    expect(output).toContain("DESCRIPTION:");
-    expect(output).toContain("FEATURES:");
+    expect(output).toContain("KEYBINDINGS:");
   });
 
   it("prints help text for -h", async () => {

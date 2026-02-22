@@ -7,7 +7,7 @@ export type LinkStatus = "linked" | "stale" | "missing" | "direct";
 export class Linker {
   /**
    * Create a relative symlink from source to target.
-   * Falls back to copy on EPERM (Windows without dev mode).
+   * Falls back to copy when symlink creation is blocked by platform permissions.
    */
   async link(source: string, target: string): Promise<void> {
     await mkdir(dirname(target), { recursive: true });
@@ -21,7 +21,8 @@ export class Linker {
     try {
       await symlink(rel, target);
     } catch (err: unknown) {
-      if ((err as NodeJS.ErrnoException).code === "EPERM") {
+      const code = (err as NodeJS.ErrnoException).code;
+      if (code === "EPERM" || code === "EACCES" || code === "UNKNOWN") {
         await copyFile(source, target);
       } else {
         throw err;

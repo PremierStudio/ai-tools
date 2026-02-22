@@ -126,6 +126,59 @@ jobs:
         run: npm test
 
   # ============================================================================
+  # STAGE 1.5: NON-BLOCKING CROSS-PLATFORM SMOKE (PRE-PUBLISH)
+  # ============================================================================
+  smoke-agentful-preflight:
+    name: Smoke agentful preflight (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    continue-on-error: true
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+
+      - name: Cache dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.npm
+          key: ${{ runner.os }}-node-${{ hashFiles('**/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build CLI package
+        run: npm run build --workspace @premierstudio/ai-tools
+
+      - name: Smoke-test local agentful wrapper
+        run: |
+          node -e "
+          const { spawnSync } = require('node:child_process');
+          const result = spawnSync('node', ['packages/agentful/bin.js', '--help'], {
+            encoding: 'utf-8',
+            shell: true,
+          });
+          const output = (result.stdout || '') + (result.stderr || '');
+          if (result.status !== 0 || !/agentful\s+-\s+Unified CLI/.test(output)) {
+            console.error(output);
+            process.exit(1);
+          }
+          console.log('agentful preflight smoke test passed');
+          "
+
+  # ============================================================================
   # STAGE 2: SECURITY
   # ============================================================================
   security-audit:
@@ -207,3 +260,61 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+  # ============================================================================
+  # STAGE 4: POST-PUBLISH SMOKE TESTS
+  # ============================================================================
+  smoke-agentful:
+    name: Smoke agentful (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    needs: [publish-npm]
+    if: |
+      github.ref == 'refs/heads/master' &&
+      github.event_name == 'push' &&
+      !contains(github.event.head_commit.message, '[skip ci]')
+
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+
+    steps:
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          check-latest: true
+
+      - name: Wait for npm propagation and smoke-test agentful
+        run: |
+          node -e "
+          const { spawnSync } = require('node:child_process');
+
+          function runAgentful() {
+            return spawnSync('npx', ['--yes', 'agentful@latest', '--help'], {
+              encoding: 'utf-8',
+              shell: true,
+            });
+          }
+
+          const maxAttempts = 8;
+          for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
+            const result = runAgentful();
+            const output = (result.stdout || '') + (result.stderr || '');
+            const ok = result.status === 0 && /agentful\s+-\s+Unified CLI/.test(output);
+
+            if (ok) {
+              console.log('agentful smoke test passed');
+              process.exit(0);
+            }
+
+            console.log('attempt ' + attempt + '/' + maxAttempts + ' failed');
+            if (attempt < maxAttempts) {
+              const waitMs = 15000;
+              Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, waitMs);
+            }
+          }
+
+          console.error('agentful smoke test failed after retries');
+          process.exit(1);
+          "

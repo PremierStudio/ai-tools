@@ -59,11 +59,13 @@ class DroidSessionAdapter extends BaseSessionAdapter {
 
         const fileStat = await stat(filePath);
         const sessionId = `droid-${file.replace(".jsonl", "")}`;
+        const title = this.resolveSessionTitle(undefined, messages);
 
         sessions.push({
           id: sessionId,
           tool: this.id,
           toolName: this.name,
+          title,
           startedAt: fileStat.birthtime.toISOString(),
           updatedAt: fileStat.mtime.toISOString(),
           messageCount: messages.length,

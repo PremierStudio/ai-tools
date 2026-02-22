@@ -33,16 +33,23 @@
   },
   "scripts": {
     "build": "tsup",
-    "dev": "tsup --watch",
+    "dev": "tsx watch src/cli/bin.ts",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
-    "clean": "rm -rf dist"
+    "clean": "node -e \"const { rmSync } = require('node:fs'); rmSync('dist', { recursive: true, force: true });\"",
+    "dev:build": "tsup --watch",
+    "dev:run": "node dist/cli/bin.js --dev"
   },
   "dependencies": {
     "@premierstudio/ai-sessions": "1.1.8",
-    "@rezi-ui/core": "^0.1.0-alpha.24",
-    "@rezi-ui/node": "^0.1.0-alpha.24",
+    "@rezi-ui/core": "^0.1.0-alpha.26",
+    "@rezi-ui/native": "^0.1.0-alpha.26",
+    "@rezi-ui/node": "^0.1.0-alpha.26",
+    "@xterm/headless": "^6.0.0",
     "node-pty": "^1.1.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.21.0"
   },
   "engines": {
     "node": ">=22.0.0"
