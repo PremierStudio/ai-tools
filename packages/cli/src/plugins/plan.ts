@@ -1,16 +1,5 @@
-import "@premierstudio/ai-agents/adapters/all";
-import "@premierstudio/ai-hooks/adapters/all";
-import "@premierstudio/ai-mcp/adapters/all";
-import "@premierstudio/ai-rules/adapters/all";
-import "@premierstudio/ai-skills/adapters/all";
-
-import { registry as agentsRegistry } from "@premierstudio/ai-agents";
-import { registry as hooksRegistry } from "@premierstudio/ai-hooks";
-import { registry as mcpRegistry } from "@premierstudio/ai-mcp";
-import { registry as rulesRegistry } from "@premierstudio/ai-rules";
-import { registry as skillsRegistry } from "@premierstudio/ai-skills";
-
 import { getPluginHostInfo, KNOWN_PLUGIN_HOSTS } from "./hosts.js";
+import { getAllPluginEngines, loadEngineRegistries } from "./runtime.js";
 import type {
   AiPluginDefinition,
   BuildPluginPlanOptions,
@@ -33,23 +22,23 @@ function getRequestedEngines(plugin: AiPluginDefinition): PluginEngine[] {
   return engines;
 }
 
-function getAdapterSupport(): EngineRegistrySupport {
+function getAdapterSupport(registries: Awaited<ReturnType<typeof loadEngineRegistries>>): EngineRegistrySupport {
   return {
-    mcp: new Set(mcpRegistry.list()),
-    skills: new Set(skillsRegistry.list()),
-    rules: new Set(rulesRegistry.list()),
-    agents: new Set(agentsRegistry.list()),
-    hooks: new Set(hooksRegistry.list()),
+    mcp: new Set(registries.mcp.list()),
+    skills: new Set(registries.skills.list()),
+    rules: new Set(registries.rules.list()),
+    agents: new Set(registries.agents.list()),
+    hooks: new Set(registries.hooks.list()),
   };
 }
 
-async function detectTools(): Promise<Set<string>> {
+async function detectTools(registries: Awaited<ReturnType<typeof loadEngineRegistries>>): Promise<Set<string>> {
   const [mcp, skills, rules, agents, hooks] = await Promise.all([
-    mcpRegistry.detectAll(),
-    skillsRegistry.detectAll(),
-    rulesRegistry.detectAll(),
-    agentsRegistry.detectAll(),
-    hooksRegistry.detectAll(),
+    registries.mcp.detectAll(),
+    registries.skills.detectAll(),
+    registries.rules.detectAll(),
+    registries.agents.detectAll(),
+    registries.hooks.detectAll(),
   ]);
   return new Set([
     ...mcp.map((adapter) => adapter.id),
@@ -140,7 +129,7 @@ function buildTargetPlan(
   force: boolean,
 ): PluginTargetPlan {
   const host = getPluginHostInfo(toolId);
-  const allEngines: PluginEngine[] = ["mcp", "skills", "rules", "agents", "hooks"];
+  const allEngines = getAllPluginEngines();
   const engines: EngineInstallPlan[] = allEngines.map((engine) =>
     buildEnginePlan(engine, toolId, detectedToolIds, support, requestedEngines, force),
   );
@@ -160,9 +149,12 @@ export async function buildPluginInstallPlan(
   plugin: AiPluginDefinition,
   options: BuildPluginPlanOptions = {},
 ): Promise<PluginInstallPlan> {
+  const registries = await loadEngineRegistries();
   const requestedEngines = getRequestedEngines(plugin);
-  const support = getAdapterSupport();
-  const detectedToolIds = new Set(options.detectedToolsOverride ?? [...(await detectTools())]);
+  const support = getAdapterSupport(registries);
+  const detectedToolIds = new Set(
+    options.detectedToolsOverride ?? [...(await detectTools(registries))],
+  );
   const knownToolIds = resolveKnownToolIds(requestedEngines, support);
   const selectedToolIds = selectToolIds(plugin, knownToolIds, detectedToolIds, options);
 

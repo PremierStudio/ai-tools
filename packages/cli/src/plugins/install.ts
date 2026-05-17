@@ -1,16 +1,5 @@
-import "@premierstudio/ai-agents/adapters/all";
-import "@premierstudio/ai-hooks/adapters/all";
-import "@premierstudio/ai-mcp/adapters/all";
-import "@premierstudio/ai-rules/adapters/all";
-import "@premierstudio/ai-skills/adapters/all";
-
-import { registry as agentsRegistry } from "@premierstudio/ai-agents";
-import { registry as hooksRegistry } from "@premierstudio/ai-hooks";
-import { registry as mcpRegistry } from "@premierstudio/ai-mcp";
-import { registry as rulesRegistry } from "@premierstudio/ai-rules";
-import { registry as skillsRegistry } from "@premierstudio/ai-skills";
-
 import { buildPluginInstallPlan } from "./plan.js";
+import { loadEngineRegistries } from "./runtime.js";
 import type {
   AiPluginDefinition,
   InstalledPluginArtifact,
@@ -24,41 +13,42 @@ function uniquePaths(paths: string[]): string[] {
 }
 
 async function installEngine(
+  registries: Awaited<ReturnType<typeof loadEngineRegistries>>,
   plugin: AiPluginDefinition,
   engine: PluginEngine,
   toolId: string,
 ): Promise<string[]> {
   switch (engine) {
     case "mcp": {
-      const adapter = mcpRegistry.get(toolId);
+      const adapter = registries.mcp.get(toolId);
       if (!adapter) throw new Error(`Missing MCP adapter for ${toolId}`);
       const files = await adapter.generate(plugin.mcpServers ?? []);
       await adapter.install(files);
       return files.map((file) => file.path);
     }
     case "skills": {
-      const adapter = skillsRegistry.get(toolId);
+      const adapter = registries.skills.get(toolId);
       if (!adapter) throw new Error(`Missing skills adapter for ${toolId}`);
       const files = await adapter.generate(plugin.skills ?? []);
       await adapter.install(files);
       return files.map((file) => file.path);
     }
     case "rules": {
-      const adapter = rulesRegistry.get(toolId);
+      const adapter = registries.rules.get(toolId);
       if (!adapter) throw new Error(`Missing rules adapter for ${toolId}`);
       const files = await adapter.generate(plugin.rules ?? []);
       await adapter.install(files);
       return files.map((file) => file.path);
     }
     case "agents": {
-      const adapter = agentsRegistry.get(toolId);
+      const adapter = registries.agents.get(toolId);
       if (!adapter) throw new Error(`Missing agents adapter for ${toolId}`);
       const files = await adapter.generate(plugin.agents ?? []);
       await adapter.install(files);
       return files.map((file) => file.path);
     }
     case "hooks": {
-      const adapter = hooksRegistry.get(toolId);
+      const adapter = registries.hooks.get(toolId);
       if (!adapter) throw new Error(`Missing hooks adapter for ${toolId}`);
       const files = await adapter.generate(plugin.hooks ?? []);
       await adapter.install(files);
@@ -71,6 +61,7 @@ export async function installPluginBundle(
   plugin: AiPluginDefinition,
   options: InstallPluginOptions = {},
 ): Promise<InstallPluginResult> {
+  const registries = await loadEngineRegistries();
   const plan = await buildPluginInstallPlan(plugin, options);
   const installed: InstalledPluginArtifact[] = [];
   const failed: InstallPluginResult["failed"] = [];
@@ -83,7 +74,9 @@ export async function installPluginBundle(
     for (const engine of target.engines) {
       if (engine.status !== "ready") continue;
       try {
-        const filePaths = uniquePaths(await installEngine(plugin, engine.engine, target.toolId));
+        const filePaths = uniquePaths(
+          await installEngine(registries, plugin, engine.engine, target.toolId),
+        );
         installed.push({
           toolId: target.toolId,
           toolName: target.toolName,
