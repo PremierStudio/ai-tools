@@ -104,7 +104,7 @@ export interface IconDef {
 
 /**
  * Icon registry mapping semantic names to display characters.
- * 
+ *
  * Note: This is our own registry that maps to Rezi's ui.icon() system
  * or provides direct glyphs for richText spans.
  */
@@ -239,7 +239,9 @@ export function getToolColor(toolId: string): RgbColor {
 /**
  * Get the navigation icon for a view.
  */
-export function getViewIcon(view: "tools" | "sessions" | "handoff" | "config" | "terminal"): IconName {
+export function getViewIcon(
+  view: "tools" | "sessions" | "handoff" | "config" | "terminal",
+): IconName {
   const map: Record<typeof view, IconName> = {
     tools: "nav.tools",
     sessions: "nav.sessions",
@@ -275,7 +277,7 @@ export function getStatusIcon(
 
 /**
  * Create props for ui.icon() with proper styling.
- * 
+ *
  * Usage:
  *   ui.icon(...makeIconProps("status.success", { fg: STATUS.success }))
  */
@@ -296,7 +298,7 @@ export function makeIconProps(
 
 /**
  * Create a rich text span for an icon.
- * 
+ *
  * Usage:
  *   ui.richText([iconSpan("status.success", STATUS.success), { text: " Done" }])
  */

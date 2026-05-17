@@ -113,12 +113,10 @@ describe("PaneManager", () => {
   describe("spawnPaneWithCommand", () => {
     it("spawns a pane with custom command and args", async () => {
       const manager = createTestManager();
-      const pane = await manager.spawnPaneWithCommand(
-        "codex",
-        "Codex",
-        "codex",
-        ["--prompt", "continue from handoff"],
-      );
+      const pane = await manager.spawnPaneWithCommand("codex", "Codex", "codex", [
+        "--prompt",
+        "continue from handoff",
+      ]);
 
       expect(pane.toolId).toBe("codex");
       expect(pane.toolName).toBe("Codex");

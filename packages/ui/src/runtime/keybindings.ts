@@ -64,7 +64,11 @@ const NON_OVERRIDABLE_BASE_KEYS: Array<{ trigger: string; semanticKey: string }>
   { trigger: "Right", semanticKey: "Right" },
 ];
 
-function resolveBinding(actionId: string, defaults: string[], overrides: Record<string, string>): string[] {
+function resolveBinding(
+  actionId: string,
+  defaults: string[],
+  overrides: Record<string, string>,
+): string[] {
   const effective = getEffectiveKey(actionId, overrides).trim();
   if (!effective || effective.includes("/")) return defaults;
   return [effective];

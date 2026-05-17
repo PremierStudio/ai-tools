@@ -22,7 +22,9 @@ function getRequestedEngines(plugin: AiPluginDefinition): PluginEngine[] {
   return engines;
 }
 
-function getAdapterSupport(registries: Awaited<ReturnType<typeof loadEngineRegistries>>): EngineRegistrySupport {
+function getAdapterSupport(
+  registries: Awaited<ReturnType<typeof loadEngineRegistries>>,
+): EngineRegistrySupport {
   return {
     mcp: new Set(registries.mcp.list()),
     skills: new Set(registries.skills.list()),
@@ -32,7 +34,9 @@ function getAdapterSupport(registries: Awaited<ReturnType<typeof loadEngineRegis
   };
 }
 
-async function detectTools(registries: Awaited<ReturnType<typeof loadEngineRegistries>>): Promise<Set<string>> {
+async function detectTools(
+  registries: Awaited<ReturnType<typeof loadEngineRegistries>>,
+): Promise<Set<string>> {
   const [mcp, skills, rules, agents, hooks] = await Promise.all([
     registries.mcp.detectAll(),
     registries.skills.detectAll(),
@@ -107,15 +111,36 @@ function buildEnginePlan(
   }
 
   if (!nativeHostSupport) {
-    return { engine, requested, nativeHostSupport, adapterAvailable, detected, status: "host-unsupported" };
+    return {
+      engine,
+      requested,
+      nativeHostSupport,
+      adapterAvailable,
+      detected,
+      status: "host-unsupported",
+    };
   }
 
   if (!adapterAvailable) {
-    return { engine, requested, nativeHostSupport, adapterAvailable, detected, status: "adapter-missing" };
+    return {
+      engine,
+      requested,
+      nativeHostSupport,
+      adapterAvailable,
+      detected,
+      status: "adapter-missing",
+    };
   }
 
   if (!force && !detected) {
-    return { engine, requested, nativeHostSupport, adapterAvailable, detected, status: "not-detected" };
+    return {
+      engine,
+      requested,
+      nativeHostSupport,
+      adapterAvailable,
+      detected,
+      status: "not-detected",
+    };
   }
 
   return { engine, requested, nativeHostSupport, adapterAvailable, detected, status: "ready" };

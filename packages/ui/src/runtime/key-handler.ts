@@ -151,7 +151,11 @@ export function handleKeyEvent(state: TuiState, event: SimpleKeyEvent): KeyResul
   }
 
   if (key === "1") {
-    return { state: { ...state, view: "tools", selectedSessionId: null }, stop: false, action: null };
+    return {
+      state: { ...state, view: "tools", selectedSessionId: null },
+      stop: false,
+      action: null,
+    };
   }
   if (key === "2") {
     return {
@@ -161,10 +165,18 @@ export function handleKeyEvent(state: TuiState, event: SimpleKeyEvent): KeyResul
     };
   }
   if (key === "3") {
-    return { state: { ...state, view: "handoff", selectedSessionId: null }, stop: false, action: null };
+    return {
+      state: { ...state, view: "handoff", selectedSessionId: null },
+      stop: false,
+      action: null,
+    };
   }
   if (key === "4") {
-    return { state: { ...state, view: "config", selectedSessionId: null }, stop: false, action: null };
+    return {
+      state: { ...state, view: "config", selectedSessionId: null },
+      stop: false,
+      action: null,
+    };
   }
 
   if (key === "`") {

@@ -50,10 +50,9 @@ export function renderSessionDetailView<T>(ui: UiKit<T>, state: SessionDetailSta
   const session = state.sessions.find((s) => s.id === state.selectedSessionId);
 
   if (!session) {
-    return ui.box(
-      { ...PRESETS.content, title: "Session Detail", style: { bg: SURFACE.base } },
-      [ui.text("Session not found.", { style: { fg: TEXT.tertiary }, dim: true })],
-    );
+    return ui.box({ ...PRESETS.content, title: "Session Detail", style: { bg: SURFACE.base } }, [
+      ui.text("Session not found.", { style: { fg: TEXT.tertiary }, dim: true }),
+    ]);
   }
 
   const icon = getIconChar(getToolIcon(session.tool));
@@ -68,11 +67,17 @@ export function renderSessionDetailView<T>(ui: UiKit<T>, state: SessionDetailSta
   // ── Hero block — tool identity ────────────────────────
   const heroRow = ui.box({ style: { bg: heroBg }, py: 1, px: 2 }, [
     ui.richText([
-      { text: `${getIconChar("powerline.separator")} `, style: { fg: gutterBg, bold: true, bg: heroBg } },
+      {
+        text: `${getIconChar("powerline.separator")} `,
+        style: { fg: gutterBg, bold: true, bg: heroBg },
+      },
       { text: `${icon}  `, style: { fg: brand, bold: true, bg: heroBg } },
       { text: session.toolName, style: { fg: TEXT.primary, bold: true, bg: heroBg } },
       { text: "  │  ", style: { fg: TEXT.secondary, bg: heroBg } },
-      { text: `${getIconChar("nav.sessions")} ${session.messageCount} msgs`, style: { fg: BRAND.accent, bg: heroBg } },
+      {
+        text: `${getIconChar("nav.sessions")} ${session.messageCount} msgs`,
+        style: { fg: BRAND.accent, bg: heroBg },
+      },
     ]),
   ]);
 
@@ -111,7 +116,13 @@ export function renderSessionDetailView<T>(ui: UiKit<T>, state: SessionDetailSta
 
   const titleStr = session.title.slice(0, 36);
   return ui.box(
-    { border: PRESETS.card.border, title: `Session: ${titleStr}`, p: "none", flex: 1, style: { bg: SURFACE.base } },
+    {
+      border: PRESETS.card.border,
+      title: `Session: ${titleStr}`,
+      p: "none",
+      flex: 1,
+      style: { bg: SURFACE.base },
+    },
     [
       ui.column({ gap: GAP.none }, [
         heroRow,

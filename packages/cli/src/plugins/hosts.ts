@@ -65,7 +65,8 @@ export const KNOWN_PLUGIN_HOSTS: Record<string, PluginHostInfo> = {
     nativeEngineSupport: { mcp: true, skills: true, rules: true, agents: false, hooks: false },
     supportsInteractiveApps: false,
     supportsNativeBundles: false,
-    notes: "Windsurf can consume MCP, prompts, and rules, but ai-tools does not yet model a richer native bundle surface.",
+    notes:
+      "Windsurf can consume MCP, prompts, and rules, but ai-tools does not yet model a richer native bundle surface.",
   },
   copilot: {
     id: "copilot",
@@ -74,7 +75,8 @@ export const KNOWN_PLUGIN_HOSTS: Record<string, PluginHostInfo> = {
     nativeEngineSupport: { mcp: true, skills: true, rules: true, agents: true, hooks: false },
     supportsInteractiveApps: false,
     supportsNativeBundles: false,
-    notes: "Copilot can consume MCP and prompt surfaces through the IDE, but ai-tools currently treats it as direct engine deployment.",
+    notes:
+      "Copilot can consume MCP and prompt surfaces through the IDE, but ai-tools currently treats it as direct engine deployment.",
   },
   kiro: {
     id: "kiro",

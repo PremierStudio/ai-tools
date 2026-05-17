@@ -84,13 +84,11 @@ describe("createActionExecutor telemetry", () => {
 
     await executeAction({ type: "execute-handoff", sessionId: "s1", targetTool: "codex" });
 
-    expect(paneManager.spawnPaneWithCommand).toHaveBeenCalledWith(
-      "codex",
-      "Codex",
-      "codex",
-      ["--prompt", "# handoff"],
-    );
-    expect((app.stop as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(paneManager.spawnPaneWithCommand).toHaveBeenCalledWith("codex", "Codex", "codex", [
+      "--prompt",
+      "# handoff",
+    ]);
+    expect(app.stop as unknown as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
   });
 
   it("injects markdown into embedded pane when tool lacks prompt flag", async () => {
@@ -118,6 +116,6 @@ describe("createActionExecutor telemetry", () => {
       [],
     );
     expect(paneManager.writeToActivePane).toHaveBeenCalledWith("# continue\n");
-    expect((app.stop as unknown as ReturnType<typeof vi.fn>)).not.toHaveBeenCalled();
+    expect(app.stop as unknown as ReturnType<typeof vi.fn>).not.toHaveBeenCalled();
   });
 });

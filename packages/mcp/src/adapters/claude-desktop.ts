@@ -9,7 +9,13 @@ import type { GeneratedFile, MCPServerDefinition } from "../types/index.js";
 
 function resolveClaudeDesktopConfigPath(cwd?: string): string | null {
   if (process.platform === "darwin") {
-    return join(homedir(), "Library", "Application Support", "Claude", "claude_desktop_config.json");
+    return join(
+      homedir(),
+      "Library",
+      "Application Support",
+      "Claude",
+      "claude_desktop_config.json",
+    );
   }
 
   if (process.platform === "win32") {
@@ -35,7 +41,9 @@ class ClaudeDesktopMCPAdapter extends BaseMCPAdapter {
 
     for (const server of servers) {
       if (server.transport.type !== "stdio") {
-        throw new Error("Claude Desktop local configuration currently supports stdio MCP servers only.");
+        throw new Error(
+          "Claude Desktop local configuration currently supports stdio MCP servers only.",
+        );
       }
 
       mcpServers[server.id] = {
@@ -63,7 +71,9 @@ class ClaudeDesktopMCPAdapter extends BaseMCPAdapter {
   async install(files: GeneratedFile[], cwd?: string): Promise<void> {
     const targetPath = resolveClaudeDesktopConfigPath(cwd);
     if (!targetPath) {
-      throw new Error("Claude Desktop is only supported on macOS and Windows for global installation.");
+      throw new Error(
+        "Claude Desktop is only supported on macOS and Windows for global installation.",
+      );
     }
 
     const file = files[0];

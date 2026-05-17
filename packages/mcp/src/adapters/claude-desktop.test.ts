@@ -26,7 +26,12 @@ describe("ClaudeDesktopMCPAdapter", () => {
   const testServer: MCPServerDefinition = {
     id: "cert-coach",
     name: "Certification Coach",
-    transport: { type: "stdio", command: "npx", args: ["cert-coach-mcp"], env: { NODE_ENV: "test" } },
+    transport: {
+      type: "stdio",
+      command: "npx",
+      args: ["cert-coach-mcp"],
+      env: { NODE_ENV: "test" },
+    },
   };
 
   beforeEach(() => {
@@ -65,7 +70,12 @@ describe("ClaudeDesktopMCPAdapter", () => {
     vi.mocked(readFile).mockResolvedValue(
       JSON.stringify({
         mcpServers: {
-          "cert-coach": { type: "stdio", command: "npx", args: ["cert-coach-mcp"], env: { NODE_ENV: "test" } },
+          "cert-coach": {
+            type: "stdio",
+            command: "npx",
+            args: ["cert-coach-mcp"],
+            env: { NODE_ENV: "test" },
+          },
         },
       }),
     );

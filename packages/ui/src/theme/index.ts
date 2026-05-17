@@ -41,19 +41,13 @@ import {
  * Agentful dark theme (default)
  * Based on Rezi's darkTheme with brand color overrides
  */
-export const agentfulDarkTheme: ThemeDefinition = extendTheme(
-  darkTheme,
-  DARK_THEME_OVERRIDES,
-);
+export const agentfulDarkTheme: ThemeDefinition = extendTheme(darkTheme, DARK_THEME_OVERRIDES);
 
 /**
  * Agentful light theme
  * Based on Rezi's lightTheme with brand color overrides
  */
-export const agentfulLightTheme: ThemeDefinition = extendTheme(
-  lightTheme,
-  LIGHT_THEME_OVERRIDES,
-);
+export const agentfulLightTheme: ThemeDefinition = extendTheme(lightTheme, LIGHT_THEME_OVERRIDES);
 
 /**
  * Agentful dimmed theme
@@ -77,10 +71,7 @@ export const agentfulHighContrastTheme: ThemeDefinition = extendTheme(
  * Agentful Nord theme
  * Nordic blue-grey palette
  */
-export const agentfulNordTheme: ThemeDefinition = extendTheme(
-  nordTheme,
-  NORD_THEME_OVERRIDES,
-);
+export const agentfulNordTheme: ThemeDefinition = extendTheme(nordTheme, NORD_THEME_OVERRIDES);
 
 /**
  * Agentful Dracula theme
@@ -136,14 +127,7 @@ export function cycleTheme(current: ThemeName): ThemeName {
 }
 
 // Re-export tokens for direct access
-export {
-  BRAND,
-  STATUS,
-  SURFACE,
-  TEXT,
-  BORDER,
-  TOOLS,
-};
+export { BRAND, STATUS, SURFACE, TEXT, BORDER, TOOLS };
 
 // Re-export spacing system
 export {

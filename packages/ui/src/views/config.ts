@@ -50,18 +50,16 @@ function fitText(text: string, width: number): string {
 export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
   // ── Loading state ───────────────────────────
   if (state.loadingConfig) {
-    return ui.box(
-      { ...PRESETS.content, title: TITLE, style: { bg: SURFACE.base } },
-      [ui.spinner({ variant: "dots", label: "Loading config…" })],
-    );
+    return ui.box({ ...PRESETS.content, title: TITLE, style: { bg: SURFACE.base } }, [
+      ui.spinner({ variant: "dots", label: "Loading config…" }),
+    ]);
   }
 
   // ── Empty state ───────────────────────────
   if (state.engines.length === 0) {
-    return ui.box(
-      { ...PRESETS.content, title: TITLE, style: { bg: SURFACE.base } },
-      [ui.text("No engines found.", { style: { fg: TEXT.tertiary }, dim: true })],
-    );
+    return ui.box({ ...PRESETS.content, title: TITLE, style: { bg: SURFACE.base } }, [
+      ui.text("No engines found.", { style: { fg: TEXT.tertiary }, dim: true }),
+    ]);
   }
 
   const configuredCount = state.engines.filter((e) => e.configured).length;
@@ -99,7 +97,10 @@ export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
     const baseLine = ui.richText([
       { text: "  ", style: rowBg ? { bg: rowBg } : undefined },
       {
-        text: fitText(`${e.configured ? getIconChar("nav.sessions") : getIconChar("status.inactive")} ${e.engine}`, colEngine),
+        text: fitText(
+          `${e.configured ? getIconChar("nav.sessions") : getIconChar("status.inactive")} ${e.engine}`,
+          colEngine,
+        ),
         style: {
           fg: e.configured ? BRAND.base : TEXT.secondary,
           bg: rowBg,
@@ -153,34 +154,42 @@ export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
   ]);
 
   return ui.box(
-    { border: PRESETS.card.border, title: TITLE, p: PADDING.card, flex: 1, style: { bg: SURFACE.base } },
-    [ui.column({ gap: GAP.standard }, [
-      healthCallout,
-      summary,
-      ui.divider(),
-      ui.richText([
-        { text: "Engine Status", style: { fg: BRAND.base, bold: true } },
-        {
-          text: `  (${configuredCount} of ${total} configured)`,
-          style: { fg: TEXT.tertiary },
-        },
-      ]),
-      tableHeader,
-      ui.divider({ char: "─" }),
-      ui.column({ gap: GAP.none }, engineRows),
-      ui.box({ style: { bg: tintBg(BRAND.base, 0.08) }, p: PADDING.card }, [
+    {
+      border: PRESETS.card.border,
+      title: TITLE,
+      p: PADDING.card,
+      flex: 1,
+      style: { bg: SURFACE.base },
+    },
+    [
+      ui.column({ gap: GAP.standard }, [
+        healthCallout,
+        summary,
+        ui.divider(),
         ui.richText([
-          { text: "Tip: ", style: { fg: TEXT.primary, bold: true } },
+          { text: "Engine Status", style: { fg: BRAND.base, bold: true } },
           {
-            text: "Use g to generate, i to install, and r to re-check health quickly.",
+            text: `  (${configuredCount} of ${total} configured)`,
             style: { fg: TEXT.tertiary },
           },
         ]),
+        tableHeader,
+        ui.divider({ char: "─" }),
+        ui.column({ gap: GAP.none }, engineRows),
+        ui.box({ style: { bg: tintBg(BRAND.base, 0.08) }, p: PADDING.card }, [
+          ui.richText([
+            { text: "Tip: ", style: { fg: TEXT.primary, bold: true } },
+            {
+              text: "Use g to generate, i to install, and r to re-check health quickly.",
+              style: { fg: TEXT.tertiary },
+            },
+          ]),
+        ]),
+        ui.divider(),
+        actionsHint,
       ]),
-      ui.divider(),
-      actionsHint,
-    ]),
-  ]);
+    ],
+  );
 }
 
 export function getConfigKeyHints(): string {

@@ -15,20 +15,13 @@ import { renderSessionDetailView, getSessionDetailKeyHints } from "./views/sessi
 import { renderHandoffView, getHandoffKeyHints } from "./views/handoff.js";
 import { renderConfigView, getConfigKeyHints } from "./views/config.js";
 import { renderHelpOverlay } from "./views/help.js";
-import {
-  renderSettingsMenu,
-  createSettingsMenuState,
-} from "./views/settings.js";
+import { renderSettingsMenu, createSettingsMenuState } from "./views/settings.js";
 import { addToast, expireToasts } from "./toasts.js";
 import { loadPreferences } from "./preferences.js";
 import type { PaneManager } from "./terminal/manager.js";
 import type { TerminalKeyEvent, CommandAction } from "./terminal/input.js";
 import { isLeaderKey, keyEventToTerminalInput, parseCommandKey } from "./terminal/input.js";
-import {
-  navigateView,
-  selectItem,
-  handleKeyEvent,
-} from "./runtime/key-handler.js";
+import { navigateView, selectItem, handleKeyEvent } from "./runtime/key-handler.js";
 import { createActionExecutor } from "./runtime/action-executor.js";
 import { buildDashboardKeyHandlers } from "./runtime/keybindings.js";
 import { createTerminalCommandExecutor } from "./runtime/terminal-command-executor.js";
@@ -184,7 +177,9 @@ function withDefaultBgUi<T>(ui: UiKit<T>, defaultBg: RgbColor): UiKit<T> {
       return ui.spinner(withDefaultBgProps(props, defaultBg));
     },
     modal(props) {
-      return ui.modal(withDefaultBgProps(props, defaultBg) as Record<string, unknown> & { content: T });
+      return ui.modal(
+        withDefaultBgProps(props, defaultBg) as Record<string, unknown> & { content: T },
+      );
     },
     richText(spans, props) {
       const normalizedSpans = spans.map((span) => {
@@ -452,7 +447,13 @@ export function renderContent<T>(ui: UiKit<T>, state: TuiState): T {
       return renderConfigView(ui, toConfigViewState(state));
     case "terminal":
       return ui.box(
-        { border: BORDER_STYLE.single, title: "Terminal", p: PADDING.compact, flex: 1, style: { bg: SURFACE.base } },
+        {
+          border: BORDER_STYLE.single,
+          title: "Terminal",
+          p: PADDING.compact,
+          flex: 1,
+          style: { bg: SURFACE.base },
+        },
         [ui.text("No terminal panes open. Launch a tool with Shift+Enter from Tools.")],
       );
   }
@@ -587,7 +588,10 @@ export function renderStatusBar<T>(
 
   if (isInitialLoading) {
     return ui.richText([
-      { text: ` ${getIconChar("brand.logo")} `, style: { fg: BRAND.accent, bold: true, bg: PL_MODE_BG } },
+      {
+        text: ` ${getIconChar("brand.logo")} `,
+        style: { fg: BRAND.accent, bold: true, bg: PL_MODE_BG },
+      },
       { text: " Agentful ", style: { fg: BRAND.base, bold: true, bg: PL_MODE_BG } },
       { text: getIconChar("powerline.segment"), style: { fg: PL_MODE_BG, bg: PL_HINTS_BG } },
       { text: "  scanning…  ", style: { fg: cMuted, bg: PL_HINTS_BG } },
@@ -609,7 +613,12 @@ export function renderStatusBar<T>(
       : health === "stale" || health === "warning"
         ? PL_HEALTH_BG_WARN
         : PL_HEALTH_BG_ERR;
-  const hDot = health === "healthy" || health === "ok" ? getIconChar("status.active") : health === "stale" ? "◐" : getIconChar("status.error");
+  const hDot =
+    health === "healthy" || health === "ok"
+      ? getIconChar("status.active")
+      : health === "stale"
+        ? "◐"
+        : getIconChar("status.error");
 
   const hints = getContextKeyHints(state);
   // Parse hint string "key:Action  key2:Action2" into alternating key/desc spans
@@ -629,7 +638,10 @@ export function renderStatusBar<T>(
 
   return ui.richText([
     // Mode segment with brand icon
-    { text: ` ${getIconChar("brand.logo")} `, style: { fg: BRAND.accent, bold: true, bg: PL_MODE_BG } },
+    {
+      text: ` ${getIconChar("brand.logo")} `,
+      style: { fg: BRAND.accent, bold: true, bg: PL_MODE_BG },
+    },
     { text: ` ${state.mode} `, style: { fg: TEXT.secondary, bg: PL_MODE_BG } },
     { text: getIconChar("powerline.segment"), style: { fg: PL_MODE_BG, bg: hBg } },
     // Health segment with status icon
@@ -637,7 +649,10 @@ export function renderStatusBar<T>(
     { text: `${state.configHealth} `, style: { fg: hColor, bg: hBg } },
     { text: getIconChar("powerline.segment"), style: { fg: hBg, bg: PL_SESSIONS_BG } },
     // Sessions segment
-    { text: ` ${getIconChar("nav.sessions")} `, style: { fg: BRAND.accent, bold: true, bg: PL_SESSIONS_BG } },
+    {
+      text: ` ${getIconChar("nav.sessions")} `,
+      style: { fg: BRAND.accent, bold: true, bg: PL_SESSIONS_BG },
+    },
     {
       text: `${state.sessionCount}`,
       style: { fg: TEXT.primary, bold: true, bg: PL_SESSIONS_BG },
@@ -645,13 +660,19 @@ export function renderStatusBar<T>(
     { text: " sessions ", style: { fg: cMuted, bg: PL_SESSIONS_BG } },
     { text: getIconChar("powerline.segment"), style: { fg: PL_SESSIONS_BG, bg: toolBg } },
     { text: ` ${getIconChar("nav.sessions")} `, style: { fg: BRAND.base, bold: true, bg: toolBg } },
-    { text: `${readyTools}/${installedTools}`, style: { fg: TEXT.primary, bold: true, bg: toolBg } },
+    {
+      text: `${readyTools}/${installedTools}`,
+      style: { fg: TEXT.primary, bold: true, bg: toolBg },
+    },
     { text: " ready ", style: { fg: cMuted, bg: toolBg } },
     // Running segment (conditional) with enhanced styling
     ...(state.runningTools.length > 0
       ? [
           { text: getIconChar("powerline.segment"), style: { fg: toolBg, bg: PL_RUNNING_BG } },
-          { text: ` ${getIconChar("status.running")} `, style: { fg: STATUS.success, bold: true, bg: PL_RUNNING_BG } },
+          {
+            text: ` ${getIconChar("status.running")} `,
+            style: { fg: STATUS.success, bold: true, bg: PL_RUNNING_BG },
+          },
           {
             text: `${state.runningTools.length}`,
             style: { fg: STATUS.success, bold: true, bg: PL_RUNNING_BG },
@@ -663,7 +684,10 @@ export function renderStatusBar<T>(
     { text: " ⌘ ", style: { fg: ACCENT_INDIGO, bold: true, bg: runtimeBg } },
     { text: `${runtimeLabel} `, style: { fg: cMuted, bg: runtimeBg } },
     { text: getIconChar("powerline.segment"), style: { fg: runtimeBg, bg: refreshBg } },
-    { text: ` ${getIconChar("action.refresh")} `, style: { fg: BRAND.accent, bold: true, bg: refreshBg } },
+    {
+      text: ` ${getIconChar("action.refresh")} `,
+      style: { fg: BRAND.accent, bold: true, bg: refreshBg },
+    },
     {
       text: `${refreshIsActiveView ? "act" : "idle"} ${refreshSeconds}s `,
       style: { fg: cMuted, bg: refreshBg },
@@ -673,7 +697,10 @@ export function renderStatusBar<T>(
     { text: " ", style: { bg: PL_HINTS_BG } },
     ...(isAnyLoading
       ? [
-          { text: getIconChar("action.refresh"), style: { fg: BRAND.accent, bold: true, bg: PL_HINTS_BG } },
+          {
+            text: getIconChar("action.refresh"),
+            style: { fg: BRAND.accent, bold: true, bg: PL_HINTS_BG },
+          },
           {
             text: ` updating${loadingSlices ? ` ${loadingSlices}` : ""}  `,
             style: { fg: cMuted, bg: PL_HINTS_BG },
@@ -771,7 +798,10 @@ function renderHeaderBar<T>(
     { text: " ", style: {} },
   ];
 
-  return ui.row({ gap: GAP.none, justify: "between", style: { bg: SURFACE.base } }, [ui.richText(left), ui.richText(right)]);
+  return ui.row({ gap: GAP.none, justify: "between", style: { bg: SURFACE.base } }, [
+    ui.richText(left),
+    ui.richText(right),
+  ]);
 }
 
 /**
@@ -890,7 +920,7 @@ export async function startTui(
 
   // Load persisted preferences synchronously before showing UI
   const prefs = loadPreferences();
-  
+
   // Get the initial theme from our theme map
   const initialTheme = getTheme(prefs.theme);
 

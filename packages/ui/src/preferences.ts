@@ -4,11 +4,7 @@ import { homedir } from "node:os";
 import type { ThemeName } from "./theme/index.js";
 
 // Re-export from theme system for consistency
-export {
-  AVAILABLE_THEMES,
-  type ThemeName,
-  cycleTheme,
-} from "./theme/index.js";
+export { AVAILABLE_THEMES, type ThemeName, cycleTheme } from "./theme/index.js";
 
 /**
  * Built-in keybinding definitions.
@@ -385,7 +381,6 @@ export function savePreferences(prefs: Partial<UiPreferences>): void {
   }
   writeFileSync(path, JSON.stringify(merged, null, 2) + "\n", "utf-8");
 }
-
 
 /**
  * Check if a string is a valid theme name.

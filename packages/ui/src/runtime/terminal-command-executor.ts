@@ -9,10 +9,7 @@ type TerminalCommandExecutorDeps = {
   paneManager: PaneManager;
 };
 
-export function createTerminalCommandExecutor({
-  app,
-  paneManager,
-}: TerminalCommandExecutorDeps) {
+export function createTerminalCommandExecutor({ app, paneManager }: TerminalCommandExecutorDeps) {
   return function handleCommandAction(cmd: CommandAction): void {
     switch (cmd.type) {
       case "switch-tab":

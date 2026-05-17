@@ -82,10 +82,9 @@ export function renderSessionsView<T>(ui: UiKit<T>, state: SessionsViewState): T
 
   // ── Loading state ───────────────────────────
   if (state.loadingSessions) {
-    return ui.box(
-      { ...PRESETS.content, title, style: { bg: SURFACE.base } },
-      [ui.spinner({ variant: "dots", label: "  Loading sessions…" })],
-    );
+    return ui.box({ ...PRESETS.content, title, style: { bg: SURFACE.base } }, [
+      ui.spinner({ variant: "dots", label: "  Loading sessions…" }),
+    ]);
   }
 
   // ── Empty / no results states ───────────────────────────
@@ -94,7 +93,10 @@ export function renderSessionsView<T>(ui: UiKit<T>, state: SessionsViewState): T
     if (state.sessionFilter.query) {
       inner.push(
         ui.richText([
-          { text: ` ${getIconChar("action.search")} `, style: { fg: STATUS.warning, bold: true, bg: SEARCH_HIGHLIGHT_BG } },
+          {
+            text: ` ${getIconChar("action.search")} `,
+            style: { fg: STATUS.warning, bold: true, bg: SEARCH_HIGHLIGHT_BG },
+          },
           {
             text: ` ${state.sessionFilter.query} `,
             style: { fg: STATUS.warning, bg: SEARCH_HIGHLIGHT_BG },
@@ -116,7 +118,10 @@ export function renderSessionsView<T>(ui: UiKit<T>, state: SessionsViewState): T
   if (state.sessionFilter.query) {
     children.push(
       ui.richText([
-        { text: ` ${getIconChar("action.search")} `, style: { fg: STATUS.warning, bold: true, bg: SEARCH_HIGHLIGHT_BG } },
+        {
+          text: ` ${getIconChar("action.search")} `,
+          style: { fg: STATUS.warning, bold: true, bg: SEARCH_HIGHLIGHT_BG },
+        },
         {
           text: ` ${state.sessionFilter.query} `,
           style: { fg: STATUS.warning, bg: SEARCH_HIGHLIGHT_BG },
@@ -195,7 +200,10 @@ export function renderSessionsView<T>(ui: UiKit<T>, state: SessionsViewState): T
       const selBg = tintBg(brand, 0.15);
       return ui.box({ style: { bg: selBg }, pl: 0 }, [
         ui.richText([
-          { text: `${getIconChar("select.selected")} `, style: { fg: brand, bold: true, bg: selBg } },
+          {
+            text: `${getIconChar("select.selected")} `,
+            style: { fg: brand, bold: true, bg: selBg },
+          },
           { text: toolText, style: { fg: brand, bold: true, bg: selBg } },
           { text: " │ ", style: { fg: TEXT.secondary, bg: selBg } },
           { text: titleText, style: { fg: TEXT.primary, bold: true, bg: selBg } },

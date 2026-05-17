@@ -92,10 +92,16 @@ function renderStepProgress<T>(ui: Pick<UiKit<T>, "richText">, current: number):
       spans.push({ text: "  ──  ", style: { fg: COLOR_SEPARATOR } });
     }
     if (i < current) {
-      spans.push({ text: `${getIconChar("status.success")} `, style: { fg: STATUS.success, bold: true } });
+      spans.push({
+        text: `${getIconChar("status.success")} `,
+        style: { fg: STATUS.success, bold: true },
+      });
       spans.push({ text: label, style: { fg: TEXT.tertiary } });
     } else if (i === current) {
-      spans.push({ text: `${getIconChar("status.running")} `, style: { fg: BRAND.accent, bold: true } });
+      spans.push({
+        text: `${getIconChar("status.running")} `,
+        style: { fg: BRAND.accent, bold: true },
+      });
       spans.push({ text: label, style: { fg: TEXT.primary, bold: true } });
     } else {
       spans.push({ text: `${getIconChar("status.pending")} `, style: { fg: COLOR_SEPARATOR } });
@@ -151,10 +157,9 @@ export function renderHandoffView<T>(ui: UiKit<T>, state: HandoffViewState): T {
 
 function renderSessionSelectStep<T>(ui: UiKit<T>, state: HandoffViewState, title: string): T {
   if (state.sessions.length === 0) {
-    return ui.box(
-      { ...PRESETS.content, title, style: { bg: SURFACE.base } },
-      [ui.text("No sessions available for handoff.", { style: { fg: STATUS.neutral }, dim: true })],
-    );
+    return ui.box({ ...PRESETS.content, title, style: { bg: SURFACE.base } }, [
+      ui.text("No sessions available for handoff.", { style: { fg: STATUS.neutral }, dim: true }),
+    ]);
   }
 
   const cols = computeSessionColumnWidths();
@@ -276,7 +281,10 @@ function renderTargetSelectStep<T>(ui: UiKit<T>, state: HandoffViewState, title:
     const line = ui.richText([
       { text: `${prefix} `, style: { fg: selected ? color : TEXT.tertiary, bold: selected } },
       { text: `${icon} `, style: { fg: selected ? color : dimColor(color, 0.65), bold: selected } },
-      { text: target.name, style: { fg: selected ? TEXT.primary : STATUS.neutral, bold: selected } },
+      {
+        text: target.name,
+        style: { fg: selected ? TEXT.primary : STATUS.neutral, bold: selected },
+      },
     ]);
     if (!selected) return line;
     return ui.box({ style: { bg: tintBg(color, 0.15) }, pl: 0 }, [line]);
@@ -315,21 +323,22 @@ function renderConfirmStep<T>(ui: UiKit<T>, state: HandoffViewState, title: stri
         renderStepProgress(ui, 3),
         ui.divider({ char: "─" }),
         ui.text("Confirm Handoff:", { bold: true, style: { fg: TEXT.primary } }),
-      ui.text(""),
-      ui.richText([
-        { text: "From", style: { fg: TEXT.tertiary } },
-        { text: "  " },
-        { text: sessionTitle, style: { fg: STATUS.warning, bold: true } },
+        ui.text(""),
+        ui.richText([
+          { text: "From", style: { fg: TEXT.tertiary } },
+          { text: "  " },
+          { text: sessionTitle, style: { fg: STATUS.warning, bold: true } },
+        ]),
+        ui.richText([
+          { text: "To", style: { fg: TEXT.tertiary } },
+          { text: "    " },
+          { text: targetName, style: { fg: targetColor, bold: true } },
+        ]),
+        ui.text(""),
+        actionHints(ui, "Enter", "Launch", "Esc", "Cancel"),
       ]),
-      ui.richText([
-        { text: "To", style: { fg: TEXT.tertiary } },
-        { text: "    " },
-        { text: targetName, style: { fg: targetColor, bold: true } },
-      ]),
-      ui.text(""),
-      actionHints(ui, "Enter", "Launch", "Esc", "Cancel"),
-    ]),
-  ]);
+    ],
+  );
 }
 
 /**

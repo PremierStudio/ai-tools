@@ -171,7 +171,7 @@ describe("CodexAdapter", () => {
       const runner = files[0]!.content;
       expect(runner).toContain("ai-hooks runner for Codex");
       expect(runner).toContain('const toolInfo = { name: "codex", version: "1.0" }');
-      expect(runner).toContain("hookEventName === \"PreToolUse\"");
+      expect(runner).toContain('hookEventName === "PreToolUse"');
       expect(runner).toContain("process.exit(2)");
     });
   });

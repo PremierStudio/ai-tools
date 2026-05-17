@@ -57,7 +57,10 @@ function parseFlags(args: string[]): Flags {
 }
 
 function parseTools(flags: Flags): string[] | undefined {
-  return flags.tools?.split(",").map((item) => item.trim()).filter(Boolean);
+  return flags.tools
+    ?.split(",")
+    .map((item) => item.trim())
+    .filter(Boolean);
 }
 
 function formatEnginePlan(plan: EngineInstallPlan): string {
@@ -158,13 +161,18 @@ async function cmdPlan(flags: Flags): Promise<void> {
   printPlan(plugin, plan);
 }
 
-function printPlan(plugin: AiPluginDefinition, plan: Awaited<ReturnType<typeof buildPluginInstallPlan>>): void {
+function printPlan(
+  plugin: AiPluginDefinition,
+  plan: Awaited<ReturnType<typeof buildPluginInstallPlan>>,
+): void {
   console.log(`${plugin.name} (${plugin.id}) v${plugin.version}`);
   if (plugin.description) {
     console.log(plugin.description);
   }
   console.log("");
-  console.log(`Requested engines: ${plan.requestedEngines.length ? plan.requestedEngines.join(", ") : "none"}`);
+  console.log(
+    `Requested engines: ${plan.requestedEngines.length ? plan.requestedEngines.join(", ") : "none"}`,
+  );
   console.log("");
   for (const target of plan.targets) {
     printTarget(target);

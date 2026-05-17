@@ -67,17 +67,15 @@ export function renderToolsView<T>(ui: UiKit<T>, state: ToolsViewState): T {
   const title = `  ${getIconChar("nav.tools")} Tools  [Enter:Launch  d:Kill  j/k:Select]  `;
 
   if (state.loadingTools) {
-    return ui.box(
-      { ...PRESETS.content, title, style: { bg: SURFACE.base } },
-      [ui.spinner({ variant: "dots", label: "  Scanning for AI tools…" })],
-    );
+    return ui.box({ ...PRESETS.content, title, style: { bg: SURFACE.base } }, [
+      ui.spinner({ variant: "dots", label: "  Scanning for AI tools…" }),
+    ]);
   }
 
   if (state.tools.length === 0) {
-    return ui.box(
-      { ...PRESETS.content, title, style: { bg: SURFACE.base } },
-      [ui.text("No tools detected.", { style: { fg: TEXT.tertiary } })],
-    );
+    return ui.box({ ...PRESETS.content, title, style: { bg: SURFACE.base } }, [
+      ui.text("No tools detected.", { style: { fg: TEXT.tertiary } }),
+    ]);
   }
 
   const embeddedSet = new Set(state.embeddedToolIds ?? []);
@@ -111,11 +109,7 @@ export function renderToolsView<T>(ui: UiKit<T>, state: ToolsViewState): T {
     const mutedBrand = dimColor(brand, 0.6);
 
     const cardBg: RgbColor = selected ? tintBg(brand, 0.12) : SURFACE.elevated;
-    const gutterColor: RgbColor = notInstalled
-      ? TEXT.tertiary
-      : selected
-        ? brand
-        : mutedBrand;
+    const gutterColor: RgbColor = notInstalled ? TEXT.tertiary : selected ? brand : mutedBrand;
 
     const nameColor: RgbColor = notInstalled
       ? TEXT.tertiary
@@ -141,7 +135,10 @@ export function renderToolsView<T>(ui: UiKit<T>, state: ToolsViewState): T {
       { text: fitText(tool.command, commandWidth), style: { fg: cmdColor, italic: true } },
       ...(tool.sessionCount > 0
         ? [
-            { text: `  │  ${getIconChar("nav.sessions")} `, style: { fg: selected ? BRAND.accent : brand } },
+            {
+              text: `  │  ${getIconChar("nav.sessions")} `,
+              style: { fg: selected ? BRAND.accent : brand },
+            },
             {
               text: `${tool.sessionCount} session${tool.sessionCount !== 1 ? "s" : ""}`,
               style: { fg: selected ? BRAND.base : TEXT.secondary },
@@ -181,7 +178,13 @@ export function renderToolsView<T>(ui: UiKit<T>, state: ToolsViewState): T {
   });
 
   return ui.box(
-    { border: PRESETS.card.border, title, flex: 1, pt: PADDING.component, style: { bg: SURFACE.base } },
+    {
+      border: PRESETS.card.border,
+      title,
+      flex: 1,
+      pt: PADDING.component,
+      style: { bg: SURFACE.base },
+    },
     [ui.column({ gap: GAP.none }, [summary, ui.divider({ char: "─" }), ...cards])],
   );
 }
