@@ -1,9 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@premierstudio/ai-sessions", () => {
-  const adapters = new Map<string, MockAdapter>();
-
-  type MockAdapter = {
+vi.mock("@premierstudio/ai-tools-sessions", () => {
+  type InternalMockAdapter = {
     id: string;
     name: string;
     command: string;
@@ -11,20 +9,22 @@ vi.mock("@premierstudio/ai-sessions", () => {
     parseSessions: () => Promise<{ id: string }[]>;
   };
 
+  const adapters = new Map<string, InternalMockAdapter>();
+
   return {
     registry: {
       list: () => [...adapters.keys()],
       get: (id: string) => adapters.get(id),
-      register: (adapter: MockAdapter) => adapters.set(adapter.id, adapter),
+      register: (adapter: InternalMockAdapter) => adapters.set(adapter.id, adapter),
       clear: () => adapters.clear(),
     },
   };
 });
 
-vi.mock("@premierstudio/ai-sessions/adapters/all", () => ({}));
+vi.mock("@premierstudio/ai-tools-sessions/adapters/all", () => ({}));
 
 import { createInitialState, detectTools, computeConfigHealth, getStatusBarData } from "./app.js";
-import { registry } from "@premierstudio/ai-sessions";
+import { registry } from "@premierstudio/ai-tools-sessions";
 import type { AppState } from "./types.js";
 
 type MockAdapter = {

@@ -52,7 +52,7 @@ describe("CodexSessionAdapter", () => {
         mtime: new Date("2025-01-01T01:00:00Z"),
       } as unknown as Awaited<ReturnType<typeof stat>>);
       vi.mocked(readFile).mockResolvedValue(
-        '{"role":"user","content":"Hello"}\n' + '{"role":"assistant","content":"Hi!"}\n',
+        '{"role":"user","content":"Hello"}\n{"role":"assistant","content":"Hi!"}\n',
       );
 
       const sessions = await adapter.parseSessions();
@@ -123,7 +123,7 @@ describe("CodexSessionAdapter", () => {
         mtime: new Date("2025-01-01T01:00:00Z"),
       } as unknown as Awaited<ReturnType<typeof stat>>);
       vi.mocked(readFile).mockResolvedValue(
-        '{"role":"unknown","content":"skip me"}\n' + '{"role":"user","content":"keep me"}\n',
+        '{"role":"unknown","content":"skip me"}\n{"role":"user","content":"keep me"}\n',
       );
 
       const sessions = await adapter.parseSessions();

@@ -1,5 +1,5 @@
 /**
- * Icon System for Agentful TUI
+ * Icon System for the ai-tools TUI
  *
  * Maps semantic icon names to Rezi's icon registry.
  * Provides type-safe icon access with fallback support.
@@ -30,6 +30,7 @@ export type IconName =
   | "status.unknown"
   | "status.active"
   | "status.inactive"
+  | "status.stale"
   // Navigation icons
   | "nav.tools"
   | "nav.sessions"
@@ -112,7 +113,7 @@ export const ICONS: Record<IconName, IconDef> = {
   // Status icons
   "status.success": { glyph: "✓", fallback: "[x]", width: 1 },
   "status.error": { glyph: "✗", fallback: "[X]", width: 1 },
-  "status.warning": { glyph: "⚠", fallback: "[!]", width: 1 },
+  "status.warning": { glyph: "⚠", fallback: "[!]", width: 2 },
   "status.info": { glyph: "ℹ", fallback: "[i]", width: 1 },
   "status.pending": { glyph: "○", fallback: "[ ]", width: 1 },
   "status.running": { glyph: "▶", fallback: ">", width: 1 },
@@ -120,9 +121,10 @@ export const ICONS: Record<IconName, IconDef> = {
   "status.unknown": { glyph: "?", fallback: "[?]", width: 1 },
   "status.active": { glyph: "●", fallback: "[*]", width: 1 },
   "status.inactive": { glyph: "○", fallback: "[ ]", width: 1 },
+  "status.stale": { glyph: "◐", fallback: "[~]", width: 1 },
 
   // Navigation icons
-  "nav.tools": { glyph: "⚙", fallback: "[T]", width: 1 },
+  "nav.tools": { glyph: "⚙", fallback: "[T]", width: 2 },
   "nav.sessions": { glyph: "◈", fallback: "[S]", width: 1 },
   "nav.handoff": { glyph: "⇄", fallback: "[H]", width: 1 },
   "nav.config": { glyph: "≡", fallback: "[C]", width: 1 },
@@ -131,21 +133,21 @@ export const ICONS: Record<IconName, IconDef> = {
   "nav.forward": { glyph: "→", fallback: ">", width: 1 },
   "nav.close": { glyph: "×", fallback: "x", width: 1 },
   "nav.menu": { glyph: "☰", fallback: "=", width: 1 },
-  "nav.settings": { glyph: "⚙", fallback: "[S]", width: 1 },
+  "nav.settings": { glyph: "⚙", fallback: "[S]", width: 2 },
   "nav.help": { glyph: "ℹ", fallback: "?", width: 1 },
 
   // Action icons
   "action.launch": { glyph: "▶", fallback: ">", width: 1 },
-  "action.kill": { glyph: "⏹", fallback: "[X]", width: 1 },
+  "action.kill": { glyph: "⏹", fallback: "[X]", width: 2 },
   "action.refresh": { glyph: "↻", fallback: "R", width: 1 },
   "action.search": { glyph: "⌕", fallback: "/", width: 1 },
   "action.edit": { glyph: "✎", fallback: "E", width: 1 },
-  "action.save": { glyph: "💾", fallback: "S", width: 1 },
+  "action.save": { glyph: "💾", fallback: "S", width: 2 },
   "action.copy": { glyph: "⧉", fallback: "C", width: 1 },
-  "action.paste": { glyph: "📋", fallback: "P", width: 1 },
+  "action.paste": { glyph: "📋", fallback: "P", width: 2 },
   "action.undo": { glyph: "↶", fallback: "U", width: 1 },
   "action.redo": { glyph: "↷", fallback: "R", width: 1 },
-  "action.settings": { glyph: "⚙", fallback: "*", width: 1 },
+  "action.settings": { glyph: "⚙", fallback: "*", width: 2 },
   "action.help": { glyph: "?", fallback: "?", width: 1 },
 
   // Selection icons
@@ -160,7 +162,7 @@ export const ICONS: Record<IconName, IconDef> = {
   "tool.gemini": { glyph: "✦", fallback: "[*]", width: 1 },
   "tool.cursor": { glyph: "⊡", fallback: "[C]", width: 1 },
   "tool.opencode": { glyph: "⬡", fallback: "[O]", width: 1 },
-  "tool.amp": { glyph: "⚡", fallback: "[A]", width: 1 },
+  "tool.amp": { glyph: "⚡", fallback: "[A]", width: 2 },
   "tool.cline": { glyph: "◎", fallback: "[L]", width: 1 },
   "tool.generic": { glyph: "◆", fallback: "[*]", width: 1 },
 
@@ -169,7 +171,7 @@ export const ICONS: Record<IconName, IconDef> = {
   "brand.particle": { glyph: "◉", fallback: "o", width: 1 },
 
   // Session icons
-  "session.messages": { glyph: "✉", fallback: "M", width: 1 },
+  "session.messages": { glyph: "✉", fallback: "M", width: 2 },
   "session.time": { glyph: "◷", fallback: "T", width: 1 },
   "session.folder": { glyph: "▤", fallback: "[+]", width: 1 },
   "session.file": { glyph: "▥", fallback: "[f]", width: 1 },
@@ -256,7 +258,16 @@ export function getViewIcon(
  * Get the status icon for a given status.
  */
 export function getStatusIcon(
-  status: "success" | "error" | "warning" | "info" | "pending" | "running" | "stopped" | "unknown",
+  status:
+    | "success"
+    | "error"
+    | "warning"
+    | "info"
+    | "pending"
+    | "running"
+    | "stopped"
+    | "stale"
+    | "unknown",
 ): IconName {
   const map: Record<typeof status, IconName> = {
     success: "status.success",
@@ -266,6 +277,7 @@ export function getStatusIcon(
     pending: "status.pending",
     running: "status.running",
     stopped: "status.stopped",
+    stale: "status.stale",
     unknown: "status.unknown",
   };
   return map[status];

@@ -283,7 +283,7 @@ describe("GeminiCliAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const eventScript = configs.find((c) => c.path.includes("BeforeShell"));
       expect(eventScript!.content).toContain(
-        'import { loadConfig, HookEngine } from "@premierstudio/ai-hooks"',
+        'import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks"',
       );
     });
 

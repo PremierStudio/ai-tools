@@ -247,7 +247,7 @@ describe("KiroAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
       expect(runner).toBeDefined();
-      expect(runner!.path).toBe(".kiro/hooks/ai-hooks-runner.js");
+      expect(runner!.path).toBe(".kiro/hooks/ai-tools-hooks-runner.js");
     });
 
     it("runner script has correct format", async () => {
@@ -266,7 +266,7 @@ describe("KiroAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
       expect(runner!.content).toContain(
-        'import { loadConfig, HookEngine } from "@premierstudio/ai-hooks"',
+        'import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks"',
       );
     });
 
@@ -370,7 +370,7 @@ describe("KiroAdapter", () => {
 
     it("hooks JSON command uses absolute path to runner", async () => {
       const configs = await adapter.generate([testHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, Array<{ command: string }>>;
       };
@@ -381,20 +381,20 @@ describe("KiroAdapter", () => {
 
     it("generates hooks JSON at correct path", async () => {
       const configs = await adapter.generate([testHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       expect(hooksJson).toBeDefined();
-      expect(hooksJson!.path).toBe(".kiro/hooks/ai-hooks.json");
+      expect(hooksJson!.path).toBe(".kiro/hooks/ai-tools-hooks.json");
     });
 
     it("hooks JSON has correct format", async () => {
       const configs = await adapter.generate([testHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       expect(hooksJson!.format).toBe("json");
     });
 
     it("hooks JSON contains valid JSON", async () => {
       const configs = await adapter.generate([testHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as Record<string, unknown>;
       expect(parsed).toBeDefined();
       expect(parsed.hooks).toBeDefined();
@@ -402,14 +402,14 @@ describe("KiroAdapter", () => {
 
     it("hooks JSON maps shell:before to preToolUse entry", async () => {
       const configs = await adapter.generate([testHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, Array<{ command: string; matcher?: string }>>;
       };
       const preToolUse = parsed.hooks.preToolUse;
       expect(preToolUse).toBeDefined();
       expect(preToolUse).toHaveLength(1);
-      expect(preToolUse![0]!.command).toContain("ai-hooks-runner.js");
+      expect(preToolUse![0]!.command).toContain("ai-tools-hooks-runner.js");
       expect(preToolUse![0]!.matcher).toBe("*");
     });
 
@@ -422,7 +422,7 @@ describe("KiroAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([multiHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, Array<{ command: string; matcher?: string }>>;
       };
@@ -439,7 +439,7 @@ describe("KiroAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([sessionHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, Array<{ command: string; matcher?: string }>>;
       };
@@ -457,7 +457,7 @@ describe("KiroAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([multiHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, unknown[]>;
       };
@@ -484,7 +484,7 @@ describe("KiroAdapter", () => {
         },
       ];
       const configs = await adapter.generate(hooks);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, unknown[]>;
       };
@@ -501,7 +501,7 @@ describe("KiroAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([unmappedHook]);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, unknown[]>;
       };
@@ -511,7 +511,7 @@ describe("KiroAdapter", () => {
     it("generates config for empty hooks array", async () => {
       const configs = await adapter.generate([]);
       expect(configs).toHaveLength(2);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, unknown[]>;
       };
@@ -536,7 +536,7 @@ describe("KiroAdapter", () => {
         },
       ];
       const configs = await adapter.generate(hooks);
-      const hooksJson = configs.find((c) => c.path.includes("ai-hooks.json"));
+      const hooksJson = configs.find((c) => c.path.includes("ai-tools-hooks.json"));
       const parsed = JSON.parse(hooksJson!.content) as {
         hooks: Record<string, unknown[]>;
       };

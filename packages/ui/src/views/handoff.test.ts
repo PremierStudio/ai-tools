@@ -24,12 +24,14 @@ function makeSession(overrides: Partial<SessionRow> = {}): SessionRow {
 function makeState(overrides: Partial<HandoffViewState> = {}): HandoffViewState {
   return {
     sessions: [],
+    loadingSessions: false,
     handoffStep: 0,
     handoffSessionId: null,
     handoffTargetTool: null,
     handoffPreview: null,
     selectedSessionIndex: 0,
     selectedTargetIndex: 0,
+    keyOverrides: {},
     ...overrides,
   };
 }
@@ -49,12 +51,24 @@ function allText(node: AnyVNode): string {
 
 describe("renderHandoffView", () => {
   describe("step 0: session selection", () => {
+    it("shows spinner while sessions are loading", () => {
+      const state = makeState({ handoffStep: 0, sessions: [], loadingSessions: true });
+      const vnode = renderHandoffView(mockUi, state) as AnyVNode;
+      const text = allText(vnode);
+      // Spinner label is in props, not content — check the raw tree for the spinner node
+      const json = JSON.stringify(vnode);
+      expect(json).toContain("spinner");
+      expect(json).toContain("Loading sessions");
+      expect(text).not.toContain("No sessions available");
+    });
+
     it("shows empty message when no sessions", () => {
       const state = makeState({ handoffStep: 0, sessions: [] });
       const vnode = renderHandoffView(mockUi, state) as {
         children: Array<{ content: string }>;
       };
-      expect(vnode.children[0]!.content).toContain("No sessions available");
+      const text = allText(vnode as unknown as AnyVNode);
+      expect(text).toContain("No sessions available");
     });
 
     it("shows session list when sessions exist", () => {
@@ -81,8 +95,8 @@ describe("renderHandoffView", () => {
       };
       const col = vnode.children[0]!;
       const sessionRows = col.children.filter((c) => allText(c).includes("claude"));
-      expect(allText(sessionRows[0]!)).toMatch(/^ /);
-      expect(allText(sessionRows[1]!)).toMatch(/^\u25B6/);
+      expect(allText(sessionRows[0]!)).not.toMatch(/\u25B8/);
+      expect(allText(sessionRows[1]!)).toMatch(/\u25B8/);
     });
 
     it("shows step 1 of 4 in title", () => {
@@ -97,12 +111,10 @@ describe("renderHandoffView", () => {
   describe("step 1: preview", () => {
     it("shows loading when no preview available", () => {
       const state = makeState({ handoffStep: 1, handoffPreview: null });
-      const vnode = renderHandoffView(mockUi, state) as {
-        children: [{ children: Array<{ content: string }> }];
-      };
-      const col = vnode.children[0]!;
-      const loadingText = col.children.find((c) => allText(c).includes("Loading handoff preview"));
-      expect(loadingText).toBeTruthy();
+      const vnode = renderHandoffView(mockUi, state) as AnyVNode;
+      const json = JSON.stringify(vnode);
+      expect(json).toContain("spinner");
+      expect(json).toContain("Generating context summary");
     });
 
     it("shows preview text when available", () => {
@@ -153,8 +165,8 @@ describe("renderHandoffView", () => {
           allText(c).includes("Gemini CLI") ||
           allText(c).includes("OpenCode"),
       );
-      expect(allText(targetRows[0]!)).toMatch(/^ /);
-      expect(allText(targetRows[2]!)).toMatch(/^\u25B6/);
+      expect(allText(targetRows[0]!)).not.toMatch(/\u25B8/);
+      expect(allText(targetRows[2]!)).toMatch(/\u25B8/);
     });
 
     it("shows step 3 of 4 in title", () => {
@@ -261,7 +273,7 @@ describe("getTargetToolId", () => {
 
 describe("getHandoffKeyHints", () => {
   it("returns key hint string", () => {
-    const hints = getHandoffKeyHints();
+    const hints = getHandoffKeyHints({});
     expect(hints).toContain("Enter:Next");
     expect(hints).toContain("Esc:Cancel");
     expect(hints).toContain("j/k:Select");

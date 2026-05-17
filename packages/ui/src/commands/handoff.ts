@@ -1,4 +1,4 @@
-import type { SessionContext } from "@premierstudio/ai-sessions";
+import type { SessionContext } from "@premierstudio/ai-tools-sessions";
 import { extractHandoffContext, previewHandoff } from "../widgets/handoff-panel.js";
 
 /**

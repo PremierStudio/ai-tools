@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SessionContext, UnifiedSession } from "@premierstudio/ai-sessions";
+import type { SessionContext, UnifiedSession } from "@premierstudio/ai-tools-sessions";
 
 const mockAdapters: Array<{
   id: string;
@@ -8,13 +8,13 @@ const mockAdapters: Array<{
   extractContext: (session: UnifiedSession) => Promise<SessionContext>;
 }> = [];
 
-vi.mock("@premierstudio/ai-sessions", () => ({
-  registry: {
-    detectAll: async () => mockAdapters,
-  },
+vi.mock("./handoff-runtime.js", () => ({
+  loadSessionRegistry: async () => ({
+    registry: {
+      detectAll: async () => mockAdapters,
+    },
+  }),
 }));
-
-vi.mock("@premierstudio/ai-sessions/adapters/all", () => ({}));
 
 import { extractHandoffContext, previewHandoff, getTargetTools } from "./handoff-panel.js";
 

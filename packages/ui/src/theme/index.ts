@@ -1,8 +1,8 @@
 /**
- * Theme System for Agentful TUI
+ * Theme System for the ai-tools TUI.
  *
  * Provides semantic themes that extend Rezi's built-in themes with
- * Agentful's brand colors and design tokens.
+ * ai-tools brand colors and design tokens.
  *
  * @see https://rezitui.dev/docs/styling/theme
  */
@@ -25,59 +25,60 @@ import {
   HIGH_CONTRAST_THEME_OVERRIDES,
   NORD_THEME_OVERRIDES,
   DRACULA_THEME_OVERRIDES,
+  ACCENT_INDIGO,
   BRAND,
   STATUS,
   SURFACE,
   TEXT,
   BORDER,
   TOOLS,
+  setActiveTheme,
+  getActiveTokens,
+  getActiveThemeId,
 } from "./tokens.js";
 
 // ─────────────────────────────────────────────────────────────
-// EXTENDED THEMES (Rezi base + Agentful brand)
+// EXTENDED THEMES (Rezi base + ai-tools brand)
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Agentful dark theme (default)
+ * ai-tools dark theme (default)
  * Based on Rezi's darkTheme with brand color overrides
  */
-export const agentfulDarkTheme: ThemeDefinition = extendTheme(darkTheme, DARK_THEME_OVERRIDES);
+export const aiToolsDarkTheme: ThemeDefinition = extendTheme(darkTheme, DARK_THEME_OVERRIDES);
 
 /**
- * Agentful light theme
+ * ai-tools light theme
  * Based on Rezi's lightTheme with brand color overrides
  */
-export const agentfulLightTheme: ThemeDefinition = extendTheme(lightTheme, LIGHT_THEME_OVERRIDES);
+export const aiToolsLightTheme: ThemeDefinition = extendTheme(lightTheme, LIGHT_THEME_OVERRIDES);
 
 /**
- * Agentful dimmed theme
+ * ai-tools dimmed theme
  * Lower contrast dark theme for reduced eye strain
  */
-export const agentfulDimmedTheme: ThemeDefinition = extendTheme(
-  dimmedTheme,
-  DIMMED_THEME_OVERRIDES,
-);
+export const aiToolsDimmedTheme: ThemeDefinition = extendTheme(dimmedTheme, DIMMED_THEME_OVERRIDES);
 
 /**
- * Agentful high contrast theme
+ * ai-tools high contrast theme
  * WCAG AAA compliant for accessibility
  */
-export const agentfulHighContrastTheme: ThemeDefinition = extendTheme(
+export const aiToolsHighContrastTheme: ThemeDefinition = extendTheme(
   highContrastTheme,
   HIGH_CONTRAST_THEME_OVERRIDES,
 );
 
 /**
- * Agentful Nord theme
+ * ai-tools Nord theme
  * Nordic blue-grey palette
  */
-export const agentfulNordTheme: ThemeDefinition = extendTheme(nordTheme, NORD_THEME_OVERRIDES);
+export const aiToolsNordTheme: ThemeDefinition = extendTheme(nordTheme, NORD_THEME_OVERRIDES);
 
 /**
- * Agentful Dracula theme
+ * ai-tools Dracula theme
  * Popular purple/magenta dark theme
  */
-export const agentfulDraculaTheme: ThemeDefinition = extendTheme(
+export const aiToolsDraculaTheme: ThemeDefinition = extendTheme(
   draculaTheme,
   DRACULA_THEME_OVERRIDES,
 );
@@ -102,19 +103,21 @@ export const AVAILABLE_THEMES: ThemeName[] = [
  * Used for dynamic theme switching.
  */
 export const THEME_MAP: Record<ThemeName, ThemeDefinition> = {
-  dark: agentfulDarkTheme,
-  light: agentfulLightTheme,
-  dim: agentfulDimmedTheme,
-  highContrast: agentfulHighContrastTheme,
-  nord: agentfulNordTheme,
-  dracula: agentfulDraculaTheme,
+  dark: aiToolsDarkTheme,
+  light: aiToolsLightTheme,
+  dim: aiToolsDimmedTheme,
+  highContrast: aiToolsHighContrastTheme,
+  nord: aiToolsNordTheme,
+  dracula: aiToolsDraculaTheme,
 };
 
 /**
  * Get a theme by name with fallback to dark theme.
+ * Also updates the active theme context so token getters resolve correctly.
  */
 export function getTheme(name: ThemeName | string): ThemeDefinition {
-  return THEME_MAP[name as ThemeName] ?? agentfulDarkTheme;
+  setActiveTheme(name);
+  return THEME_MAP[name as ThemeName] ?? aiToolsDarkTheme;
 }
 
 /**
@@ -127,7 +130,18 @@ export function cycleTheme(current: ThemeName): ThemeName {
 }
 
 // Re-export tokens for direct access
-export { BRAND, STATUS, SURFACE, TEXT, BORDER, TOOLS };
+export {
+  ACCENT_INDIGO,
+  BRAND,
+  STATUS,
+  SURFACE,
+  TEXT,
+  BORDER,
+  TOOLS,
+  setActiveTheme,
+  getActiveTokens,
+  getActiveThemeId,
+};
 
 // Re-export spacing system
 export {
@@ -136,9 +150,11 @@ export {
   GAP,
   MARGIN,
   LAYOUT,
-  BORDER as BORDER_STYLE,
+  BORDER_STYLE,
   SHADOW,
   PRESETS,
+  TINT,
+  DIM,
   spacingValue,
   pad,
   margin,
@@ -151,3 +167,4 @@ export {
 // ─────────────────────────────────────────────────────────────
 
 export type { ThemeDefinition };
+export type { ResolvedTokens } from "./tokens.js";

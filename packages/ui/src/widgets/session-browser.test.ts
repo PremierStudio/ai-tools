@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { UnifiedSession } from "@premierstudio/ai-sessions";
+import type { UnifiedSession } from "@premierstudio/ai-tools-sessions";
 
-vi.mock("@premierstudio/ai-sessions", () => {
+vi.mock("@premierstudio/ai-tools-sessions", () => {
   const mockAdapters: Array<{
     id: string;
     detect: () => Promise<boolean>;
@@ -21,10 +21,10 @@ vi.mock("@premierstudio/ai-sessions", () => {
   };
 });
 
-vi.mock("@premierstudio/ai-sessions/adapters/all", () => ({}));
+vi.mock("@premierstudio/ai-tools-sessions/adapters/all", () => ({}));
 
 import { listSessions, formatSessionRow, groupByTool } from "./session-browser.js";
-import { registry } from "@premierstudio/ai-sessions";
+import { registry } from "@premierstudio/ai-tools-sessions";
 
 type MockRegistry = typeof registry & {
   __addAdapter: (adapter: {

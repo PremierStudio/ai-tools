@@ -2,7 +2,16 @@ import { defineConfig } from "tsup";
 
 export default defineConfig([
   {
-    entry: ["src/index.ts"],
+    entry: [
+      "src/index.ts",
+      "src/hooks.ts",
+      "src/mcp.ts",
+      "src/skills.ts",
+      "src/agents.ts",
+      "src/rules.ts",
+      "src/sessions.ts",
+      "src/tui.ts",
+    ],
     format: ["esm"],
     dts: true,
     clean: true,

@@ -9,8 +9,8 @@
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
 
-import { loadConfig } from "@premierstudio/ai-hooks";
-import { HookEngine } from "@premierstudio/ai-hooks";
+import { loadConfig } from "@premierstudio/ai-tools-hooks";
+import { HookEngine } from "@premierstudio/ai-tools-hooks";
 
 const hookEvent = process.env.CLAUDE_HOOK_EVENT;
 const toolName = process.env.CLAUDE_TOOL_NAME;

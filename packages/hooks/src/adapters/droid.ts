@@ -130,14 +130,14 @@ class DroidAdapter extends BaseAdapter {
 
     // Generate the runner script
     configs.push({
-      path: ".factory/hooks/ai-hooks-runner.js",
+      path: ".factory/hooks/ai-tools-hooks-runner.js",
       content: this.generateRunner(),
       format: "js",
     });
 
     // Build Droid settings hooks config
     const hooksConfig: Record<string, unknown[]> = {};
-    const runnerAbsPath = resolve(process.cwd(), ".factory/hooks/ai-hooks-runner.js");
+    const runnerAbsPath = resolve(process.cwd(), ".factory/hooks/ai-tools-hooks-runner.js");
 
     for (const event of neededEvents) {
       const hookEntry: Record<string, unknown> = {
@@ -183,6 +183,7 @@ class DroidAdapter extends BaseAdapter {
 
   async uninstall(): Promise<void> {
     await this.removeFile(".factory/hooks/ai-hooks-runner.js");
+    await this.removeFile(".factory/hooks/ai-tools-hooks-runner.js");
   }
 
   private async mergeSettings(
@@ -204,12 +205,19 @@ class DroidAdapter extends BaseAdapter {
       if (!mergedHooks[event]) {
         mergedHooks[event] = [];
       }
-      // Remove old ai-hooks entries (identified by runner path)
+      // Remove legacy and current hook runner entries so upgrades do not duplicate hooks.
       mergedHooks[event] = (
         mergedHooks[event] as Array<{
           hooks?: Array<{ command?: string }>;
         }>
-      ).filter((entry) => !entry.hooks?.some((h) => h.command?.includes("ai-hooks-runner")));
+      ).filter(
+        (entry) =>
+          !entry.hooks?.some(
+            (h) =>
+              h.command?.includes("ai-hooks-runner") ||
+              h.command?.includes("ai-tools-hooks-runner"),
+          ),
+      );
       mergedHooks[event].push(...entries);
     }
 
@@ -233,7 +241,7 @@ class DroidAdapter extends BaseAdapter {
  *
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
-import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
+import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks";
 
 async function readStdin() {
   const chunks = [];

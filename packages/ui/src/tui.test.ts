@@ -52,8 +52,11 @@ function makeEngine(overrides: Partial<EngineStatus> = {}): EngineStatus {
   };
 }
 
-function makeKeyEvent(key: string, modifiers?: { ctrl?: boolean }): SimpleKeyEvent {
-  return { key, ctrl: modifiers?.ctrl };
+function makeKeyEvent(
+  key: string,
+  modifiers?: { ctrl?: boolean; shift?: boolean },
+): SimpleKeyEvent {
+  return { key, ctrl: modifiers?.ctrl, shift: modifiers?.shift };
 }
 
 function makeState(overrides: Partial<TuiState> = {}): TuiState {
@@ -475,6 +478,20 @@ describe("handleKeyEvent", () => {
     });
   });
 
+  it("returns launch-tool-embedded action on Shift+Enter for available tool", () => {
+    const state = makeState({
+      tools: [makeTool({ id: "claude", command: "claude" })],
+      selectedToolIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter", { shift: true }));
+    expect(result.action).toEqual({
+      type: "launch-tool-embedded",
+      toolId: "claude",
+      command: "claude",
+      args: [],
+    });
+  });
+
   it("adds error toast on Enter for not-installed tool", () => {
     const state = makeState({
       tools: [makeTool({ id: "x", status: "not-installed" })],
@@ -534,6 +551,34 @@ describe("handleKeyEvent", () => {
     expect(result.state.searchActive).toBe(true);
   });
 
+  it("appends typed characters to search query when search is active", () => {
+    const state = makeState({ view: "sessions", searchActive: true, sessionFilter: {} });
+    const result = handleKeyEvent(state, makeKeyEvent("a"));
+    expect(result.state.sessionFilter).toEqual({ query: "a" });
+    expect(result.stop).toBe(false);
+  });
+
+  it("backspace removes one character from active search query", () => {
+    const state = makeState({
+      view: "sessions",
+      searchActive: true,
+      sessionFilter: { query: "auth" },
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Backspace"));
+    expect(result.state.sessionFilter).toEqual({ query: "aut" });
+  });
+
+  it("q is treated as search input while search is active", () => {
+    const state = makeState({
+      view: "sessions",
+      searchActive: true,
+      sessionFilter: { query: "a" },
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("q"));
+    expect(result.stop).toBe(false);
+    expect(result.state.sessionFilter).toEqual({ query: "aq" });
+  });
+
   it("clears filter on Escape in sessions view", () => {
     const state = makeState({
       view: "sessions",
@@ -553,6 +598,31 @@ describe("handleKeyEvent", () => {
     });
     const result = handleKeyEvent(state, makeKeyEvent("H"));
     expect(result.action).toEqual({ type: "quick-handoff", sessionId: "s1" });
+  });
+
+  it("uses visible sorted sessions for Enter action", () => {
+    const state = makeState({
+      view: "sessions",
+      sessions: [
+        makeSession({ id: "older", title: "Older", updatedAt: "2025-01-10T00:00:00Z" }),
+        makeSession({ id: "newer", title: "Newer", updatedAt: "2025-01-20T00:00:00Z" }),
+      ],
+      sessionSort: { column: "updatedAt", direction: "desc" },
+      selectedSessionIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("Enter"));
+    expect(result.state.selectedSessionId).toBe("newer");
+  });
+
+  it("uses visible filtered sessions for quick handoff", () => {
+    const state = makeState({
+      view: "sessions",
+      sessions: [makeSession({ id: "a", title: "Alpha" }), makeSession({ id: "b", title: "Beta" })],
+      sessionFilter: { query: "bet" },
+      selectedSessionIndex: 0,
+    });
+    const result = handleKeyEvent(state, makeKeyEvent("H"));
+    expect(result.action).toEqual({ type: "quick-handoff", sessionId: "b" });
   });
 
   it("cycles sort on s in sessions view", () => {
@@ -787,6 +857,25 @@ function flattenNodeContent(node: {
   return [node.content ?? "", ...(node.children ?? []).map(flattenNodeContent)].join("");
 }
 
+function findNavItems(vnode: {
+  children?: Array<{
+    children?: Array<{ content?: string; children?: Array<{ content?: string }> }>;
+  }>;
+}): Array<{
+  content?: string;
+  children?: Array<{ content?: string; children?: Array<{ content?: string }> }>;
+}> {
+  const outerCol = vnode.children?.[0];
+  const candidates = outerCol?.children ?? [];
+  const navCol = candidates.find((node) => {
+    const text = flattenNodeContent(node as never);
+    return text.includes("Tools") && text.includes("Sessions") && text.includes("Handoff");
+  }) as
+    | { children?: Array<{ content?: string; children?: Array<{ content?: string }> }> }
+    | undefined;
+  return navCol?.children ?? [];
+}
+
 // ── renderSidebar ─────────────────────────────────────
 
 describe("renderSidebar", () => {
@@ -796,36 +885,37 @@ describe("renderSidebar", () => {
     expect(vnode.type).toBe("box");
   });
 
-  it("marks current view with triangle prefix", () => {
+  it("marks current view with bar prefix", () => {
     const state = makeState({ view: "sessions" });
     const vnode = renderSidebar(mockUi, state) as unknown as {
       children: [{ children: Array<{ content?: string; children?: Array<{ content?: string }> }> }];
     };
-    // Sidebar structure: box > column(outerCol) > [...logoNodes, wordmark, divider, column(navItems), divider, hint]
-    // navItems column is at outerCol.children[8] (6 logo + wordmark + divider = 8 before navCol)
-    const outerCol = vnode.children[0]!;
-    const navCol = outerCol.children[8]!; // column containing nav item richText/box/row nodes
-    const navItems = navCol.children ?? [];
-    // Active item may be wrapped in a box for styling — extract inner content via shared helper
+    const navItems = findNavItems(vnode);
     const toolsText = getSidebarItemText(navItems[0]!);
     const sessionsText = getSidebarItemText(navItems[1]!);
-    expect(toolsText).toMatch(/^ /); // tools not active (space prefix)
-    expect(sessionsText).toMatch(/^\u258C/); // sessions active (▌ bar prefix)
+    expect(toolsText).toMatch(/^[\s▸]/);
+    expect(sessionsText).toMatch(/^[\s▸]/);
+    // Active item (sessions) is wrapped in a box for tinted bg
+    expect((navItems[1] as { type?: string }).type).toBe("box");
+    // Inactive item (tools) is a plain richText node
+    expect((navItems[0] as { type?: string }).type).toBe("richText");
   });
 
-  it("bolds the active view", () => {
+  it("wraps active view in tinted box", () => {
     const state = makeState();
     const vnode = renderSidebar(mockUi, state) as unknown as {
       children: [{ children: Array<{ content?: string; children?: Array<{ content?: string }> }> }];
     };
-    const outerCol = vnode.children[0]!;
-    const navCol = outerCol.children[8]!;
-    const navItems = navCol.children ?? [];
-    // Active item may be wrapped in a box for styling — extract inner content via shared helper
+    const navItems = findNavItems(vnode);
+    // Both items use ▌ prefix — active is wrapped in box, inactive is plain richText
     const toolsText = getSidebarItemText(navItems[0]!);
     const sessionsText = getSidebarItemText(navItems[1]!);
-    expect(toolsText).toMatch(/^\u258C/); // tools is active view (▌ bar prefix)
-    expect(sessionsText).toMatch(/^ /); // sessions not active (space prefix)
+    expect(toolsText).toMatch(/^[\s▸]/);
+    expect(sessionsText).toMatch(/^[\s▸]/);
+    // Active item (tools, default view) is wrapped in box for tinted bg
+    expect((navItems[0] as { type?: string }).type).toBe("box");
+    // Inactive item (sessions) is plain richText
+    expect((navItems[1] as { type?: string }).type).toBe("richText");
   });
 
   it("shows running tool count badge", () => {
@@ -842,9 +932,7 @@ describe("renderSidebar", () => {
         },
       ];
     };
-    const outerCol = vnode.children[0]!;
-    const navCol = outerCol.children[8]!;
-    const navItems = navCol.children ?? [];
+    const navItems = findNavItems(vnode);
     // Active tools item with badge: box > row > [richText, badge]
     // Flatten all nested content to find the badge count
     const toolsItem = navItems[0]!;
@@ -856,14 +944,7 @@ describe("renderSidebar", () => {
     const vnode = renderSidebar(mockUi, state) as unknown as {
       children: [{ children: Array<{ content?: string; children?: Array<{ content?: string }> }> }];
     };
-    const outerCol = vnode.children[0]!;
-    const navCol = outerCol.children[8]!;
-    const navItems =
-      (
-        navCol as unknown as {
-          children?: Array<{ content?: string; children?: Array<{ content?: string }> }>;
-        }
-      ).children ?? [];
+    const navItems = findNavItems(vnode);
     // Flatten all nested content — no "(" bracket from badge
     expect(flattenNodeContent(navItems[0]!)).not.toContain("(");
   });
@@ -1124,25 +1205,25 @@ describe("getContextKeyHints", () => {
 
 // ── renderApp ─────────────────────────────────────────
 
-describe("renderApp", () => {
-  function bodyChildren(vnode: {
-    children?: Array<{
-      children?: Array<{ type?: string; content?: string; props?: { title?: string } }>;
-    }>;
-  }): Array<{
+function bodyChildren(vnode: {
+  children?: Array<{
+    children?: Array<{ type?: string; content?: string; props?: { title?: string } }>;
+  }>;
+}): Array<{
+  type?: string;
+  content?: string;
+  props?: { title?: string };
+  children?: Array<{ content?: string }>;
+}> {
+  return (vnode.children?.[0]?.children ?? []) as Array<{
     type?: string;
     content?: string;
     props?: { title?: string };
     children?: Array<{ content?: string }>;
-  }> {
-    return (vnode.children?.[0]?.children ?? []) as Array<{
-      type?: string;
-      content?: string;
-      props?: { title?: string };
-      children?: Array<{ content?: string }>;
-    }>;
-  }
+  }>;
+}
 
+describe("renderApp", () => {
   it("returns a box as root", () => {
     const state = makeState();
     const vnode = renderApp(mockUi, state) as { type: string };

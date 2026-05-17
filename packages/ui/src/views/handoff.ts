@@ -6,7 +6,6 @@ import {
   SURFACE,
   TEXT,
   COLOR_SEPARATOR,
-  ACTION_SECONDARY_BG,
   dimColor,
   tintBg,
   getIconChar,
@@ -15,26 +14,31 @@ import {
   PADDING,
   GAP,
   PRESETS,
+  TINT,
 } from "../theme.js";
+import {
+  computeSessionColumnWidths,
+  renderSessionRow,
+  renderEmptyState,
+  renderColumnHeaders,
+  renderActionHints,
+  GUTTER_SELECTED,
+  GUTTER_UNSELECTED,
+} from "./utils.js";
 
 export type HandoffViewState = {
   sessions: SessionRow[];
+  loadingSessions: boolean;
   handoffStep: number;
   handoffSessionId: string | null;
   handoffTargetTool: string | null;
   handoffPreview: string | null;
   selectedSessionIndex: number;
   selectedTargetIndex: number;
+  keyOverrides: Record<string, string>;
 };
 
 type HandoffTarget = { id: string; name: string };
-
-type SessionColumnWidths = {
-  tool: number;
-  title: number;
-  msgs: number;
-  updated: number;
-};
 
 const HANDOFF_TARGETS: HandoffTarget[] = [
   { id: "claude", name: "Claude Code" },
@@ -42,41 +46,6 @@ const HANDOFF_TARGETS: HandoffTarget[] = [
   { id: "gemini", name: "Gemini CLI" },
   { id: "opencode", name: "OpenCode" },
 ];
-
-function clamp(value: number, min: number, max: number): number {
-  return Math.max(min, Math.min(max, value));
-}
-
-function shortDate(iso: string): string {
-  return iso.slice(0, 10);
-}
-
-function fitText(text: string, width: number): string {
-  if (width <= 0) return "";
-  if (text.length <= width) return text.padEnd(width);
-  if (width <= 1) return text.slice(0, width);
-  return `${text.slice(0, width - 1)}…`;
-}
-
-function fitTextRight(text: string, width: number): string {
-  if (width <= 0) return "";
-  if (text.length <= width) return text.padStart(width);
-  if (width <= 1) return text.slice(0, width);
-  return `${text.slice(0, width - 1)}…`;
-}
-
-function computeSessionColumnWidths(): SessionColumnWidths {
-  const terminalWidth = process.stdout.columns ?? 120;
-  const estimatedContentWidth = Math.max(72, terminalWidth - 34);
-
-  const tool = clamp(Math.floor(estimatedContentWidth * 0.2), 12, 22);
-  const msgs = 8;
-  const updated = 12;
-  const separators = 6;
-  const title = Math.max(24, estimatedContentWidth - tool - msgs - updated - separators);
-
-  return { tool, title, msgs, updated };
-}
 
 /**
  * Render a rich step-progress indicator as a richText row.
@@ -113,28 +82,6 @@ function renderStepProgress<T>(ui: Pick<UiKit<T>, "richText">, current: number):
 }
 
 /**
- * Key hint chip row.
- */
-function actionHints<T>(
-  ui: Pick<UiKit<T>, "richText">,
-  primary: string,
-  primaryLabel: string,
-  secondary: string,
-  secondaryLabel: string,
-): T {
-  const chipBg = dimColor(BRAND.base, 0.25);
-  return ui.richText([
-    { text: ` ${primary} `, style: { fg: BRAND.accent, bold: true, bg: chipBg } },
-    { text: `:${primaryLabel}  `, style: { fg: TEXT.tertiary } },
-    {
-      text: ` ${secondary} `,
-      style: { fg: TEXT.tertiary, bold: true, bg: ACTION_SECONDARY_BG },
-    },
-    { text: `:${secondaryLabel}`, style: { fg: TEXT.tertiary } },
-  ]);
-}
-
-/**
  * Render the handoff wizard view.
  */
 export function renderHandoffView<T>(ui: UiKit<T>, state: HandoffViewState): T {
@@ -156,117 +103,115 @@ export function renderHandoffView<T>(ui: UiKit<T>, state: HandoffViewState): T {
 }
 
 function renderSessionSelectStep<T>(ui: UiKit<T>, state: HandoffViewState, title: string): T {
+  // ── Loading state ───────────────────────────
+  if (state.loadingSessions) {
+    return ui.box({ ...PRESETS.content, title, style: { bg: SURFACE.base } }, [
+      ui.column({ gap: GAP.tight }, [
+        renderStepProgress(ui, 0),
+        ui.divider({ char: "─" }),
+        ui.spinner({ variant: "dots", label: "  Loading sessions…" }),
+      ]),
+    ]);
+  }
+
+  // ── Empty state (after loading completes) ───────────────────────────
   if (state.sessions.length === 0) {
     return ui.box({ ...PRESETS.content, title, style: { bg: SURFACE.base } }, [
-      ui.text("No sessions available for handoff.", { style: { fg: STATUS.neutral }, dim: true }),
+      ui.column({ gap: GAP.tight }, [
+        renderStepProgress(ui, 0),
+        ui.divider({ char: "─" }),
+        renderEmptyState(ui, getIconChar("nav.sessions"), "No sessions available for handoff", [
+          { text: "Create a session in an AI tool first, then return here." },
+          {
+            spans: [
+              { text: "Press ", style: { fg: TEXT.tertiary } },
+              { text: "Esc", style: { fg: BRAND.accent, bold: true } },
+              { text: " to go back and start a session.", style: { fg: TEXT.tertiary } },
+            ],
+          },
+        ]),
+      ]),
     ]);
   }
 
   const cols = computeSessionColumnWidths();
-  const header = ui.richText([
-    { text: "   " },
-    { text: fitText("Tool", cols.tool), style: { fg: BRAND.base, bold: true } },
-    { text: " │ ", style: { fg: TEXT.secondary } },
-    { text: fitText("Title", cols.title), style: { fg: BRAND.base, bold: true } },
-    { text: " │ ", style: { fg: TEXT.secondary } },
-    { text: fitTextRight("Msgs", cols.msgs), style: { fg: BRAND.base, bold: true } },
-    { text: " │ ", style: { fg: TEXT.secondary } },
-    { text: fitTextRight("Updated", cols.updated), style: { fg: BRAND.base, bold: true } },
+  const header = renderColumnHeaders(ui, [
+    { text: "Tool", width: cols.tool },
+    { text: "Title", width: cols.title },
+    { text: "Msgs", width: cols.msgs, align: "right" },
+    { text: "Updated", width: cols.updated, align: "right" },
   ]);
 
-  const rows = state.sessions.map((s, i) => {
-    const selected = i === state.selectedSessionIndex;
-    const prefix = selected ? "\u25B6" : " ";
-    const icon = getIconChar(getToolIcon(s.tool));
-    const brand = getToolColor(s.tool);
-    const toolText = fitText(`${icon} ${s.tool}`, cols.tool);
-    const titleText = fitText(s.title, cols.title);
-    const msgsText = fitTextRight(String(s.messageCount), cols.msgs);
-    const updatedText = fitTextRight(shortDate(s.updatedAt), cols.updated);
-    const rowBg = i % 2 === 1 ? SURFACE.elevated : undefined;
-
-    if (selected) {
-      const selectedBg = tintBg(brand, 0.15);
-      return ui.box({ style: { bg: selectedBg }, pl: 0 }, [
-        ui.richText([
-          { text: `${prefix} `, style: { fg: brand, bold: true, bg: selectedBg } },
-          { text: toolText, style: { fg: brand, bold: true, bg: selectedBg } },
-          { text: " │ ", style: { fg: TEXT.secondary, bg: selectedBg } },
-          { text: titleText, style: { fg: TEXT.primary, bold: true, bg: selectedBg } },
-          { text: " │ ", style: { fg: TEXT.secondary, bg: selectedBg } },
-          { text: msgsText, style: { fg: BRAND.accent, bold: true, bg: selectedBg } },
-          { text: " │ ", style: { fg: TEXT.secondary, bg: selectedBg } },
-          { text: updatedText, style: { fg: TEXT.tertiary, bg: selectedBg } },
-        ]),
-      ]);
-    }
-
-    if (rowBg) {
-      return ui.box({ style: { bg: rowBg } }, [
-        ui.richText([
-          { text: `${prefix} `, style: { bg: rowBg } },
-          { text: toolText, style: { fg: dimColor(brand, 0.6), bg: rowBg } },
-          { text: " │ ", style: { fg: TEXT.secondary, bg: rowBg } },
-          { text: titleText, style: { fg: STATUS.neutral, bg: rowBg } },
-          { text: " │ ", style: { fg: TEXT.secondary, bg: rowBg } },
-          { text: msgsText, style: { fg: TEXT.tertiary, bg: rowBg } },
-          { text: " │ ", style: { fg: TEXT.secondary, bg: rowBg } },
-          { text: updatedText, style: { fg: TEXT.tertiary, bg: rowBg } },
-        ]),
-      ]);
-    }
-
-    return ui.richText([
-      { text: `${prefix} ` },
-      { text: toolText, style: { fg: dimColor(brand, 0.6) } },
-      { text: " │ ", style: { fg: TEXT.secondary } },
-      { text: titleText, style: { fg: STATUS.neutral } },
-      { text: " │ ", style: { fg: TEXT.secondary } },
-      { text: msgsText, style: { fg: TEXT.tertiary } },
-      { text: " │ ", style: { fg: TEXT.secondary } },
-      { text: updatedText, style: { fg: TEXT.tertiary } },
-    ]);
-  });
+  const rows = state.sessions.map((s, i) =>
+    renderSessionRow(ui, s, i, state.selectedSessionIndex, cols),
+  );
 
   return ui.box(
     { border: PRESETS.card.border, title, p: PADDING.card, flex: 1, style: { bg: SURFACE.base } },
     [
-      ui.column({ gap: GAP.none }, [
+      ui.column({ gap: GAP.tight }, [
         renderStepProgress(ui, 0),
         ui.divider({ char: "─" }),
         ui.text("Select a session to hand off:", { bold: true, style: { fg: TEXT.primary } }),
-        ui.text(""),
         header,
         ui.divider({ char: "─" }),
         ...rows,
         ui.text(""),
-        actionHints(ui, "Enter", "Select", "Esc", "Cancel"),
+        renderActionHints(ui, [
+          ["Enter", "Select"],
+          ["Esc", "Cancel"],
+        ]),
       ]),
     ],
   );
 }
 
 function renderPreviewStep<T>(ui: UiKit<T>, state: HandoffViewState, title: string): T {
+  const isLoading = state.handoffPreview === null;
   const preview = state.handoffPreview ?? "Loading handoff preview...";
-  const previewLines = preview.split("\n").slice(0, 16).join("\n");
-  const previewBg = tintBg(BRAND.base, 0.08);
+  // Reserve rows for chrome (step progress, dividers, headings, action hints) and
+  // use remaining terminal height for preview content.
+  const maxPreviewLines = Math.max(6, (process.stdout.rows ?? 30) - 14);
+  const allLines = preview.split("\n");
+  const truncated = allLines.length > maxPreviewLines;
+  const previewLines =
+    allLines.slice(0, maxPreviewLines).join("\n") + (truncated ? "\n\u2026" : "");
+  const previewBg = SURFACE.elevated;
+
+  const headerSpans: Array<{ text: string; style?: Record<string, unknown> }> = [
+    {
+      text: `${getIconChar("nav.handoff")} `,
+      style: { fg: BRAND.accent, bold: true },
+    },
+    { text: "Handoff Context Preview", style: { fg: TEXT.primary, bold: true } },
+  ];
+  if (!isLoading) {
+    headerSpans.push({
+      text: `  (${allLines.length} lines${truncated ? ", truncated" : ""})`,
+      style: { fg: TEXT.tertiary },
+    });
+  }
 
   return ui.box(
     { border: PRESETS.card.border, title, p: PADDING.card, flex: 1, style: { bg: SURFACE.base } },
     [
-      ui.column({ gap: GAP.none }, [
+      ui.column({ gap: GAP.tight }, [
         renderStepProgress(ui, 1),
         ui.divider({ char: "─" }),
-        ui.text("Handoff Context Preview:", { bold: true, style: { fg: TEXT.primary } }),
+        ui.richText(headerSpans),
         ui.text("Review what will be transferred before selecting a target.", {
           style: { fg: TEXT.tertiary },
         }),
-        ui.text(""),
         ui.box({ style: { bg: previewBg }, p: PADDING.card }, [
-          ui.text(previewLines, { style: { fg: STATUS.warning } }),
+          isLoading
+            ? ui.spinner({ variant: "dots", label: "  Generating context summary…" })
+            : ui.text(previewLines, { style: { fg: TEXT.secondary } }),
         ]),
         ui.text(""),
-        actionHints(ui, "Enter", "Continue", "Esc", "Back"),
+        renderActionHints(ui, [
+          ["Enter", "Continue"],
+          ["Esc", "Back"],
+        ]),
       ]),
     ],
   );
@@ -275,33 +220,47 @@ function renderPreviewStep<T>(ui: UiKit<T>, state: HandoffViewState, title: stri
 function renderTargetSelectStep<T>(ui: UiKit<T>, state: HandoffViewState, title: string): T {
   const rows = HANDOFF_TARGETS.map((target, i) => {
     const selected = i === state.selectedTargetIndex;
-    const prefix = selected ? "\u25B6" : " ";
     const icon = getIconChar(getToolIcon(target.id));
     const color = getToolColor(target.id);
-    const line = ui.richText([
-      { text: `${prefix} `, style: { fg: selected ? color : TEXT.tertiary, bold: selected } },
-      { text: `${icon} `, style: { fg: selected ? color : dimColor(color, 0.65), bold: selected } },
-      {
-        text: target.name,
-        style: { fg: selected ? TEXT.primary : STATUS.neutral, bold: selected },
-      },
+    const rowBg = selected
+      ? tintBg(color, TINT.emphasis)
+      : i % 2 === 1
+        ? SURFACE.elevated
+        : SURFACE.base;
+    const gutterColor = selected ? color : dimColor(color, 0.25);
+
+    return ui.box({ style: { bg: rowBg } }, [
+      ui.richText([
+        {
+          text: selected ? GUTTER_SELECTED : GUTTER_UNSELECTED,
+          style: { fg: gutterColor, bold: selected, bg: rowBg },
+        },
+        {
+          text: `${icon} `,
+          style: { fg: selected ? color : dimColor(color, 0.65), bold: selected, bg: rowBg },
+        },
+        {
+          text: target.name,
+          style: { fg: selected ? TEXT.primary : STATUS.neutral, bold: selected, bg: rowBg },
+        },
+      ]),
     ]);
-    if (!selected) return line;
-    return ui.box({ style: { bg: tintBg(color, 0.15) }, pl: 0 }, [line]);
   });
 
   return ui.box(
     { border: PRESETS.card.border, title, p: PADDING.card, flex: 1, style: { bg: SURFACE.base } },
     [
-      ui.column({ gap: GAP.none }, [
+      ui.column({ gap: GAP.tight }, [
         renderStepProgress(ui, 2),
         ui.divider({ char: "─" }),
         ui.text("Select target tool:", { bold: true, style: { fg: TEXT.primary } }),
         ui.text("Pick where to continue this conversation.", { style: { fg: TEXT.tertiary } }),
-        ui.text(""),
         ...rows,
         ui.text(""),
-        actionHints(ui, "Enter", "Select", "Esc", "Back"),
+        renderActionHints(ui, [
+          ["Enter", "Select"],
+          ["Esc", "Back"],
+        ]),
       ]),
     ],
   );
@@ -311,31 +270,58 @@ function renderConfirmStep<T>(ui: UiKit<T>, state: HandoffViewState, title: stri
   const session = state.sessions.find((s) => s.id === state.handoffSessionId);
   const target = HANDOFF_TARGETS[state.selectedTargetIndex];
   const sessionTitle = session?.title ?? "Unknown";
+  const sessionTool = session?.tool ?? "";
   const targetName = target?.name ?? "Unknown";
   const targetId = target?.id ?? "";
+  const sourceColor = sessionTool ? getToolColor(sessionTool) : STATUS.warning;
   const targetColor = targetId ? getToolColor(targetId) : STATUS.success;
+  const sourceIcon = sessionTool ? getIconChar(getToolIcon(sessionTool)) : "";
+  const targetIcon = targetId ? getIconChar(getToolIcon(targetId)) : "";
   const confirmBg = tintBg(BRAND.base, 0.08);
+  const transferBg = SURFACE.elevated;
 
   return ui.box(
     { border: PRESETS.card.border, title, p: PADDING.card, flex: 1, style: { bg: confirmBg } },
     [
-      ui.column({ gap: GAP.none }, [
+      ui.column({ gap: GAP.tight }, [
         renderStepProgress(ui, 3),
         ui.divider({ char: "─" }),
         ui.text("Confirm Handoff:", { bold: true, style: { fg: TEXT.primary } }),
+        ui.text("Review and confirm the session transfer below.", {
+          style: { fg: TEXT.tertiary },
+        }),
         ui.text(""),
-        ui.richText([
-          { text: "From", style: { fg: TEXT.tertiary } },
-          { text: "  " },
-          { text: sessionTitle, style: { fg: STATUS.warning, bold: true } },
-        ]),
-        ui.richText([
-          { text: "To", style: { fg: TEXT.tertiary } },
-          { text: "    " },
-          { text: targetName, style: { fg: targetColor, bold: true } },
+        ui.box({ style: { bg: transferBg }, p: PADDING.card }, [
+          ui.column({ gap: GAP.tight }, [
+            ui.richText([
+              { text: "From:  ", style: { fg: TEXT.tertiary, bg: transferBg } },
+              {
+                text: sourceIcon ? `${sourceIcon} ` : "",
+                style: { fg: sourceColor, bold: true, bg: transferBg },
+              },
+              { text: sessionTitle, style: { fg: sourceColor, bold: true, bg: transferBg } },
+            ]),
+            ui.richText([
+              {
+                text: `  ${getIconChar("nav.handoff")} `,
+                style: { fg: BRAND.accent, bold: true, bg: transferBg },
+              },
+            ]),
+            ui.richText([
+              { text: "To:    ", style: { fg: TEXT.tertiary, bg: transferBg } },
+              {
+                text: targetIcon ? `${targetIcon} ` : "",
+                style: { fg: targetColor, bold: true, bg: transferBg },
+              },
+              { text: targetName, style: { fg: targetColor, bold: true, bg: transferBg } },
+            ]),
+          ]),
         ]),
         ui.text(""),
-        actionHints(ui, "Enter", "Launch", "Esc", "Cancel"),
+        renderActionHints(ui, [
+          ["Enter", "Launch"],
+          ["Esc", "Cancel"],
+        ]),
       ]),
     ],
   );
@@ -359,6 +345,7 @@ export function getTargetToolId(index: number): string | null {
 /**
  * Get context-sensitive key hints for the handoff view.
  */
-export function getHandoffKeyHints(): string {
+export function getHandoffKeyHints(overrides: Record<string, string>): string {
+  void overrides;
   return "Enter:Next  Esc:Cancel  j/k:Select";
 }

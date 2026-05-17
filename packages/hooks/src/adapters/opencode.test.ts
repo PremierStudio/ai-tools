@@ -261,59 +261,59 @@ describe("OpenCodeAdapter", () => {
 
     it("generates plugin at correct path", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin).toBeDefined();
-      expect(plugin!.path).toBe(".opencode/plugins/ai-hooks-plugin.js");
+      expect(plugin!.path).toBe(".opencode/plugins/ai-tools-hooks-plugin.js");
     });
 
     it("plugin has correct format", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.format).toBe("js");
     });
 
     it("plugin imports from ai-hooks", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain(
-        'import { loadConfig, HookEngine } from "@premierstudio/ai-hooks"',
+        'import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks"',
       );
     });
 
     it("plugin contains DO NOT EDIT warning", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain("DO NOT EDIT");
     });
 
     it("plugin embeds PROJECT_ROOT for worktree safety", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain("const PROJECT_ROOT =");
       expect(plugin!.content).toContain("process.chdir(PROJECT_ROOT)");
     });
 
     it("plugin contains handleHook function", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain("async function handleHook");
     });
 
     it("plugin contains resolveToolBefore function", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain("function resolveToolBefore");
     });
 
     it("plugin contains resolveToolAfter function", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain("function resolveToolAfter");
     });
 
     it("plugin handles tool.execute.before hook entry for shell:before", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"tool.execute.before"');
     });
 
@@ -326,7 +326,7 @@ describe("OpenCodeAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([sessionHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"session.created"');
     });
 
@@ -339,7 +339,7 @@ describe("OpenCodeAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([sessionEndHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"session.idle"');
     });
 
@@ -352,7 +352,7 @@ describe("OpenCodeAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([promptHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"message.updated"');
     });
 
@@ -365,48 +365,48 @@ describe("OpenCodeAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([notifHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"tui.toast.show"');
     });
 
     it("plugin handles blocking for tool.execute.before", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain("blocked");
       expect(plugin!.content).toContain("reason");
     });
 
     it("plugin handles file_write and write tool names", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"file_write"');
       expect(plugin!.content).toContain('"write"');
     });
 
     it("plugin handles file_edit and edit tool names", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"file_edit"');
       expect(plugin!.content).toContain('"edit"');
     });
 
     it("plugin handles file_read and read tool names", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"file_read"');
       expect(plugin!.content).toContain('"read"');
     });
 
     it("plugin handles bash and shell tool names", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"bash"');
       expect(plugin!.content).toContain('"shell"');
     });
 
     it("plugin exports AiHooksPlugin", async () => {
       const configs = await adapter.generate([testHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain("export const AiHooksPlugin");
     });
 
@@ -444,14 +444,14 @@ describe("OpenCodeAdapter", () => {
       const parsed = JSON.parse(pkgJson!.content) as {
         dependencies: Record<string, string>;
       };
-      expect(parsed.dependencies["@premierstudio/ai-hooks"]).toBe("*");
+      expect(parsed.dependencies["@premierstudio/ai-tools-hooks"]).toBe("*");
     });
 
     it("package.json points main to plugin file", async () => {
       const configs = await adapter.generate([testHook]);
       const pkgJson = configs.find((c) => c.path.includes("package.json"));
       const parsed = JSON.parse(pkgJson!.content) as Record<string, unknown>;
-      expect(parsed.main).toBe("ai-hooks-plugin.js");
+      expect(parsed.main).toBe("ai-tools-hooks-plugin.js");
     });
 
     it("deduplicates native events from multiple hooks mapping to same native event", async () => {
@@ -472,7 +472,7 @@ describe("OpenCodeAdapter", () => {
         },
       ];
       const configs = await adapter.generate(hooks);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       // Both map to tool.execute.before, should only appear once
       const matches = plugin!.content.match(/"tool\.execute\.before"/g);
       // It appears in the hook entries once (as a key) plus in the handleHook switch
@@ -491,7 +491,7 @@ describe("OpenCodeAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([multiHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"session.created": async');
       expect(plugin!.content).toContain('"tool.execute.after": async');
       expect(plugin!.content).toContain('"tui.toast.show": async');
@@ -500,7 +500,7 @@ describe("OpenCodeAdapter", () => {
     it("generates config for empty hooks array", async () => {
       const configs = await adapter.generate([]);
       expect(configs).toHaveLength(2);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       // The plugin should have no hook entries
       expect(plugin!.content).toContain("return {");
     });
@@ -514,7 +514,7 @@ describe("OpenCodeAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([fileHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       // file:write maps to both tool.execute.before and file.edited
       expect(plugin!.content).toContain('"tool.execute.before": async');
       expect(plugin!.content).toContain('"file.edited": async');
@@ -529,7 +529,7 @@ describe("OpenCodeAdapter", () => {
         handler: makeHandler(),
       };
       const configs = await adapter.generate([responseHook]);
-      const plugin = configs.find((c) => c.path.includes("ai-hooks-plugin"));
+      const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain('"message.part.updated": async');
     });
   });

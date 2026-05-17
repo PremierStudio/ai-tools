@@ -258,7 +258,7 @@ describe("ClaudeCodeAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
       expect(runner).toBeDefined();
-      expect(runner!.path).toBe(".claude/hooks/ai-hooks-runner.js");
+      expect(runner!.path).toBe(".claude/hooks/ai-tools-hooks-runner.js");
     });
 
     it("runner script has correct format", async () => {
@@ -282,8 +282,12 @@ describe("ClaudeCodeAdapter", () => {
     it("runner script imports from ai-hooks", async () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
-      expect(runner!.content).toContain('import { loadConfig } from "@premierstudio/ai-hooks"');
-      expect(runner!.content).toContain('import { HookEngine } from "@premierstudio/ai-hooks"');
+      expect(runner!.content).toContain(
+        'import { loadConfig } from "@premierstudio/ai-tools-hooks"',
+      );
+      expect(runner!.content).toContain(
+        'import { HookEngine } from "@premierstudio/ai-tools-hooks"',
+      );
     });
 
     it("runner script reads CLAUDE_HOOK_EVENT env var", async () => {
@@ -393,7 +397,7 @@ describe("ClaudeCodeAdapter", () => {
       const entry = preToolUseEntries![0]!;
       expect(entry.hooks).toHaveLength(1);
       expect(entry.hooks[0]!.type).toBe("command");
-      expect(entry.hooks[0]!.command).toContain("ai-hooks-runner.js");
+      expect(entry.hooks[0]!.command).toContain("ai-tools-hooks-runner.js");
       expect(entry.hooks[0]!.timeout).toBe(10);
       expect(entry.hooks[0]!.description).toBe("ai-hooks: PreToolUse");
     });
@@ -565,12 +569,12 @@ describe("ClaudeCodeAdapter", () => {
   describe("uninstall", () => {
     it("removes the runner script", async () => {
       await adapter.uninstall();
-      expect(removeFileSpy).toHaveBeenCalledWith(".claude/hooks/ai-hooks-runner.js");
+      expect(removeFileSpy).toHaveBeenCalledWith(".claude/hooks/ai-tools-hooks-runner.js");
     });
 
-    it("calls removeFile exactly once", async () => {
+    it("calls removeFile for both legacy and current runner names", async () => {
       await adapter.uninstall();
-      expect(removeFileSpy).toHaveBeenCalledTimes(1);
+      expect(removeFileSpy).toHaveBeenCalledTimes(2);
     });
   });
 });

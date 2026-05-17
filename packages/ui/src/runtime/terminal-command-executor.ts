@@ -36,10 +36,20 @@ export function createTerminalCommandExecutor({ app, paneManager }: TerminalComm
       case "close-pane": {
         const state = paneManager.getState();
         if (paneManager.closePane(state.activePaneIndex)) {
+          const remainingPids = new Set(
+            paneManager
+              .getState()
+              .panes.filter((pane) => pane.status === "running")
+              .map((pane) => pane.pid),
+          );
           if (paneManager.getPaneCount() === 0) {
-            app.update((s) => ({ ...s, view: "tools", inputMode: "dashboard" }));
+            app.update((s) => ({ ...s, view: "tools", inputMode: "dashboard", runningTools: [] }));
           } else {
-            app.update((s) => ({ ...s, inputMode: "terminal" }));
+            app.update((s) => ({
+              ...s,
+              inputMode: "terminal",
+              runningTools: s.runningTools.filter((tool) => remainingPids.has(tool.pid)),
+            }));
           }
         }
         break;
@@ -55,13 +65,30 @@ export function createTerminalCommandExecutor({ app, paneManager }: TerminalComm
         app.update((s) => ({ ...s, inputMode: "terminal" }));
         break;
 
-      case "handoff":
-        app.update((s) => ({
-          ...s,
-          inputMode: "terminal",
-          toasts: addToast(s.toasts, "info", "Handoff: not yet wired for live panes"),
-        }));
+      case "handoff": {
+        const pmState = paneManager.getState();
+        const activePane = pmState.panes[pmState.activePaneIndex];
+        app.update((s) => {
+          // Pre-select a session matching the active pane's tool, if any
+          let sessionIndex = 0;
+          if (activePane) {
+            const idx = s.sessions.findIndex((sess) => sess.tool === activePane.toolId);
+            if (idx >= 0) sessionIndex = idx;
+          }
+          return {
+            ...s,
+            view: "handoff",
+            inputMode: "dashboard",
+            handoffStep: 0,
+            handoffSessionId: null,
+            handoffTargetTool: null,
+            handoffPreview: null,
+            selectedSessionIndex: sessionIndex,
+            selectedTargetIndex: 0,
+          };
+        });
         break;
+      }
 
       case "dashboard":
         app.update((s) => ({ ...s, view: "tools", inputMode: "dashboard" }));

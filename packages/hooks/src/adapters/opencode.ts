@@ -124,7 +124,7 @@ class OpenCodeAdapter extends BaseAdapter {
 
     // Generate the OpenCode plugin
     configs.push({
-      path: ".opencode/plugins/ai-hooks-plugin.js",
+      path: ".opencode/plugins/ai-tools-hooks-plugin.js",
       content: this.generatePlugin(neededEvents),
       format: "js",
     });
@@ -138,9 +138,9 @@ class OpenCodeAdapter extends BaseAdapter {
             name: "ai-hooks-opencode-plugin",
             version: "1.0.0",
             type: "module",
-            main: "ai-hooks-plugin.js",
+            main: "ai-tools-hooks-plugin.js",
             dependencies: {
-              "@premierstudio/ai-hooks": "*",
+              "@premierstudio/ai-tools-hooks": "*",
             },
           },
           null,
@@ -162,6 +162,7 @@ class OpenCodeAdapter extends BaseAdapter {
 
   async uninstall(): Promise<void> {
     await this.removeFile(".opencode/plugins/ai-hooks-plugin.js");
+    await this.removeFile(".opencode/plugins/ai-tools-hooks-plugin.js");
     await this.removeFile(".opencode/plugins/package.json");
   }
 
@@ -183,7 +184,7 @@ class OpenCodeAdapter extends BaseAdapter {
  *
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
-import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
+import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks";
 
 const PROJECT_ROOT = "${resolve(process.cwd())}";
 process.chdir(PROJECT_ROOT);

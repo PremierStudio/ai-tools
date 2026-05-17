@@ -19,8 +19,8 @@ export function createInitialState(): AppState {
  * Each tool is detected concurrently; session counts are fetched in parallel too.
  */
 export async function detectTools(): Promise<ToolInfo[]> {
-  const { registry } = await import("@premierstudio/ai-sessions");
-  await import("@premierstudio/ai-sessions/adapters/all");
+  const { registry } = await import("@premierstudio/ai-tools-sessions");
+  await import("@premierstudio/ai-tools-sessions/adapters/all");
 
   const adapterIds = registry.list();
 

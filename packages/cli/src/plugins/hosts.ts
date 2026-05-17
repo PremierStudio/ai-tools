@@ -32,11 +32,11 @@ export const KNOWN_PLUGIN_HOSTS: Record<string, PluginHostInfo> = {
     id: "codex",
     name: "Codex",
     kind: "hybrid",
-    nativeEngineSupport: { mcp: true, skills: true, rules: true, agents: false, hooks: true },
+    nativeEngineSupport: { mcp: true, skills: true, rules: true, agents: true, hooks: true },
     supportsInteractiveApps: false,
     supportsNativeBundles: true,
     notes:
-      "Codex plugins bundle skills, MCP, hooks, and app integrations across the CLI, app, and IDE extension.",
+      "Codex plugins bundle skills, MCP, hooks, app integrations, and project or user custom agents across the CLI, app, and IDE extension.",
   },
   cursor: {
     id: "cursor",
@@ -57,6 +57,16 @@ export const KNOWN_PLUGIN_HOSTS: Record<string, PluginHostInfo> = {
     supportsNativeBundles: true,
     notes:
       "OpenCode ships as a terminal app, desktop app, and IDE extension with first-class MCP support plus a native plugin system.",
+  },
+  "antigravity-cli": {
+    id: "antigravity-cli",
+    name: "Antigravity CLI",
+    kind: "hybrid",
+    nativeEngineSupport: { mcp: true, skills: true, rules: true, agents: true, hooks: true },
+    supportsInteractiveApps: true,
+    supportsNativeBundles: true,
+    notes:
+      "Antigravity CLI supports workspace .agents customizations and native plugins that can bundle skills, agents, rules, MCP servers, and hooks.",
   },
   windsurf: {
     id: "windsurf",

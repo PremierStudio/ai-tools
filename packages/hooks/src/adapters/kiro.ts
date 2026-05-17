@@ -120,7 +120,7 @@ class KiroAdapter extends BaseAdapter {
 
     // Generate the runner script
     configs.push({
-      path: ".kiro/hooks/ai-hooks-runner.js",
+      path: ".kiro/hooks/ai-tools-hooks-runner.js",
       content: this.generateRunner(),
       format: "js",
     });
@@ -130,7 +130,7 @@ class KiroAdapter extends BaseAdapter {
 
     for (const event of neededEvents) {
       const entry: Record<string, unknown> = {
-        command: `node ${resolve(process.cwd(), ".kiro/hooks/ai-hooks-runner.js")}`,
+        command: `node ${resolve(process.cwd(), ".kiro/hooks/ai-tools-hooks-runner.js")}`,
       };
 
       // preToolUse and postToolUse support matchers; use wildcard
@@ -145,7 +145,7 @@ class KiroAdapter extends BaseAdapter {
     }
 
     configs.push({
-      path: ".kiro/hooks/ai-hooks.json",
+      path: ".kiro/hooks/ai-tools-hooks.json",
       content: JSON.stringify({ hooks: hooksConfig }, null, 2) + "\n",
       format: "json",
     });
@@ -164,6 +164,8 @@ class KiroAdapter extends BaseAdapter {
   async uninstall(): Promise<void> {
     await this.removeFile(".kiro/hooks/ai-hooks-runner.js");
     await this.removeFile(".kiro/hooks/ai-hooks.json");
+    await this.removeFile(".kiro/hooks/ai-tools-hooks-runner.js");
+    await this.removeFile(".kiro/hooks/ai-tools-hooks.json");
   }
 
   private generateRunner(): string {
@@ -177,7 +179,7 @@ class KiroAdapter extends BaseAdapter {
  *
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
-import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
+import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks";
 
 const PROJECT_ROOT = "${resolve(process.cwd())}";
 process.chdir(PROJECT_ROOT);

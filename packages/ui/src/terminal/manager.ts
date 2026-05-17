@@ -36,9 +36,9 @@ export class PaneManager {
     };
     this.ptyManager = ptyManager;
     this.termFactory = termFactory;
-    // Terminal content area: full width, minus tab bar (1 row) and status bar (1 row)
+    // Terminal content area dimensions are passed directly by caller.
     this.contentCols = cols;
-    this.contentRows = Math.max(1, rows - 2);
+    this.contentRows = Math.max(1, rows);
   }
 
   /**
@@ -163,7 +163,7 @@ export class PaneManager {
    */
   resize(cols: number, rows: number): void {
     this.contentCols = cols;
-    this.contentRows = Math.max(1, rows - 2);
+    this.contentRows = Math.max(1, rows);
     for (const pane of this.state.panes) {
       resizePane(pane, this.contentCols, this.contentRows);
     }

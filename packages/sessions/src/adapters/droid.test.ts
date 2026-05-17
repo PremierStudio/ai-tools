@@ -124,7 +124,7 @@ describe("DroidSessionAdapter", () => {
         mtime: new Date("2025-01-01T01:00:00Z"),
       } as unknown as Awaited<ReturnType<typeof stat>>);
       vi.mocked(readFile).mockResolvedValue(
-        '{"role":"unknown","content":"skip"}\n' + '{"role":"user","content":"keep"}\n',
+        '{"role":"unknown","content":"skip"}\n{"role":"user","content":"keep"}\n',
       );
 
       const sessions = await adapter.parseSessions();

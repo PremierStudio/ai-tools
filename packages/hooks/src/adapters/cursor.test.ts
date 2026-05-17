@@ -228,7 +228,7 @@ describe("CursorAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
       expect(runner).toBeDefined();
-      expect(runner!.path).toBe(".cursor/hooks/ai-hooks-runner.js");
+      expect(runner!.path).toBe(".cursor/hooks/ai-tools-hooks-runner.js");
     });
 
     it("runner script has correct format", async () => {
@@ -247,7 +247,7 @@ describe("CursorAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
       expect(runner!.content).toContain(
-        'import { loadConfig, HookEngine } from "@premierstudio/ai-hooks"',
+        'import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks"',
       );
     });
 
@@ -381,7 +381,7 @@ describe("CursorAdapter", () => {
       const entry = parsed.hooks.beforeShellExecution;
       expect(entry).toBeDefined();
       expect(entry).toHaveLength(1);
-      expect(entry![0]!.command).toContain("ai-hooks-runner.js");
+      expect(entry![0]!.command).toContain("ai-tools-hooks-runner.js");
       expect(entry![0]!.command).toContain("beforeShellExecution");
     });
 
@@ -392,9 +392,9 @@ describe("CursorAdapter", () => {
         hooks: Record<string, Array<{ command: string }>>;
       };
       const entry = parsed.hooks.beforeShellExecution;
-      expect(entry![0]!.command).toContain("ai-hooks-runner.js beforeShellExecution");
+      expect(entry![0]!.command).toContain("ai-tools-hooks-runner.js beforeShellExecution");
       expect(entry![0]!.command).toMatch(
-        /^node \/.*\.cursor\/hooks\/ai-hooks-runner\.js beforeShellExecution$/,
+        /^node \/.*\.cursor\/hooks\/ai-tools-hooks-runner\.js beforeShellExecution$/,
       );
     });
 

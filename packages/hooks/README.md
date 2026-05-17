@@ -2,12 +2,12 @@
 
 ![Node.js >=22](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
-![100% Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![Coverage Gate >=80%](https://img.shields.io/badge/coverage_gate-%3E%3D80%25-brightgreen)
 ![License MIT](https://img.shields.io/badge/license-MIT-16A34A)
 
 **Universal hook engine for AI coding tools. Write policy once — enforce it everywhere, or let external systems drive it.**
 
-`ai-hooks` is an open-source framework for portable guardrails, audit trails, and runtime control across AI coding tools. Define hooks in one config and they work everywhere — Claude Code, Codex, Gemini CLI, Cursor, Kiro, Cline, and more. Or use it as a library to let external platforms programmatically steer the AI client a developer is using.
+`ai-hooks` is an open-source framework for portable guardrails, audit trails, and runtime control across AI coding tools. Define hooks in one config and they work everywhere the hooks adapter is implemented — Claude Code, Codex, legacy Gemini CLI, Cursor, Kiro, Cline, and more. Or use it as a library to let external platforms programmatically steer the AI client a developer is using.
 
 ## The problem
 
@@ -35,8 +35,8 @@ graph TD
 
     subgraph native ["Hook-compatible clients — blocking + observation"]
         CC["Claude Code"]
-        Codex["Codex CLI"]
-        Gemini["Gemini CLI"]
+        Codex["Codex"]
+        Gemini["Gemini CLI<br/>(legacy)"]
         Cursor["Cursor"]
         Kiro["Kiro"]
         OC["OpenCode"]
@@ -59,17 +59,17 @@ graph TD
 
 ## Supported tools
 
-| Tool                                                          | Blocking | Observation | Events |
-| ------------------------------------------------------------- | -------- | ----------- | ------ |
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | Yes      | Yes         | 13     |
-| [Codex CLI](https://github.com/openai/codex)                  | Yes      | Yes         | 13     |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli)     | Yes      | Yes         | 13     |
-| [Cursor](https://cursor.com)                                  | Yes      | Yes         | 9      |
-| [Kiro](https://kiro.dev)                                      | Yes      | Yes         | 14     |
-| [OpenCode](https://opencode.ai)                               | Yes      | Yes         | 13     |
-| [Factory Droid](https://factory.ai)                           | Yes      | Yes         | 9      |
-| [Amp](https://ampcode.com)                                    | Yes      | Yes         | 2      |
-| [Cline](https://cline.bot)                                    | Yes      | Yes         | 7      |
+| Tool                                                             | Blocking | Observation | Events |
+| ---------------------------------------------------------------- | -------- | ----------- | ------ |
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code)    | Yes      | Yes         | 13     |
+| [Codex](https://openai.com/codex/)                               | Yes      | Yes         | 13     |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) legacy | Yes      | Yes         | 13     |
+| [Cursor](https://cursor.com)                                     | Yes      | Yes         | 9      |
+| [Kiro](https://kiro.dev)                                         | Yes      | Yes         | 14     |
+| [OpenCode](https://opencode.ai)                                  | Yes      | Yes         | 13     |
+| [Factory Droid](https://factory.ai)                              | Yes      | Yes         | 9      |
+| [Amp](https://ampcode.com)                                       | Yes      | Yes         | 2      |
+| [Cline](https://cline.bot)                                       | Yes      | Yes         | 7      |
 
 ### Compatible tools (no separate adapter needed)
 
@@ -81,7 +81,7 @@ graph TD
 
 ```bash
 # Install
-npm i -D @premierstudio/ai-hooks
+npm i -D @premierstudio/ai-tools-hooks
 
 # Initialize config
 npx ai-hooks init
@@ -96,7 +96,7 @@ npx ai-hooks install
 
 ```ts
 // ai-hooks.config.ts
-import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-hooks";
+import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-tools-hooks";
 
 export default defineConfig({
   extends: [{ hooks: builtinHooks }],
@@ -151,7 +151,7 @@ ai-hooks ships with 4 hooks you can use immediately:
 If you're building a platform that orchestrates AI agents — a PM tool, CI system, or custom control plane — import the engine directly:
 
 ```ts
-import { HookEngine, builtinHooks } from "@premierstudio/ai-hooks";
+import { HookEngine, builtinHooks } from "@premierstudio/ai-tools-hooks";
 
 const engine = new HookEngine({
   hooks: builtinHooks,
@@ -169,15 +169,15 @@ This gives your platform a standard interface for controlling what AI agents can
 
 ## Packages
 
-| Package                    | Description                                                               |
-| -------------------------- | ------------------------------------------------------------------------- |
-| `@premierstudio/ai-hooks`  | Core engine, 9 built-in adapters, CLI, types, config loader               |
-| `@premierstudio/plannable` | CLI + preset for connecting AI tools to [Plannable](https://plannable.ai) |
+| Package                         | Description                                                                           |
+| ------------------------------- | ------------------------------------------------------------------------------------- |
+| `@premierstudio/ai-tools-hooks` | Core engine, 9 built-in adapters, CLI, types, config loader                           |
+| Internal workspaces             | Additional engines, adapters, and packaging support used by `@premierstudio/ai-tools` |
 
 ## Development
 
 ```bash
-git clone https://github.com/PremierStudio/ai-hooks.git
+git clone https://github.com/PremierStudio/ai-tools-hooks.git
 cd ai-hooks
 npm install
 npm run check   # lint + format + typecheck + test

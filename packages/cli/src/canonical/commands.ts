@@ -13,11 +13,27 @@ type EngineModule = {
 };
 
 const ENGINES: EngineModule[] = [
-  { name: "hooks", pkg: "@premierstudio/ai-hooks/cli", configPkg: "@premierstudio/ai-hooks" },
-  { name: "mcp", pkg: "@premierstudio/ai-mcp/cli", configPkg: "@premierstudio/ai-mcp" },
-  { name: "skills", pkg: "@premierstudio/ai-skills/cli", configPkg: "@premierstudio/ai-skills" },
-  { name: "agents", pkg: "@premierstudio/ai-agents/cli", configPkg: "@premierstudio/ai-agents" },
-  { name: "rules", pkg: "@premierstudio/ai-rules/cli", configPkg: "@premierstudio/ai-rules" },
+  {
+    name: "hooks",
+    pkg: "@premierstudio/ai-tools-hooks/cli",
+    configPkg: "@premierstudio/ai-tools-hooks",
+  },
+  { name: "mcp", pkg: "@premierstudio/ai-tools-mcp/cli", configPkg: "@premierstudio/ai-tools-mcp" },
+  {
+    name: "skills",
+    pkg: "@premierstudio/ai-tools-skills/cli",
+    configPkg: "@premierstudio/ai-tools-skills",
+  },
+  {
+    name: "agents",
+    pkg: "@premierstudio/ai-tools-agents/cli",
+    configPkg: "@premierstudio/ai-tools-agents",
+  },
+  {
+    name: "rules",
+    pkg: "@premierstudio/ai-tools-rules/cli",
+    configPkg: "@premierstudio/ai-tools-rules",
+  },
 ];
 
 const TOOL_DIRS = [

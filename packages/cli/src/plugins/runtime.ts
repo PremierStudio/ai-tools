@@ -66,21 +66,21 @@ async function loadSideEffectModule(packageName: string): Promise<void> {
 
 export async function loadEngineRegistries(): Promise<EngineRegistries> {
   const adapterAllPackages = [
-    "@premierstudio/ai-mcp/adapters/all",
-    "@premierstudio/ai-skills/adapters/all",
-    "@premierstudio/ai-rules/adapters/all",
-    "@premierstudio/ai-agents/adapters/all",
-    "@premierstudio/ai-hooks/adapters/all",
+    "@premierstudio/ai-tools-mcp/adapters/all",
+    "@premierstudio/ai-tools-skills/adapters/all",
+    "@premierstudio/ai-tools-rules/adapters/all",
+    "@premierstudio/ai-tools-agents/adapters/all",
+    "@premierstudio/ai-tools-hooks/adapters/all",
   ];
 
   await Promise.all(adapterAllPackages.map((pkg) => loadSideEffectModule(pkg)));
 
   const [mcp, skills, rules, agents, hooks] = await Promise.all([
-    loadRegistryModule<McpAdapter>("@premierstudio/ai-mcp"),
-    loadRegistryModule<SkillsAdapter>("@premierstudio/ai-skills"),
-    loadRegistryModule<RulesAdapter>("@premierstudio/ai-rules"),
-    loadRegistryModule<AgentsAdapter>("@premierstudio/ai-agents"),
-    loadRegistryModule<HooksAdapter>("@premierstudio/ai-hooks"),
+    loadRegistryModule<McpAdapter>("@premierstudio/ai-tools-mcp"),
+    loadRegistryModule<SkillsAdapter>("@premierstudio/ai-tools-skills"),
+    loadRegistryModule<RulesAdapter>("@premierstudio/ai-tools-rules"),
+    loadRegistryModule<AgentsAdapter>("@premierstudio/ai-tools-agents"),
+    loadRegistryModule<HooksAdapter>("@premierstudio/ai-tools-hooks"),
   ]);
 
   return {

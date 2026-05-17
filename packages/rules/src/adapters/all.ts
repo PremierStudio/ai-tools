@@ -1,3 +1,4 @@
+import "./antigravity-cli.js";
 import "./claude-code.js";
 import "./cursor.js";
 import "./cline.js";

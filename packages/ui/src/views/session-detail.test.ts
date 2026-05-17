@@ -20,6 +20,7 @@ function makeState(overrides: Partial<SessionDetailState> = {}): SessionDetailSt
   return {
     sessions: [],
     selectedSessionId: null,
+    keyOverrides: {},
     ...overrides,
   };
 }
@@ -49,7 +50,7 @@ describe("renderSessionDetailView", () => {
     const vnode = renderSessionDetailView(mockUi, state) as unknown as AnyNode;
     expect(String(vnode.props?.title)).toBe("Session Detail");
     const texts = allText(vnode);
-    expect(texts.some((t) => t.includes("Session not found."))).toBe(true);
+    expect(texts.some((t) => t.includes("Session not found"))).toBe(true);
   });
 
   it("shows not found when session ID does not match", () => {
@@ -59,7 +60,7 @@ describe("renderSessionDetailView", () => {
     });
     const vnode = renderSessionDetailView(mockUi, state) as unknown as AnyNode;
     const texts = allText(vnode);
-    expect(texts.some((t) => t.includes("Session not found."))).toBe(true);
+    expect(texts.some((t) => t.includes("Session not found"))).toBe(true);
   });
 
   it("renders session title in box title", () => {
@@ -128,9 +129,15 @@ describe("renderSessionDetailView", () => {
 
 describe("getSessionDetailKeyHints", () => {
   it("returns key hint string", () => {
-    const hints = getSessionDetailKeyHints();
+    const hints = getSessionDetailKeyHints({});
     expect(hints).toContain("h:Handoff");
     expect(hints).toContain("Enter:Continue");
     expect(hints).toContain("Backspace:Back");
+  });
+
+  it("respects key overrides", () => {
+    const hints = getSessionDetailKeyHints({ "detail-handoff": "H" });
+    expect(hints).toContain("H:Handoff");
+    expect(hints).not.toContain("h:Handoff");
   });
 });

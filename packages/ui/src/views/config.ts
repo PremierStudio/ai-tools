@@ -1,5 +1,6 @@
 import type { UiKit } from "../types.js";
-import type { EngineStatus } from "../widgets/config-dashboard.js";
+import type { EngineStatus, ToolDeployment, ManifestHealth } from "../widgets/config-dashboard.js";
+import type { ConfigLastAction } from "../runtime/state.js";
 import {
   BRAND,
   STATUS,
@@ -10,13 +11,30 @@ import {
   PADDING,
   GAP,
   PRESETS,
+  TINT,
 } from "../theme.js";
+import {
+  fitText,
+  renderEmptyState,
+  renderActionHints,
+  renderColumnHeaders,
+  computeConfigColumnWidths,
+  resolveHints,
+  resolveKeyHint,
+  GUTTER_SELECTED,
+  GUTTER_UNSELECTED,
+} from "./utils.js";
 
 export type ConfigViewState = {
   engines: EngineStatus[];
+  deployments: ToolDeployment[];
+  manifestHealth: ManifestHealth;
   mode: string;
   configHealth: string;
   loadingConfig: boolean;
+  configSelectedIndex: number;
+  configLastAction: ConfigLastAction | null;
+  keyOverrides: Record<string, string>;
 };
 
 function hColor(health: string): { r: number; g: number; b: number } {
@@ -35,30 +53,61 @@ function hCalloutVariant(health: string): string {
   return "info";
 }
 
-const TITLE = `  ${getIconChar("nav.config")} Config  [g:Generate  i:Install  r:Refresh]  `;
+function deploymentStatusColor(status: ToolDeployment["status"]): {
+  r: number;
+  g: number;
+  b: number;
+} {
+  switch (status) {
+    case "linked":
+    case "direct":
+      return STATUS.success;
+    case "stale":
+      return STATUS.warning;
+    case "missing":
+      return STATUS.error;
+  }
+}
 
-function fitText(text: string, width: number): string {
-  if (width <= 0) return "";
-  if (text.length <= width) return text.padEnd(width);
-  if (width <= 1) return text.slice(0, width);
-  return `${text.slice(0, width - 1)}…`;
+function buildConfigTitle(overrides: Record<string, string>): string {
+  const g = resolveKeyHint("config-generate", overrides, "g");
+  const i = resolveKeyHint("config-install", overrides, "i");
+  const s = resolveKeyHint("config-sync", overrides, "s");
+  const d = resolveKeyHint("config-detect", overrides, "d");
+  const r = resolveKeyHint("config-refresh", overrides, "r");
+  return `  ${getIconChar("nav.config")} Config  [${g}:Generate  ${i}:Install  ${s}:Sync  ${d}:Detect  ${r}:Refresh]  `;
 }
 
 /**
  * Render the config dashboard.
  */
 export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
+  const title = buildConfigTitle(state.keyOverrides);
+
   // ── Loading state ───────────────────────────
   if (state.loadingConfig) {
-    return ui.box({ ...PRESETS.content, title: TITLE, style: { bg: SURFACE.base } }, [
+    return ui.box({ ...PRESETS.content, title, style: { bg: SURFACE.base } }, [
       ui.spinner({ variant: "dots", label: "Loading config…" }),
     ]);
   }
 
   // ── Empty state ───────────────────────────
+  const genKey = resolveKeyHint("config-generate", state.keyOverrides, "g");
+  const instKey = resolveKeyHint("config-install", state.keyOverrides, "i");
   if (state.engines.length === 0) {
-    return ui.box({ ...PRESETS.content, title: TITLE, style: { bg: SURFACE.base } }, [
-      ui.text("No engines found.", { style: { fg: TEXT.tertiary }, dim: true }),
+    return ui.box({ ...PRESETS.content, title, style: { bg: SURFACE.base } }, [
+      renderEmptyState(ui, getIconChar("nav.config"), "No engines found", [
+        { text: "Ensure your AI tools are installed and configuration files exist." },
+        {
+          spans: [
+            { text: "Press ", style: { fg: TEXT.tertiary } },
+            { text: genKey, style: { fg: BRAND.accent, bold: true } },
+            { text: " to generate config or ", style: { fg: TEXT.tertiary } },
+            { text: instKey, style: { fg: BRAND.accent, bold: true } },
+            { text: " to install engines.", style: { fg: TEXT.tertiary } },
+          ],
+        },
+      ]),
     ]);
   }
 
@@ -67,71 +116,28 @@ export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
   const health = state.configHealth;
   const color = hColor(health);
   const calloutVariant = hCalloutVariant(health);
+  const mh = state.manifestHealth;
 
   // ── Health summary callout ──────────────────────────
-  const healthCallout = ui.callout(
+  const calloutParts = [
     `${health}  ·  ${state.mode} mode  ·  ${configuredCount}/${total} engines configured`,
-    { variant: calloutVariant },
-  );
+  ];
+  if (mh.exists) {
+    calloutParts.push(`  ·  ${mh.entryCount} deployments`);
+    if (mh.staleCount > 0) calloutParts.push(` (${mh.staleCount} stale)`);
+    if (mh.missingCount > 0) calloutParts.push(` (${mh.missingCount} missing)`);
+  }
+  const healthCallout = ui.callout(calloutParts.join(""), { variant: calloutVariant });
 
-  const contentWidth = Math.max(70, (process.stdout.columns ?? 120) - 36);
-  const colEngine = Math.max(14, Math.floor(contentWidth * 0.25));
-  const colStatus = Math.max(18, Math.floor(contentWidth * 0.2));
-  const colDetail = Math.max(20, contentWidth - colEngine - colStatus - 6);
+  const { engine: colEngine, status: colStatus, detail: colDetail } = computeConfigColumnWidths();
 
-  const tableHeader = ui.richText([
-    { text: "  " },
-    { text: fitText("Engine", colEngine), style: { fg: BRAND.base, bold: true } },
-    { text: " │ ", style: { fg: TEXT.tertiary } },
-    { text: fitText("Status", colStatus), style: { fg: BRAND.base, bold: true } },
-    { text: " │ ", style: { fg: TEXT.tertiary } },
-    { text: fitText("Detail", colDetail), style: { fg: BRAND.base, bold: true } },
-  ]);
-
-  // ── Per-engine rows ───────────────────────────
-  const engineRows: T[] = state.engines.map((e, index) => {
-    const dotColor = e.configured ? STATUS.success : e.error ? STATUS.error : TEXT.tertiary;
-    const statusText = e.configured ? "configured" : e.error ? "error" : "not configured";
-    const detailText = e.error ? `error: ${e.error}` : e.configured ? "ready" : "not configured";
-    const rowBg = index % 2 === 1 ? SURFACE.elevated : undefined;
-    const baseLine = ui.richText([
-      { text: "  ", style: rowBg ? { bg: rowBg } : undefined },
-      {
-        text: fitText(
-          `${e.configured ? getIconChar("nav.sessions") : getIconChar("status.inactive")} ${e.engine}`,
-          colEngine,
-        ),
-        style: {
-          fg: e.configured ? BRAND.base : TEXT.secondary,
-          bg: rowBg,
-          bold: e.configured,
-        },
-      },
-      { text: " │ ", style: { fg: TEXT.tertiary, bg: rowBg } },
-      {
-        text: fitText(statusText, colStatus),
-        style: { fg: dotColor, bg: rowBg, bold: e.configured || Boolean(e.error) },
-      },
-      { text: " │ ", style: { fg: TEXT.tertiary, bg: rowBg } },
-      {
-        text: fitText(detailText, colDetail),
-        style: { fg: TEXT.tertiary, bg: rowBg },
-      },
-    ]);
-
-    if (rowBg) {
-      return ui.box({ style: { bg: rowBg } }, [baseLine]);
-    }
-    return baseLine;
-  });
-
-  // ── Mode + session stats summary ────────────────────
-  const summary = ui.richText([
+  // ── Stats bar ──────────────────────────────────────
+  const statsSpans: { text: string; style: Record<string, unknown> }[] = [
     { text: "Mode  ", style: { fg: STATUS.neutral } },
     { text: state.mode, style: { fg: STATUS.info, bold: true } },
-    { text: "  │  Health  ", style: { fg: STATUS.neutral } },
+    { text: " │ Health  ", style: { fg: STATUS.neutral } },
     { text: health, style: { fg: color, bold: true } },
-    { text: "  │  Engines  ", style: { fg: STATUS.neutral } },
+    { text: " │ Engines  ", style: { fg: STATUS.neutral } },
     {
       text: `${configuredCount}/${total}`,
       style: {
@@ -139,24 +145,198 @@ export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
         bold: true,
       },
     },
+    { text: " │ Deployments  ", style: { fg: STATUS.neutral } },
+    { text: `${mh.entryCount}`, style: { fg: TEXT.primary, bold: true } },
+  ];
+  if (mh.staleCount > 0) {
+    statsSpans.push(
+      { text: " │ Stale  ", style: { fg: STATUS.neutral } },
+      { text: `${mh.staleCount}`, style: { fg: STATUS.warning, bold: true } },
+    );
+  }
+  if (mh.missingCount > 0) {
+    statsSpans.push(
+      { text: " │ Missing  ", style: { fg: STATUS.neutral } },
+      { text: `${mh.missingCount}`, style: { fg: STATUS.error, bold: true } },
+    );
+  }
+  const summary = ui.richText(statsSpans);
+
+  const tableHeader = renderColumnHeaders(ui, [
+    { text: "Engine", width: colEngine },
+    { text: "Status", width: colStatus },
+    { text: "Detail", width: colDetail },
   ]);
 
+  // ── Per-engine rows with j/k selection highlighting ───────────
+  const engineRows: T[] = state.engines.map((e, index) => {
+    const isSelected = index === state.configSelectedIndex;
+    const dotColor = e.configured ? STATUS.success : e.error ? STATUS.error : TEXT.tertiary;
+    const statusText = e.configured ? "configured" : e.error ? "error" : "not configured";
+    const detailText = e.configPath
+      ? e.configPath.replace(process.cwd() + "/", "")
+      : e.error
+        ? `error: ${e.error}`
+        : e.configured
+          ? "ready"
+          : "not configured";
+    const isOdd = index % 2 === 1;
+    const rowBg = isSelected
+      ? tintBg(BRAND.accent, TINT.emphasis)
+      : e.configured
+        ? tintBg(STATUS.success, isOdd ? 0.06 : 0.03)
+        : isOdd
+          ? SURFACE.elevated
+          : SURFACE.base;
+    const statusIcon = e.configured
+      ? getIconChar("status.success")
+      : e.error
+        ? getIconChar("status.error")
+        : getIconChar("status.inactive");
+    const gutterColor = isSelected ? BRAND.accent : SURFACE.base;
+
+    return ui.box({ style: { bg: rowBg } }, [
+      ui.richText([
+        {
+          text: isSelected ? GUTTER_SELECTED : GUTTER_UNSELECTED,
+          style: { fg: gutterColor, bg: rowBg, bold: true },
+        },
+        {
+          text: fitText(`${statusIcon} ${e.engine}`, colEngine),
+          style: {
+            fg: e.configured ? BRAND.base : TEXT.secondary,
+            bg: rowBg,
+            bold: e.configured || isSelected,
+          },
+        },
+        { text: " \u2502 ", style: { fg: TEXT.tertiary, bg: rowBg } },
+        {
+          text: fitText(statusText, colStatus),
+          style: { fg: dotColor, bg: rowBg, bold: e.configured || Boolean(e.error) },
+        },
+        { text: " \u2502 ", style: { fg: TEXT.tertiary, bg: rowBg } },
+        {
+          text: fitText(detailText, colDetail),
+          style: { fg: e.configured ? STATUS.neutral : TEXT.tertiary, bg: rowBg },
+        },
+      ]),
+    ]);
+  });
+
+  // ── Deployments table (canonical mode) ────────────────────
+  const deploymentsSection: T[] = [];
+  if (state.deployments.length > 0) {
+    const deployContentWidth = Math.max(70, (process.stdout.columns ?? 120) - 36);
+    const colAdapter = Math.max(16, Math.floor(deployContentWidth * 0.2));
+    const colTarget = Math.max(30, Math.floor(deployContentWidth * 0.4));
+    const colStrategy = Math.max(12, Math.floor(deployContentWidth * 0.15));
+    const colDeployStatus = Math.max(
+      10,
+      deployContentWidth - colAdapter - colTarget - colStrategy - 10,
+    );
+
+    deploymentsSection.push(
+      ui.divider(),
+      ui.richText([
+        { text: "Deployments", style: { fg: BRAND.base, bold: true } },
+        {
+          text: `  (${state.deployments.length} targets)`,
+          style: { fg: TEXT.tertiary },
+        },
+      ]),
+      ui.richText([
+        { text: "  " },
+        { text: fitText("Adapter", colAdapter), style: { fg: BRAND.base, bold: true } },
+        { text: " │ ", style: { fg: TEXT.tertiary } },
+        { text: fitText("Target", colTarget), style: { fg: BRAND.base, bold: true } },
+        { text: " │ ", style: { fg: TEXT.tertiary } },
+        { text: fitText("Strategy", colStrategy), style: { fg: BRAND.base, bold: true } },
+        { text: " │ ", style: { fg: TEXT.tertiary } },
+        { text: fitText("Status", colDeployStatus), style: { fg: BRAND.base, bold: true } },
+      ]),
+      ui.divider({ char: "─" }),
+    );
+
+    const deployRows: T[] = state.deployments.map((d, index) => {
+      const isOdd = index % 2 === 1;
+      const dColor = deploymentStatusColor(d.status);
+      const rowBg = isOdd ? SURFACE.elevated : SURFACE.base;
+      const statusIcon =
+        d.status === "linked" || d.status === "direct"
+          ? getIconChar("status.success")
+          : d.status === "stale"
+            ? getIconChar("status.stale")
+            : getIconChar("status.error");
+      const shortTarget = d.targetPath.replace(process.cwd() + "/", "");
+
+      return ui.box({ style: { bg: rowBg } }, [
+        ui.richText([
+          { text: "  ", style: { bg: rowBg } },
+          {
+            text: fitText(d.adapterId, colAdapter),
+            style: { fg: TEXT.primary, bg: rowBg },
+          },
+          { text: " \u2502 ", style: { fg: TEXT.tertiary, bg: rowBg } },
+          {
+            text: fitText(shortTarget, colTarget),
+            style: { fg: TEXT.secondary, bg: rowBg },
+          },
+          { text: " \u2502 ", style: { fg: TEXT.tertiary, bg: rowBg } },
+          {
+            text: fitText(d.strategy, colStrategy),
+            style: { fg: TEXT.tertiary, bg: rowBg },
+          },
+          { text: " \u2502 ", style: { fg: TEXT.tertiary, bg: rowBg } },
+          {
+            text: fitText(`${statusIcon} ${d.status}`, colDeployStatus),
+            style: { fg: dColor, bg: rowBg, bold: true },
+          },
+        ]),
+      ]);
+    });
+    deploymentsSection.push(ui.column({ gap: GAP.none }, deployRows));
+  }
+
+  // ── Action feedback ────────────────────────────────
+  const feedbackSection: T[] = [];
+  if (state.configLastAction) {
+    const feedbackColor =
+      state.configLastAction.result === "success" ? STATUS.success : STATUS.error;
+    const feedbackIcon =
+      state.configLastAction.result === "success"
+        ? getIconChar("status.success")
+        : getIconChar("status.error");
+    feedbackSection.push(
+      ui.richText([
+        { text: ` ${feedbackIcon} `, style: { fg: feedbackColor, bold: true } },
+        {
+          text: `${state.configLastAction.type}: ${state.configLastAction.message}`,
+          style: { fg: feedbackColor },
+        },
+      ]),
+    );
+  }
+
   // ── Actions hint ────────────────────────────────────
-  const actionsHint = ui.richText([
-    { text: "g", style: { fg: BRAND.base, bold: true } },
-    { text: ":Generate  ", style: { fg: TEXT.tertiary } },
-    { text: "i", style: { fg: BRAND.base, bold: true } },
-    { text: ":Install  ", style: { fg: TEXT.tertiary } },
-    { text: "r", style: { fg: BRAND.base, bold: true } },
-    { text: ":Refresh  ", style: { fg: TEXT.tertiary } },
-    { text: "e", style: { fg: BRAND.base, bold: true } },
-    { text: ":$EDITOR", style: { fg: TEXT.tertiary } },
-  ]);
+  const actionsHint = renderActionHints(
+    ui,
+    resolveHints(
+      [
+        ["config-generate", "Generate", "g"],
+        ["config-install", "Install", "i"],
+        ["config-sync", "Sync", "s"],
+        ["config-detect", "Detect", "d"],
+        ["config-refresh", "Refresh", "r"],
+        ["config-editor", "$EDITOR", "e"],
+      ],
+      state.keyOverrides,
+    ),
+  );
 
   return ui.box(
     {
-      border: PRESETS.card.border,
-      title: TITLE,
+      border: PRESETS.content.border,
+      title,
       p: PADDING.card,
       flex: 1,
       style: { bg: SURFACE.base },
@@ -176,15 +356,8 @@ export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
         tableHeader,
         ui.divider({ char: "─" }),
         ui.column({ gap: GAP.none }, engineRows),
-        ui.box({ style: { bg: tintBg(BRAND.base, 0.08) }, p: PADDING.card }, [
-          ui.richText([
-            { text: "Tip: ", style: { fg: TEXT.primary, bold: true } },
-            {
-              text: "Use g to generate, i to install, and r to re-check health quickly.",
-              style: { fg: TEXT.tertiary },
-            },
-          ]),
-        ]),
+        ...deploymentsSection,
+        ...feedbackSection,
         ui.divider(),
         actionsHint,
       ]),
@@ -192,6 +365,18 @@ export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
   );
 }
 
-export function getConfigKeyHints(): string {
-  return "g:Generate  i:Install  r:Refresh  e:$EDITOR";
+export function getConfigKeyHints(overrides: Record<string, string>): string {
+  return resolveHints(
+    [
+      ["config-generate", "Generate", "g"],
+      ["config-install", "Install", "i"],
+      ["config-sync", "Sync", "s"],
+      ["config-detect", "Detect", "d"],
+      ["config-refresh", "Refresh", "r"],
+      ["config-editor", "$EDITOR", "e"],
+    ],
+    overrides,
+  )
+    .map(([k, l]) => `${k}:${l}`)
+    .join("  ");
 }

@@ -1,6 +1,7 @@
 {
-  "name": "@premierstudio/ai-skills",
+  "name": "@premierstudio/ai-tools-skills",
   "version": "1.1.8",
+  "private": true,
   "description": "Universal skills/prompts configuration for AI coding tools",
   "license": "MIT",
   "repository": {
@@ -8,7 +9,7 @@
     "url": "https://github.com/PremierStudio/ai-tools"
   },
   "bin": {
-    "ai-skills": "dist/cli/bin.js"
+    "ai-tools-skills": "dist/cli/bin.js"
   },
   "files": [
     "dist",

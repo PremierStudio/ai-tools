@@ -23,6 +23,22 @@ export async function triggerInstall(): Promise<string> {
 }
 
 /**
+ * Trigger the canonical sync command.
+ * Returns a promise that resolves with stdout or rejects with stderr.
+ */
+export async function triggerSync(): Promise<string> {
+  return execCommand("npx", ["ai-tools", "sync"]);
+}
+
+/**
+ * Trigger the canonical detect command.
+ * Returns a promise that resolves with stdout or rejects with stderr.
+ */
+export async function triggerDetect(): Promise<string> {
+  return execCommand("npx", ["ai-tools", "detect"]);
+}
+
+/**
  * Check the .ai-tools/ directory status.
  */
 export async function getCanonicalStatus(): Promise<CanonicalStatus> {

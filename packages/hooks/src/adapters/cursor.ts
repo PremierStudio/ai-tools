@@ -100,7 +100,7 @@ class CursorAdapter extends BaseAdapter {
 
     // Generate the runner script
     configs.push({
-      path: ".cursor/hooks/ai-hooks-runner.js",
+      path: ".cursor/hooks/ai-tools-hooks-runner.js",
       content: this.generateRunner(),
       format: "js",
     });
@@ -113,7 +113,7 @@ class CursorAdapter extends BaseAdapter {
         hooksConfig[event] = [];
       }
       hooksConfig[event].push({
-        command: `node ${resolve(process.cwd(), ".cursor/hooks/ai-hooks-runner.js")} ${event}`,
+        command: `node ${resolve(process.cwd(), ".cursor/hooks/ai-tools-hooks-runner.js")} ${event}`,
       });
     }
 
@@ -136,6 +136,7 @@ class CursorAdapter extends BaseAdapter {
 
   async uninstall(): Promise<void> {
     await this.removeFile(".cursor/hooks/ai-hooks-runner.js");
+    await this.removeFile(".cursor/hooks/ai-tools-hooks-runner.js");
     await this.removeFile(".cursor/hooks.json");
   }
 
@@ -151,7 +152,7 @@ class CursorAdapter extends BaseAdapter {
  *
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
-import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
+import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks";
 
 const PROJECT_ROOT = "${resolve(process.cwd())}";
 process.chdir(PROJECT_ROOT);

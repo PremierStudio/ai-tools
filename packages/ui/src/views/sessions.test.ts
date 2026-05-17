@@ -29,6 +29,7 @@ function makeState(overrides: Partial<SessionsViewState> = {}): SessionsViewStat
     loadingSessions: false,
     sessionFilter: {},
     sessionSort: { column: "updatedAt", direction: "desc" },
+    keyOverrides: {},
     ...overrides,
   };
 }
@@ -60,10 +61,9 @@ describe("renderSessionsView", () => {
 
   it("shows no sessions message when empty and not loading", () => {
     const state = makeState({ loadingSessions: false });
-    const vnode = renderSessionsView(mockUi, state) as {
-      children: Array<{ content: string }>;
-    };
-    expect(vnode.children[0]!.content).toContain("No sessions found.");
+    const vnode = renderSessionsView(mockUi, state) as AnyVNode;
+    const texts = allText(vnode);
+    expect(texts).toContain("No sessions found");
   });
 
   it("renders session rows when sessions exist", () => {
@@ -159,12 +159,12 @@ describe("renderSessionsView", () => {
     const col = (vnode.children ?? []).find(
       (c) => allText(c).length > 0 && (c.children ?? []).length > 0,
     );
-    // First row (not selected): its text starts with spaces
+    // First row (not selected): has gutter bar ▐ but no ▸
     const firstText = allText((col!.children ?? [])[0]!);
-    expect(firstText).toMatch(/^ /);
-    // Second row (selected): its text starts with ▶ (inside richText inside box)
+    expect(firstText).not.toContain("\u25B8");
+    // Second row (selected): has ▸ selection marker
     const secondText = allText((col!.children ?? [])[1]!);
-    expect(secondText).toMatch(/\u25B6/);
+    expect(secondText).toContain("\u25B8");
   });
 
   it("bolds the selected row", () => {
@@ -174,12 +174,12 @@ describe("renderSessionsView", () => {
     });
     const vnode = renderSessionsView(mockUi, state) as AnyVNode;
     const col = (vnode.children ?? []).find((c) => (c.children ?? []).length > 0);
-    // First row (selected): contains ▶ marker
+    // First row (selected): contains ▸ marker
     const firstText = allText((col!.children ?? [])[0]!);
-    expect(firstText).toContain("\u25B6");
-    // Second row (not selected): starts with spaces, no ▶
+    expect(firstText).toContain("\u25B8");
+    // Second row (not selected): has gutter bar ▐ but no ▸
     const secondText = allText((col!.children ?? [])[1]!);
-    expect(secondText).toMatch(/^ /);
+    expect(secondText).not.toContain("\u25B8");
   });
 
   it("includes title with keybinding hints", () => {
@@ -349,7 +349,7 @@ describe("cycleSortColumn", () => {
 
 describe("getSessionsKeyHints", () => {
   it("returns key hint string", () => {
-    const hints = getSessionsKeyHints();
+    const hints = getSessionsKeyHints({});
     expect(hints).toContain("Enter:Detail");
     expect(hints).toContain("/:Search");
     expect(hints).toContain("H:Handoff");

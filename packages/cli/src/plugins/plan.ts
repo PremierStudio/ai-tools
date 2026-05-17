@@ -63,7 +63,7 @@ function resolveKnownToolIds(
       ids.add(id);
     }
   }
-  return [...ids].sort();
+  return Array.from(ids).toSorted();
 }
 
 function selectToolIds(
@@ -82,7 +82,7 @@ function selectToolIds(
       : knownToolIds;
 
   const filtered = selectedBase.filter((toolId) => !excluded.has(toolId));
-  return [...new Set(filtered)].sort();
+  return Array.from(new Set(filtered)).toSorted();
 }
 
 function buildEnginePlan(

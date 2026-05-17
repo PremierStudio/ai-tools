@@ -119,6 +119,7 @@ class ClaudeCodeAdapter extends BaseAdapter {
 
   async uninstall(): Promise<void> {
     await this.removeFile(".claude/hooks/ai-hooks-runner.js");
+    await this.removeFile(".claude/hooks/ai-tools-hooks-runner.js");
     // Note: we don't remove settings.json as it may have other user config
   }
 
@@ -140,8 +141,8 @@ class ClaudeCodeAdapter extends BaseAdapter {
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
 
-import { loadConfig } from "@premierstudio/ai-hooks";
-import { HookEngine } from "@premierstudio/ai-hooks";
+import { loadConfig } from "@premierstudio/ai-tools-hooks";
+import { HookEngine } from "@premierstudio/ai-tools-hooks";
 
 const PROJECT_ROOT = "${resolve(process.cwd())}";
 process.chdir(PROJECT_ROOT);
@@ -286,7 +287,7 @@ run().catch((err) => {
 `;
 
     return {
-      path: ".claude/hooks/ai-hooks-runner.js",
+      path: ".claude/hooks/ai-tools-hooks-runner.js",
       content: script,
       format: "js",
       gitignore: false,
@@ -325,7 +326,7 @@ run().catch((err) => {
     for (const event of neededEvents) {
       const hookEntry = {
         type: "command",
-        command: `node ${resolve(process.cwd(), ".claude/hooks/ai-hooks-runner.js")}`,
+        command: `node ${resolve(process.cwd(), ".claude/hooks/ai-tools-hooks-runner.js")}`,
         timeout: 10,
         description: `ai-hooks: ${event}`,
       };

@@ -86,7 +86,7 @@ export async function run(args: string[]): Promise<void> {
 async function cmdInit(flags: Flags): Promise<void> {
   const { writeFile } = await import("node:fs/promises");
 
-  const template = `import { defineConfig } from "@premierstudio/ai-mcp";
+  const template = `import { defineConfig } from "@premierstudio/ai-tools-mcp";
 
 export default defineConfig({
   servers: [

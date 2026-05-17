@@ -1,4 +1,5 @@
-import type { SessionContext } from "@premierstudio/ai-sessions";
+import type { SessionContext } from "@premierstudio/ai-tools-sessions";
+import { loadSessionRegistry } from "./handoff-runtime.js";
 
 /**
  * Tools that support handoff launching.
@@ -14,8 +15,7 @@ const HANDOFF_TARGETS: Record<string, { name: string; command: string; promptFla
  * Extract handoff context from a session using the adapter registry.
  */
 export async function extractHandoffContext(sessionId: string): Promise<SessionContext | null> {
-  const { registry } = await import("@premierstudio/ai-sessions");
-  await import("@premierstudio/ai-sessions/adapters/all");
+  const { registry } = await loadSessionRegistry();
 
   const detected = await registry.detectAll();
 

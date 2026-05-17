@@ -21,6 +21,7 @@ function makeState(overrides: Partial<ToolsViewState> = {}): ToolsViewState {
     selectedToolIndex: 0,
     loadingTools: false,
     runningTools: [],
+    keyOverrides: {},
     ...overrides,
   };
 }
@@ -68,7 +69,7 @@ describe("renderToolsView", () => {
     const state = makeState({ loadingTools: false });
     const vnode = renderToolsView(mockUi, state) as unknown as AnyNode;
     const texts = allText(vnode);
-    expect(texts.some((t) => t.includes("No tools detected."))).toBe(true);
+    expect(texts.some((t) => t.includes("No tools detected"))).toBe(true);
   });
 
   it("renders tool rows when tools are present", () => {
@@ -92,11 +93,10 @@ describe("renderToolsView", () => {
     const cards = toolCards(col);
     const firstTexts = allText(cards[0]!);
     const secondTexts = allText(cards[1]!);
-    // Non-selected card starts with a space selection mark; selected has ▌ or ▶
+    // Non-selected card starts with a space selection mark; selected has ▸
     expect(firstTexts.some((t) => t.startsWith(" "))).toBe(true);
-    // Selected card richText includes ▌ (selection mark) and ▶ appears in status badge/running
-    // The top-row richText for selected: selMark="▌" so content starts with "▌ "
-    expect(secondTexts.some((t) => t.startsWith("▌"))).toBe(true);
+    // Selected card richText includes ▸ (selection mark)
+    expect(secondTexts.some((t) => t.includes("\u25B8"))).toBe(true);
   });
 
   it("bolds the selected tool", () => {
@@ -108,13 +108,11 @@ describe("renderToolsView", () => {
     const col = (vnode.children ?? [])[0] as AnyNode;
     const cards = toolCards(col);
     // Each card: box > column > [topRow(row), cmdRow(richText), ...]
-    // topRow is a row, its children[0] is a richText whose content starts with "▌ "
-    // The richText content for selected card includes the selection mark
     const firstCardTexts = allText(cards[0]!);
     const secondCardTexts = allText(cards[1]!);
-    // Selected card (index 0) has "▌" in its top richText
-    expect(firstCardTexts.some((t) => t.startsWith("▌"))).toBe(true);
-    // Non-selected card (index 1) has " " (space) selection mark
+    // Selected card (index 0) has ▸ selection indicator
+    expect(firstCardTexts.some((t) => t.includes("\u25B8"))).toBe(true);
+    // Non-selected card (index 1) has space instead of selection indicator
     expect(secondCardTexts.some((t) => t.startsWith(" "))).toBe(true);
   });
 
@@ -234,9 +232,15 @@ describe("renderToolsView", () => {
 
 describe("getToolsKeyHints", () => {
   it("returns key hint string", () => {
-    const hints = getToolsKeyHints();
+    const hints = getToolsKeyHints({});
     expect(hints).toContain("Enter:Launch");
     expect(hints).toContain("d:Kill");
     expect(hints).toContain("j/k:Select");
+  });
+
+  it("respects key overrides", () => {
+    const hints = getToolsKeyHints({ "tools-kill": "x" });
+    expect(hints).toContain("x:Kill");
+    expect(hints).not.toContain("d:Kill");
   });
 });

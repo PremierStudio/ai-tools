@@ -1,11 +1,13 @@
 import { addToast } from "../toasts.js";
 import { cycleTheme } from "../theme/index.js";
-import { cycleSortColumn } from "../views/sessions.js";
+import { cycleSortColumn, getVisibleSessions } from "../views/sessions.js";
 import { getTargetToolId } from "../views/handoff.js";
 import { createSettingsMenuState, handleSettingsKey } from "../views/settings.js";
 import type { TuiState } from "../tui.js";
 import type { KeyAction, KeyResult, SimpleKeyEvent } from "./types.js";
 
+/** Dashboard views for Tab/number navigation. "terminal" is excluded because
+ *  it is accessed exclusively via the backtick (`) key. */
 const VIEW_ORDER: TuiState["view"][] = ["tools", "sessions", "handoff", "config"];
 
 export function navigateView(state: TuiState, direction: "next" | "prev"): TuiState {
@@ -36,7 +38,12 @@ export function selectItem(state: TuiState, direction: "next" | "prev"): TuiStat
   }
 
   if (state.view === "sessions" && !state.selectedSessionId) {
-    const max = Math.max(0, state.sessions.length - 1);
+    const visibleSessions = getVisibleSessions(
+      state.sessions,
+      state.sessionFilter,
+      state.sessionSort,
+    );
+    const max = Math.max(0, visibleSessions.length - 1);
     const idx =
       direction === "next"
         ? Math.min(state.selectedSessionIndex + 1, max)
@@ -122,6 +129,55 @@ export function handleKeyEvent(state: TuiState, event: SimpleKeyEvent): KeyResul
   if (state.helpOpen) {
     if (key === "?" || key === "Escape") {
       return { state: { ...state, helpOpen: false }, stop: false, action: null };
+    }
+    return { state, stop: false, action: null };
+  }
+
+  if (key.startsWith("action:")) {
+    return handleBoundAction(state, key.slice(7));
+  }
+
+  if (state.view === "sessions" && !state.selectedSessionId && state.searchActive) {
+    if (key === "Escape") {
+      return {
+        state: { ...state, sessionFilter: {}, searchActive: false },
+        stop: false,
+        action: null,
+      };
+    }
+    if (key === "Enter") {
+      return {
+        state: { ...state, searchActive: false },
+        stop: false,
+        action: null,
+      };
+    }
+    if (key === "Backspace") {
+      const query = state.sessionFilter.query ?? "";
+      const nextQuery = query.slice(0, -1);
+      return {
+        state: {
+          ...state,
+          sessionFilter: nextQuery ? { ...state.sessionFilter, query: nextQuery } : {},
+          selectedSessionIndex: 0,
+        },
+        stop: false,
+        action: null,
+      };
+    }
+    if (!ctrl && key.length === 1 && key >= " ") {
+      return {
+        state: {
+          ...state,
+          sessionFilter: {
+            ...state.sessionFilter,
+            query: `${state.sessionFilter.query ?? ""}${key}`,
+          },
+          selectedSessionIndex: 0,
+        },
+        stop: false,
+        action: null,
+      };
     }
     return { state, stop: false, action: null };
   }
@@ -229,6 +285,134 @@ export function handleKeyEvent(state: TuiState, event: SimpleKeyEvent): KeyResul
   return handleViewKeyEvent(state, event);
 }
 
+function handleBoundAction(state: TuiState, actionId: string): KeyResult<TuiState> {
+  switch (actionId) {
+    case "quit":
+    case "quit-ctrl":
+      return { state, stop: true, action: null };
+    case "help":
+      return { state: { ...state, helpOpen: true }, stop: false, action: null };
+    case "theme-cycle": {
+      const newTheme = cycleTheme(state.theme);
+      return {
+        state: { ...state, theme: newTheme },
+        stop: false,
+        action: { type: "cycle-theme", newTheme, keyOverrides: state.keyOverrides },
+      };
+    }
+    case "sidebar-collapse":
+      return { state: { ...state, sidebarCollapsed: true }, stop: false, action: null };
+    case "sidebar-expand":
+      return { state: { ...state, sidebarCollapsed: false }, stop: false, action: null };
+    case "tab-next":
+      return {
+        state: { ...navigateView(state, "next"), activePane: "content" },
+        stop: false,
+        action: null,
+      };
+    case "tab-prev":
+      return {
+        state: { ...navigateView(state, "prev"), activePane: "content" },
+        stop: false,
+        action: null,
+      };
+    case "view-1":
+      return {
+        state: { ...state, view: "tools", selectedSessionId: null },
+        stop: false,
+        action: null,
+      };
+    case "view-2":
+      return {
+        state: { ...state, view: "sessions", selectedSessionId: null },
+        stop: false,
+        action: null,
+      };
+    case "view-3":
+      return {
+        state: { ...state, view: "handoff", selectedSessionId: null },
+        stop: false,
+        action: null,
+      };
+    case "view-4":
+      return {
+        state: { ...state, view: "config", selectedSessionId: null },
+        stop: false,
+        action: null,
+      };
+    case "terminal":
+      return { state, stop: false, action: { type: "switch-to-terminal" } };
+    case "tools-kill": {
+      if (state.view !== "tools") return { state, stop: false, action: null };
+      const tool = state.tools[state.selectedToolIndex];
+      if (!tool) return { state, stop: false, action: null };
+      const running = state.runningTools.some((r) => r.toolId === tool.id);
+      return running
+        ? { state, stop: false, action: { type: "kill-tool", toolId: tool.id } }
+        : { state, stop: false, action: null };
+    }
+    case "sessions-search":
+      return state.view === "sessions" && !state.selectedSessionId
+        ? { state: { ...state, searchActive: true }, stop: false, action: null }
+        : { state, stop: false, action: null };
+    case "sessions-sort":
+      return state.view === "sessions" && !state.selectedSessionId
+        ? {
+            state: { ...state, sessionSort: cycleSortColumn(state.sessionSort) },
+            stop: false,
+            action: null,
+          }
+        : { state, stop: false, action: null };
+    case "sessions-handoff": {
+      if (state.view !== "sessions" || state.selectedSessionId)
+        return { state, stop: false, action: null };
+      const visibleSessions = getVisibleSessions(
+        state.sessions,
+        state.sessionFilter,
+        state.sessionSort,
+      );
+      const session = visibleSessions[state.selectedSessionIndex];
+      return session
+        ? { state, stop: false, action: { type: "quick-handoff", sessionId: session.id } }
+        : { state, stop: false, action: null };
+    }
+    case "detail-handoff":
+      return state.view === "sessions" && state.selectedSessionId
+        ? {
+            state,
+            stop: false,
+            action: { type: "start-handoff", sessionId: state.selectedSessionId },
+          }
+        : { state, stop: false, action: null };
+    case "config-generate":
+      return state.view === "config"
+        ? { state, stop: false, action: { type: "generate-config" } }
+        : { state, stop: false, action: null };
+    case "config-install":
+      return state.view === "config"
+        ? { state, stop: false, action: { type: "install-config" } }
+        : { state, stop: false, action: null };
+    case "config-sync":
+      return state.view === "config"
+        ? { state, stop: false, action: { type: "sync-config" } }
+        : { state, stop: false, action: null };
+    case "config-detect":
+      return state.view === "config"
+        ? { state, stop: false, action: { type: "detect-config" } }
+        : { state, stop: false, action: null };
+    case "config-refresh":
+      return state.view === "config"
+        ? { state, stop: false, action: { type: "refresh-status" } }
+        : { state, stop: false, action: null };
+    case "config-editor":
+      return state.view === "config"
+        ? { state, stop: false, action: { type: "open-editor" } }
+        : { state, stop: false, action: null };
+    default:
+      return { state, stop: false, action: null };
+  }
+}
+
 function handleViewKeyEvent(state: TuiState, event: SimpleKeyEvent): KeyResult<TuiState> {
   switch (state.view) {
     case "tools":
@@ -326,7 +510,12 @@ function handleSessionsKey(state: TuiState, event: SimpleKeyEvent): KeyResult<Tu
   }
 
   if (key === "Enter") {
-    const session = state.sessions[state.selectedSessionIndex];
+    const visibleSessions = getVisibleSessions(
+      state.sessions,
+      state.sessionFilter,
+      state.sessionSort,
+    );
+    const session = visibleSessions[state.selectedSessionIndex];
     if (session) {
       return { state: { ...state, selectedSessionId: session.id }, stop: false, action: null };
     }
@@ -359,7 +548,12 @@ function handleSessionsKey(state: TuiState, event: SimpleKeyEvent): KeyResult<Tu
   }
 
   if (key === "H") {
-    const session = state.sessions[state.selectedSessionIndex];
+    const visibleSessions = getVisibleSessions(
+      state.sessions,
+      state.sessionFilter,
+      state.sessionSort,
+    );
+    const session = visibleSessions[state.selectedSessionIndex];
     if (session) {
       return {
         state,
@@ -509,8 +703,20 @@ function handleConfigKey(state: TuiState, event: SimpleKeyEvent): KeyResult<TuiS
 
   if (key === "g") return { state, stop: false, action: { type: "generate-config" } };
   if (key === "i") return { state, stop: false, action: { type: "install-config" } };
+  if (key === "s") return { state, stop: false, action: { type: "sync-config" } };
+  if (key === "d") return { state, stop: false, action: { type: "detect-config" } };
   if (key === "r") return { state, stop: false, action: { type: "refresh-status" } };
   if (key === "e") return { state, stop: false, action: { type: "open-editor" } };
+
+  if (key === "j" || key === "Down") {
+    const max = Math.max(0, state.engines.length - 1);
+    const idx = Math.min(state.configSelectedIndex + 1, max);
+    return { state: { ...state, configSelectedIndex: idx }, stop: false, action: null };
+  }
+  if (key === "k" || key === "Up") {
+    const idx = Math.max(state.configSelectedIndex - 1, 0);
+    return { state: { ...state, configSelectedIndex: idx }, stop: false, action: null };
+  }
 
   if (key === "Escape") {
     const menu = createSettingsMenuState(state.theme, {

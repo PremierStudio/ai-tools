@@ -1,8 +1,8 @@
 const HELP = `
-ai-tools-ui - Interactive terminal dashboard for AI coding tools
+ai-tools-tui - Interactive terminal dashboard for AI coding tools
 
 USAGE:
-  ai-tools-ui [options]
+  ai-tools-tui [options]
   ai-tools ui [options]
 
 OPTIONS:
@@ -188,21 +188,25 @@ export async function run(args: string[]): Promise<void> {
             const raw = await listSessionsIncremental({ limit: 200 }, (partial) => {
               const sessions = partial.map(formatSessionRow);
               nextData.sessions = sessions;
+              nextData.sessionCount = sessions.length;
               if (!emittedOnce) {
                 emittedOnce = true;
                 sliceTimes.sessions = new Date().toISOString();
               }
               emit({
                 sessions,
+                sessionCount: sessions.length,
                 ...(setLoadingFalse ? { loading: { sessions: false } } : {}),
               });
             });
             const sessions = raw.map(formatSessionRow);
             nextData.sessions = sessions;
+            nextData.sessionCount = sessions.length;
             const sessionStamp = new Date().toISOString();
             sliceTimes.sessions = sessionStamp;
             emit({
               sessions,
+              sessionCount: sessions.length,
               ...(setLoadingFalse ? { loading: { sessions: false } } : {}),
             });
             await writeUiCache(cwd, nextData, { sessions: sessionStamp });

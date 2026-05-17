@@ -94,7 +94,7 @@ async function cmdInit(flags: Flags): Promise<void> {
 
   const { writeFile } = await import("node:fs/promises");
 
-  const template = `import { defineConfig } from "@premierstudio/ai-skills";
+  const template = `import { defineConfig } from "@premierstudio/ai-tools-skills";
 
 export default defineConfig({
   skills: [

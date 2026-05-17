@@ -230,6 +230,20 @@ export const DEFAULT_KEYBINDINGS: KeybindingDef[] = [
     description: "Re-detect tool status",
   },
   {
+    id: "config-sync",
+    label: "Sync config",
+    defaultKey: "s",
+    context: "config",
+    description: "Sync generated configs into target locations",
+  },
+  {
+    id: "config-detect",
+    label: "Detect config",
+    defaultKey: "d",
+    context: "config",
+    description: "Detect engine/config state",
+  },
+  {
     id: "config-editor",
     label: "Open in $EDITOR",
     defaultKey: "e",

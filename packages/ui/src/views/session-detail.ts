@@ -5,7 +5,6 @@ import {
   STATUS,
   SURFACE,
   TEXT,
-  ACTION_PRIMARY_BG,
   dimColor,
   tintBg,
   getIconChar,
@@ -14,19 +13,15 @@ import {
   PADDING,
   GAP,
   PRESETS,
+  TINT,
 } from "../theme.js";
+import { fitText, renderEmptyState, renderActionHints, resolveHints } from "./utils.js";
 
 export type SessionDetailState = {
   sessions: SessionRow[];
   selectedSessionId: string | null;
+  keyOverrides: Record<string, string>;
 };
-
-function fitText(text: string, width: number): string {
-  if (width <= 0) return "";
-  if (text.length <= width) return text.padEnd(width);
-  if (width <= 1) return text.slice(0, width);
-  return `${text.slice(0, width - 1)}…`;
-}
 
 /**
  * Render a rich single-session detail panel.
@@ -51,21 +46,29 @@ export function renderSessionDetailView<T>(ui: UiKit<T>, state: SessionDetailSta
 
   if (!session) {
     return ui.box({ ...PRESETS.content, title: "Session Detail", style: { bg: SURFACE.base } }, [
-      ui.text("Session not found.", { style: { fg: TEXT.tertiary }, dim: true }),
+      renderEmptyState(ui, getIconChar("nav.sessions"), "Session not found", [
+        { text: "The selected session may have been deleted or is no longer available." },
+        {
+          spans: [
+            { text: "Press ", style: { fg: TEXT.tertiary } },
+            { text: "Backspace", style: { fg: BRAND.accent, bold: true } },
+            { text: " to return to the sessions list.", style: { fg: TEXT.tertiary } },
+          ],
+        },
+      ]),
     ]);
   }
 
   const icon = getIconChar(getToolIcon(session.tool));
   const brand = getToolColor(session.tool);
-  const dimBrand = dimColor(brand, 0.4);
-  const heroBg = tintBg(brand, 0.14);
+  const heroBg = tintBg(brand, TINT.medium);
   const gutterBg = dimColor(brand, 0.25);
   const contentWidth = Math.max(70, (process.stdout.columns ?? 120) - 38);
   const labelWidth = Math.max(11, Math.min(14, Math.floor(contentWidth * 0.2)));
   const valueWidth = Math.max(24, contentWidth - labelWidth - 3);
 
   // ── Hero block — tool identity ────────────────────────
-  const heroRow = ui.box({ style: { bg: heroBg }, py: 1, px: 2 }, [
+  const heroRow = ui.box({ style: { bg: heroBg }, py: PADDING.component, px: PADDING.card }, [
     ui.richText([
       {
         text: `${getIconChar("powerline.separator")} `,
@@ -73,7 +76,7 @@ export function renderSessionDetailView<T>(ui: UiKit<T>, state: SessionDetailSta
       },
       { text: `${icon}  `, style: { fg: brand, bold: true, bg: heroBg } },
       { text: session.toolName, style: { fg: TEXT.primary, bold: true, bg: heroBg } },
-      { text: "  │  ", style: { fg: TEXT.secondary, bg: heroBg } },
+      { text: " \u2502 ", style: { fg: TEXT.secondary, bg: heroBg } },
       {
         text: `${getIconChar("nav.sessions")} ${session.messageCount} msgs`,
         style: { fg: BRAND.accent, bg: heroBg },
@@ -82,60 +85,64 @@ export function renderSessionDetailView<T>(ui: UiKit<T>, state: SessionDetailSta
   ]);
 
   // ── Metadata rows — each richText span has label: + value in same node ────
+  const metaBg = SURFACE.elevated;
   const makeMetaRow = (
     label: string,
     value: string,
     valueStyle: Record<string, unknown>,
-    rowBg?: { r: number; g: number; b: number },
-  ): T =>
-    ui.richText([
-      { text: "  ", style: rowBg ? { bg: rowBg } : undefined },
+    isAlt: boolean,
+  ): T => {
+    const rowBg = isAlt ? tintBg(brand, TINT.subtle) : metaBg;
+    return ui.richText([
+      { text: "  ", style: { bg: rowBg } },
       { text: fitText(label, labelWidth), style: { fg: STATUS.neutral, bg: rowBg } },
-      { text: " │ ", style: { fg: TEXT.tertiary, bg: rowBg } },
+      { text: " \u2502 ", style: { fg: TEXT.tertiary, bg: rowBg } },
       { text: fitText(value, valueWidth), style: { ...valueStyle, bg: rowBg } },
     ]);
+  };
 
   const metaRows: T[] = [
-    makeMetaRow("Title:", session.title, { fg: TEXT.primary, bold: true }),
-    makeMetaRow("ID:", session.id, { fg: BRAND.base }, tintBg(brand, 0.06)),
-    makeMetaRow("Messages:", String(session.messageCount), { fg: BRAND.accent, bold: true }),
-    makeMetaRow("Updated:", session.updatedAt, { fg: STATUS.info }, tintBg(brand, 0.06)),
-    makeMetaRow("Tool:", `${icon}  ${session.toolName}`, { fg: brand }),
+    makeMetaRow("Title:", session.title, { fg: TEXT.primary, bold: true }, false),
+    makeMetaRow("ID:", session.id, { fg: BRAND.base }, true),
+    makeMetaRow("Messages:", String(session.messageCount), { fg: BRAND.accent, bold: true }, false),
+    makeMetaRow("Updated:", session.updatedAt, { fg: STATUS.info }, true),
+    makeMetaRow("Tool:", `${icon}  ${session.toolName}`, { fg: brand }, false),
   ];
 
   // ── Action hints ─────────────────────────────────────
   const actionsLabel = ui.text("Actions:", { style: { fg: STATUS.neutral }, bold: true });
-  const actionHintsRow = ui.richText([
-    { text: " h ", style: { fg: brand, bold: true, bg: dimBrand } },
-    { text: " Handoff   ", style: { fg: TEXT.tertiary } },
-    { text: " Enter ", style: { fg: STATUS.success, bold: true, bg: ACTION_PRIMARY_BG } },
-    { text: " Continue   ", style: { fg: TEXT.tertiary } },
-    { text: " ⌫ ", style: { fg: TEXT.secondary, bold: true } },
-    { text: " Back", style: { fg: TEXT.tertiary } },
+  const actionHintsRow = renderActionHints(ui, [
+    ...resolveHints([["detail-handoff", "Handoff", "h"]], state.keyOverrides),
+    ["Enter", "Continue"],
+    ["\u232B", "Back"],
   ]);
 
   const titleStr = session.title.slice(0, 36);
+  const actionsBg = tintBg(brand, TINT.subtle);
   return ui.box(
     {
       border: PRESETS.card.border,
       title: `Session: ${titleStr}`,
-      p: "none",
+      p: PADDING.card,
       flex: 1,
       style: { bg: SURFACE.base },
     },
     [
-      ui.column({ gap: GAP.none }, [
+      ui.column({ gap: GAP.tight }, [
         heroRow,
-        ui.column({ gap: GAP.none, px: PADDING.card, py: PADDING.component }, metaRows),
+        ui.box({ style: { bg: SURFACE.elevated }, px: PADDING.card, py: PADDING.component }, [
+          ui.column({ gap: GAP.tight }, metaRows),
+        ]),
         ui.divider(),
-        ui.box({ px: PADDING.card, pb: PADDING.component }, [
-          ui.column({ gap: GAP.none }, [actionsLabel, actionHintsRow]),
+        ui.box({ style: { bg: actionsBg }, px: PADDING.card, py: PADDING.component }, [
+          ui.column({ gap: GAP.tight }, [actionsLabel, actionHintsRow]),
         ]),
       ]),
     ],
   );
 }
 
-export function getSessionDetailKeyHints(): string {
-  return "h:Handoff  Enter:Continue  Backspace:Back";
+export function getSessionDetailKeyHints(overrides: Record<string, string>): string {
+  const hints = resolveHints([["detail-handoff", "Handoff", "h"]], overrides);
+  return [...hints.map(([k, l]) => `${k}:${l}`), "Enter:Continue", "Backspace:Back"].join("  ");
 }

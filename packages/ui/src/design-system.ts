@@ -1,23 +1,28 @@
 /**
- * Agentful Design System
+ * ai-tools Design System
  *
  * A comprehensive design system for the TUI that ensures:
  * 1. Consistent colors everywhere (no hardcoded blacks)
  * 2. Proper layout sizing
  * 3. Smart container borders
  * 4. Unified component styling
+ *
+ * All color-producing functions read from the active theme context
+ * so they respond correctly to light, dimmed, nord, etc. themes.
  */
 
 import type { RgbColor } from "./theme.js";
 import {
-  // Semantic tokens
+  // Static default tokens (re-exported for backward compat)
   BRAND,
   STATUS,
   SURFACE,
   TEXT,
-  BORDER,
 
-  // Powerline (app-specific)
+  // Theme-aware helpers
+  getActiveTokens,
+
+  // Powerline (now functions)
   PL_HEALTH_BG_OK,
   PL_HEALTH_BG_WARN,
   PL_HEALTH_BG_ERR,
@@ -70,76 +75,47 @@ export type ContainerConfig = {
 };
 
 /**
- * Get container configuration based on variant
+ * Get container configuration based on variant.
+ * Reads from the active theme so light/dark/nord etc. are all correct.
  */
 export function getContainerConfig(variant: ContainerVariant): ContainerConfig {
+  const tokens = getActiveTokens();
   switch (variant) {
     case "elevated":
       return {
-        bg: SURFACE.elevated,
-        borderColor: BORDER.subtle,
-        fg: TEXT.primary,
-        fgSecondary: TEXT.secondary,
-        fgTertiary: TEXT.tertiary,
+        bg: tokens.surface.elevated,
+        borderColor: tokens.border.subtle,
+        fg: tokens.text.primary,
+        fgSecondary: tokens.text.secondary,
+        fgTertiary: tokens.text.tertiary,
       };
     case "overlay":
       return {
-        bg: SURFACE.overlay,
-        borderColor: BORDER.default,
-        fg: TEXT.primary,
-        fgSecondary: TEXT.secondary,
-        fgTertiary: TEXT.tertiary,
+        bg: tokens.surface.overlay,
+        borderColor: tokens.border.default,
+        fg: tokens.text.primary,
+        fgSecondary: tokens.text.secondary,
+        fgTertiary: tokens.text.tertiary,
       };
     case "card":
       return {
-        bg: SURFACE.card,
-        borderColor: BORDER.subtle,
-        fg: TEXT.primary,
-        fgSecondary: TEXT.secondary,
-        fgTertiary: TEXT.tertiary,
+        bg: tokens.surface.card,
+        borderColor: tokens.border.subtle,
+        fg: tokens.text.primary,
+        fgSecondary: tokens.text.secondary,
+        fgTertiary: tokens.text.tertiary,
       };
     case "default":
     default:
       return {
-        bg: SURFACE.base,
-        borderColor: BORDER.subtle,
-        fg: TEXT.primary,
-        fgSecondary: TEXT.secondary,
-        fgTertiary: TEXT.tertiary,
+        bg: tokens.surface.base,
+        borderColor: tokens.border.subtle,
+        fg: tokens.text.primary,
+        fgSecondary: tokens.text.secondary,
+        fgTertiary: tokens.text.tertiary,
       };
   }
 }
-
-// ─────────────────────────────────────────────────────────────
-// LAYOUT SYSTEM
-// ─────────────────────────────────────────────────────────────
-
-export type LayoutConfig = {
-  /** Minimum sidebar width */
-  sidebarMinWidth: number;
-  /** Maximum sidebar width */
-  sidebarMaxWidth: number;
-  /** Content minimum width */
-  contentMinWidth: number;
-  /** Standard padding */
-  padding: number;
-  /** Compact padding */
-  paddingCompact: number;
-  /** Gap between elements */
-  gap: number;
-  /** Gap between elements (compact) */
-  gapCompact: number;
-};
-
-export const LAYOUT: LayoutConfig = {
-  sidebarMinWidth: 22,
-  sidebarMaxWidth: 26,
-  contentMinWidth: 60,
-  padding: 1,
-  paddingCompact: 0,
-  gap: 1,
-  gapCompact: 0,
-};
 
 // ─────────────────────────────────────────────────────────────
 // COMPONENT STYLES
@@ -163,52 +139,56 @@ export interface BadgeStyle {
 }
 
 /**
- * Get button styles based on variant
+ * Get button styles based on variant.
+ * Theme-aware: tintBg reads from the active theme's surface.
  */
 export function getButtonStyle(variant: ButtonVariant): ButtonStyle {
+  const tokens = getActiveTokens();
   switch (variant) {
     case "primary":
       return {
-        fg: TEXT.primary,
-        bg: tintBg(BRAND.base, 0.2),
+        fg: tokens.text.primary,
+        bg: tintBg(tokens.brand.base, 0.2),
         bold: true,
       };
     case "secondary":
       return {
-        fg: TEXT.secondary,
-        bg: SURFACE.elevated,
+        fg: tokens.text.secondary,
+        bg: tokens.surface.elevated,
         bold: false,
       };
     case "ghost":
       return {
-        fg: TEXT.secondary,
-        bg: SURFACE.base,
+        fg: tokens.text.secondary,
+        bg: tokens.surface.base,
         bold: false,
       };
     case "danger":
       return {
-        fg: STATUS.error,
-        bg: tintBg(STATUS.error, 0.15),
+        fg: tokens.status.error,
+        bg: tintBg(tokens.status.error, 0.15),
         bold: true,
       };
   }
 }
 
 /**
- * Get badge styles based on variant
+ * Get badge styles based on variant.
+ * Theme-aware: uses active tokens for colors and tintBg for backgrounds.
  */
 export function getBadgeStyle(variant: BadgeVariant): BadgeStyle {
+  const tokens = getActiveTokens();
   switch (variant) {
     case "success":
-      return { fg: STATUS.success, bg: tintBg(STATUS.success, 0.15) };
+      return { fg: tokens.status.success, bg: tintBg(tokens.status.success, 0.15) };
     case "warning":
-      return { fg: STATUS.warning, bg: tintBg(STATUS.warning, 0.15) };
+      return { fg: tokens.status.warning, bg: tintBg(tokens.status.warning, 0.15) };
     case "error":
-      return { fg: STATUS.error, bg: tintBg(STATUS.error, 0.15) };
+      return { fg: tokens.status.error, bg: tintBg(tokens.status.error, 0.15) };
     case "info":
-      return { fg: STATUS.info, bg: tintBg(STATUS.info, 0.15) };
+      return { fg: tokens.status.info, bg: tintBg(tokens.status.info, 0.15) };
     case "neutral":
-      return { fg: TEXT.secondary, bg: SURFACE.elevated };
+      return { fg: tokens.text.secondary, bg: tokens.surface.elevated };
   }
 }
 
@@ -294,13 +274,19 @@ export interface StatusConfig {
   label: string;
 }
 
+/**
+ * Get status configuration with theme-aware colors.
+ * Powerline background getters (PL_HEALTH_BG_*) are now functions
+ * that derive from the active theme.
+ */
 export function getStatusConfig(status: string): StatusConfig {
   const s = status.toLowerCase();
+  const tokens = getActiveTokens();
 
   if (s === "healthy" || s === "ok" || s === "available" || s === "configured") {
     return {
-      color: STATUS.success,
-      bg: PL_HEALTH_BG_OK,
+      color: tokens.status.success,
+      bg: PL_HEALTH_BG_OK(),
       icon: getIconChar("status.active"),
       label: "healthy",
     };
@@ -308,17 +294,17 @@ export function getStatusConfig(status: string): StatusConfig {
 
   if (s === "stale" || s === "warning" || s === "stopped") {
     return {
-      color: STATUS.warning,
-      bg: PL_HEALTH_BG_WARN,
-      icon: "◐",
+      color: tokens.status.warning,
+      bg: PL_HEALTH_BG_WARN(),
+      icon: "\u25D0",
       label: "warning",
     };
   }
 
   if (s === "error" || s === "unhealthy" || s === "not-installed") {
     return {
-      color: STATUS.error,
-      bg: PL_HEALTH_BG_ERR,
+      color: tokens.status.error,
+      bg: PL_HEALTH_BG_ERR(),
       icon: getIconChar("status.error"),
       label: "error",
     };
@@ -326,8 +312,8 @@ export function getStatusConfig(status: string): StatusConfig {
 
   // Default/neutral
   return {
-    color: TEXT.secondary,
-    bg: PL_HINTS_BG,
+    color: tokens.text.secondary,
+    bg: PL_HINTS_BG(),
     icon: getIconChar("status.pending"),
     label: "unknown",
   };
@@ -356,12 +342,12 @@ export const ICONS = {
   refresh: getIconChar("action.refresh"),
   search: getIconChar("action.search"),
   close: getIconChar("nav.close"),
-  back: "↵",
+  back: "\u21B5",
 
   // Misc
   bullet: getIconChar("ui.bullet"),
   diamond: getIconChar("brand.logo"),
-  star: "★",
+  star: "\u2605",
   folder: getIconChar("session.folder"),
   file: getIconChar("session.file"),
 };
@@ -371,38 +357,42 @@ export const ICONS = {
 // ─────────────────────────────────────────────────────────────
 
 /**
- * Create a consistent text style with proper hierarchy
+ * Create a consistent text style with proper hierarchy.
+ * Theme-aware: reads from active tokens.
  */
 export function textStyle(variant: "primary" | "secondary" | "tertiary" | "muted"): {
   fg: RgbColor;
   bold?: boolean;
   italic?: boolean;
 } {
+  const tokens = getActiveTokens();
   switch (variant) {
     case "primary":
-      return { fg: TEXT.primary, bold: true };
+      return { fg: tokens.text.primary, bold: true };
     case "secondary":
-      return { fg: TEXT.secondary };
+      return { fg: tokens.text.secondary };
     case "tertiary":
-      return { fg: TEXT.tertiary };
+      return { fg: tokens.text.tertiary };
     case "muted":
-      return { fg: TEXT.tertiary, italic: true };
+      return { fg: tokens.text.tertiary, italic: true };
   }
 }
 
 /**
- * Get selection background with brand tint
+ * Get selection background with brand tint.
+ * Theme-aware: tintBg uses the active theme's surface.
  */
 export function selectionBackground(brandColor?: RgbColor): RgbColor {
   if (brandColor) {
-    return tintBg(brandColor, 0.12);
+    return tintBg(brandColor, 0.22);
   }
-  return SURFACE.subtle;
+  return getActiveTokens().surface.subtle;
 }
 
 /**
- * Get zebra stripe background
+ * Get zebra stripe background.
+ * Theme-aware: reads from active tokens.
  */
 export function zebraBackground(isOdd: boolean): RgbColor | undefined {
-  return isOdd ? SURFACE.elevated : undefined;
+  return isOdd ? getActiveTokens().surface.elevated : undefined;
 }

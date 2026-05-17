@@ -1,5 +1,5 @@
 /**
- * Semantic Theme Tokens for Agentful TUI
+ * Semantic Theme Tokens for the ai-tools TUI
  *
  * This module defines color tokens that map to Rezi's semantic theme system.
  * Colors are organized by semantic meaning rather than visual appearance.
@@ -17,10 +17,10 @@ import type { RgbColor } from "../theme.js";
 export const BRAND = {
   /** Primary teal */
   primary: { r: 16, g: 185, b: 129 } as RgbColor,
-  /** Secondary cyan */
-  secondary: { r: 6, g: 182, b: 212 } as RgbColor,
-  /** Accent bright cyan */
-  accent: { r: 34, g: 211, b: 238 } as RgbColor,
+  /** Secondary blue */
+  secondary: { r: 59, g: 130, b: 246 } as RgbColor,
+  /** Accent sky blue */
+  accent: { r: 94, g: 206, b: 255 } as RgbColor,
   /** Base mid-teal */
   base: { r: 11, g: 184, b: 170 } as RgbColor,
 };
@@ -34,18 +34,23 @@ export const STATUS = {
   neutral: { r: 148, g: 163, b: 184 } as RgbColor,
 };
 
-/** Background surface colors */
+/**
+ * Background surface colors.
+ *
+ * Hierarchy (darkest to lightest):
+ *   deep < base < subtle < overlay < elevated < card
+ */
 export const SURFACE = {
   /** Deepest background - app root */
   deep: { r: 8, g: 10, b: 18 } as RgbColor,
-  /** Base surface - panels, cards */
+  /** Base surface - panels */
   base: { r: 13, g: 17, b: 27 } as RgbColor,
+  /** Subtle highlight - hover states */
+  subtle: { r: 15, g: 20, b: 35 } as RgbColor,
+  /** Overlay surface - dropdowns, tooltips */
+  overlay: { r: 17, g: 24, b: 39 } as RgbColor,
   /** Elevated surface - selected items, modals */
   elevated: { r: 20, g: 28, b: 46 } as RgbColor,
-  /** Overlay surface - dropdowns, tooltips */
-  overlay: { r: 15, g: 20, b: 35 } as RgbColor,
-  /** Subtle highlight - hover states */
-  subtle: { r: 17, g: 24, b: 39 } as RgbColor,
   /** Card background */
   card: { r: 24, g: 28, b: 42 } as RgbColor,
 };
@@ -56,8 +61,8 @@ export const TEXT = {
   primary: { r: 226, g: 232, b: 240 } as RgbColor,
   /** Secondary text - muted gray */
   secondary: { r: 148, g: 163, b: 184 } as RgbColor,
-  /** Tertiary text - dim gray */
-  tertiary: { r: 100, g: 116, b: 139 } as RgbColor,
+  /** Tertiary text - dim gray (bumped for WCAG AA on elevated surfaces) */
+  tertiary: { r: 120, g: 136, b: 159 } as RgbColor,
   /** Disabled text */
   disabled: { r: 75, g: 85, b: 99 } as RgbColor,
 };
@@ -65,12 +70,15 @@ export const TEXT = {
 /** Border colors */
 export const BORDER = {
   /** Subtle borders - dividers */
-  subtle: { r: 51, g: 65, b: 85 } as RgbColor,
+  subtle: { r: 30, g: 40, b: 56 } as RgbColor,
   /** Default borders */
-  default: { r: 75, g: 85, b: 99 } as RgbColor,
+  default: { r: 42, g: 55, b: 76 } as RgbColor,
   /** Strong borders - active elements */
-  strong: { r: 99, g: 179, b: 237 } as RgbColor,
+  strong: { r: 70, g: 130, b: 190 } as RgbColor,
 };
+
+/** Accent indigo for runtime/keybinding UI elements */
+export const ACCENT_INDIGO = { r: 129, g: 140, b: 248 } as RgbColor;
 
 /** Tool-specific brand colors */
 export const TOOLS = {
@@ -191,13 +199,17 @@ export const LIGHT_THEME_OVERRIDES = {
     fg: {
       primary: { r: 15, g: 23, b: 42 },
       secondary: { r: 71, g: 85, b: 105 },
-      muted: { r: 100, g: 116, b: 139 },
+      muted: { r: 120, g: 136, b: 159 },
     },
     accent: {
       primary: { r: 13, g: 148, b: 136 },
       secondary: { r: 8, g: 145, b: 178 },
       tertiary: { r: 6, g: 182, b: 212 },
     },
+    success: { r: 22, g: 163, b: 74 },
+    warning: { r: 202, g: 138, b: 4 },
+    error: { r: 220, g: 38, b: 38 },
+    info: { r: 37, g: 99, b: 235 },
     border: {
       subtle: { r: 226, g: 232, b: 240 },
       default: { r: 203, g: 213, b: 225 },
@@ -210,6 +222,10 @@ export const LIGHT_THEME_OVERRIDES = {
     selected: {
       bg: { r: 224, g: 242, b: 254 },
       fg: { r: 15, g: 23, b: 42 },
+    },
+    disabled: {
+      fg: { r: 156, g: 163, b: 175 },
+      bg: { r: 243, g: 244, b: 246 },
     },
   },
 };
@@ -229,9 +245,9 @@ export const DIMMED_THEME_OVERRIDES = {
       muted: { r: 110, g: 110, b: 115 },
     },
     accent: {
-      primary: { r: 100, g: 150, b: 140 },
-      secondary: { r: 90, g: 140, b: 160 },
-      tertiary: { r: 120, g: 170, b: 190 },
+      primary: { r: 120, g: 175, b: 165 },
+      secondary: { r: 110, g: 165, b: 185 },
+      tertiary: { r: 145, g: 195, b: 215 },
     },
     border: {
       subtle: { r: 60, g: 60, b: 65 },
@@ -239,8 +255,8 @@ export const DIMMED_THEME_OVERRIDES = {
       strong: { r: 100, g: 100, b: 110 },
     },
     focus: {
-      ring: { r: 120, g: 170, b: 190 },
-      bg: { r: 50, g: 50, b: 55 },
+      ring: { r: 145, g: 195, b: 215 },
+      bg: { r: 65, g: 65, b: 72 },
     },
   },
 };
@@ -277,6 +293,10 @@ export const NORD_THEME_OVERRIDES = {
       ring: { r: 136, g: 192, b: 208 },
       bg: { r: 67, g: 76, b: 94 },
     },
+    disabled: {
+      fg: { r: 76, g: 86, b: 106 },
+      bg: { r: 52, g: 58, b: 72 },
+    },
   },
 };
 
@@ -312,6 +332,10 @@ export const DRACULA_THEME_OVERRIDES = {
       ring: { r: 255, g: 121, b: 198 },
       bg: { r: 68, g: 71, b: 90 },
     },
+    disabled: {
+      fg: { r: 98, g: 114, b: 164 },
+      bg: { r: 50, g: 52, b: 66 },
+    },
   },
 };
 
@@ -339,8 +363,8 @@ export const HIGH_CONTRAST_THEME_OVERRIDES = {
     error: { r: 255, g: 0, b: 0 },
     info: { r: 0, g: 255, b: 255 },
     border: {
-      subtle: { r: 100, g: 100, b: 100 },
-      default: { r: 150, g: 150, b: 150 },
+      subtle: { r: 180, g: 180, b: 180 },
+      default: { r: 220, g: 220, b: 220 },
       strong: { r: 255, g: 255, b: 255 },
     },
     focus: {
@@ -349,3 +373,118 @@ export const HIGH_CONTRAST_THEME_OVERRIDES = {
     },
   },
 };
+
+// ─────────────────────────────────────────────────────────────
+// ACTIVE THEME CONTEXT
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Resolved token set for a specific theme.
+ *
+ * Each theme override may only define a subset of tokens; missing values
+ * fall back to the base dark-theme defaults.
+ */
+export type ResolvedTokens = {
+  surface: typeof SURFACE;
+  text: typeof TEXT;
+  brand: typeof BRAND;
+  status: typeof STATUS;
+  border: typeof BORDER;
+};
+
+type ThemeOverrideColors = {
+  bg?: Partial<{ base: RgbColor; elevated: RgbColor; overlay: RgbColor; subtle: RgbColor }>;
+  fg?: Partial<{ primary: RgbColor; secondary: RgbColor; muted: RgbColor }>;
+  accent?: Partial<{ primary: RgbColor; secondary: RgbColor; tertiary: RgbColor }>;
+  success?: RgbColor;
+  warning?: RgbColor;
+  error?: RgbColor;
+  info?: RgbColor;
+  border?: Partial<{ subtle: RgbColor; default: RgbColor; strong: RgbColor }>;
+  disabled?: Partial<{ fg: RgbColor; bg: RgbColor }>;
+  focus?: Partial<{ ring: RgbColor; bg: RgbColor }>;
+  selected?: Partial<{ bg: RgbColor; fg: RgbColor }>;
+};
+
+type ThemeId = "dark" | "light" | "dim" | "highContrast" | "nord" | "dracula";
+
+const OVERRIDE_MAP: Record<ThemeId, { colors: ThemeOverrideColors }> = {
+  dark: DARK_THEME_OVERRIDES,
+  light: LIGHT_THEME_OVERRIDES,
+  dim: DIMMED_THEME_OVERRIDES,
+  highContrast: HIGH_CONTRAST_THEME_OVERRIDES,
+  nord: NORD_THEME_OVERRIDES,
+  dracula: DRACULA_THEME_OVERRIDES,
+};
+
+function resolveTokens(overrides: { colors: ThemeOverrideColors }): ResolvedTokens {
+  const c = overrides.colors;
+  return {
+    surface: {
+      deep: c.bg?.base ?? SURFACE.deep,
+      base: c.bg?.base ?? SURFACE.base,
+      subtle: c.bg?.subtle ?? SURFACE.subtle,
+      overlay: c.bg?.overlay ?? SURFACE.overlay,
+      elevated: c.bg?.elevated ?? SURFACE.elevated,
+      card: c.bg?.elevated
+        ? {
+            r: Math.min(255, c.bg.elevated.r + 4),
+            g: Math.min(255, c.bg.elevated.g + 4),
+            b: Math.min(255, c.bg.elevated.b + 4),
+          }
+        : SURFACE.card,
+    },
+    text: {
+      primary: c.fg?.primary ?? TEXT.primary,
+      secondary: c.fg?.secondary ?? TEXT.secondary,
+      tertiary: c.fg?.muted ?? TEXT.tertiary,
+      disabled: c.disabled?.fg ?? TEXT.disabled,
+    },
+    brand: {
+      primary: c.accent?.primary ?? BRAND.primary,
+      secondary: c.accent?.secondary ?? BRAND.secondary,
+      accent: c.accent?.tertiary ?? BRAND.accent,
+      base: c.accent?.primary ?? BRAND.base,
+    },
+    status: {
+      success: c.success ?? STATUS.success,
+      warning: c.warning ?? STATUS.warning,
+      error: c.error ?? STATUS.error,
+      info: c.info ?? STATUS.info,
+      neutral: STATUS.neutral,
+    },
+    border: {
+      subtle: c.border?.subtle ?? BORDER.subtle,
+      default: c.border?.default ?? BORDER.default,
+      strong: c.border?.strong ?? BORDER.strong,
+    },
+  };
+}
+
+/** Module-level active theme identifier. Defaults to "dark". */
+let activeThemeId: ThemeId = "dark";
+
+/**
+ * Set the active theme. Call this when the user switches themes
+ * so that all token-based getters return the correct values.
+ */
+export function setActiveTheme(name: string): void {
+  if (name in OVERRIDE_MAP) {
+    activeThemeId = name as ThemeId;
+  }
+}
+
+/**
+ * Get the current active theme identifier.
+ */
+export function getActiveThemeId(): ThemeId {
+  return activeThemeId;
+}
+
+/**
+ * Resolve the full token set for the currently active theme.
+ */
+export function getActiveTokens(): ResolvedTokens {
+  const overrides = OVERRIDE_MAP[activeThemeId];
+  return resolveTokens(overrides);
+}

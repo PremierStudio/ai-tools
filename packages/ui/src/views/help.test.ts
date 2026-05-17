@@ -28,7 +28,7 @@ describe("renderHelpOverlay", () => {
     };
     // modal children[0] is the column wrapper
     const col = vnode.children[0]!;
-    const header = col.children.find((c) => c.content === "Global");
+    const header = col.children.find((c) => c.content?.includes("Global"));
     expect(header).toBeTruthy();
   });
 
@@ -37,7 +37,7 @@ describe("renderHelpOverlay", () => {
       children: [{ children: Array<{ content: string }> }];
     };
     const col = vnode.children[0]!;
-    const header = col.children.find((c) => c.content === "Tools");
+    const header = col.children.find((c) => c.content?.includes("Tools"));
     expect(header).toBeTruthy();
   });
 
@@ -46,7 +46,7 @@ describe("renderHelpOverlay", () => {
       children: [{ children: Array<{ content: string }> }];
     };
     const col = vnode.children[0]!;
-    const header = col.children.find((c) => c.content === "Sessions");
+    const header = col.children.find((c) => c.content?.includes("Sessions"));
     expect(header).toBeTruthy();
   });
 
@@ -64,7 +64,7 @@ describe("renderHelpOverlay", () => {
       children: [{ children: Array<{ content: string }> }];
     };
     const col = vnode.children[0]!;
-    const header = col.children.find((c) => c.content === "Handoff");
+    const header = col.children.find((c) => c.content?.includes("Handoff"));
     expect(header).toBeTruthy();
   });
 
@@ -73,7 +73,7 @@ describe("renderHelpOverlay", () => {
       children: [{ children: Array<{ content: string }> }];
     };
     const col = vnode.children[0]!;
-    const header = col.children.find((c) => c.content === "Config");
+    const header = col.children.find((c) => c.content?.includes("Config"));
     expect(header).toBeTruthy();
   });
 
@@ -115,12 +115,14 @@ describe("renderHelpOverlay", () => {
     expect(dividers.length).toBeGreaterThanOrEqual(4);
   });
 
-  it("marks section headers as bold", () => {
+  it("marks section headers with bold content", () => {
     const vnode = renderHelpOverlay(mockUi) as {
-      children: [{ children: Array<{ content: string; props?: { bold: boolean } }> }];
+      children: [{ children: Array<{ content: string; type?: string }> }];
     };
     const col = vnode.children[0]!;
-    const globalHeader = col.children.find((c) => c.content === "Global");
-    expect(globalHeader!.props?.bold).toBe(true);
+    // Section headers are now richText nodes with icon + label (e.g. "◆ Global")
+    const globalHeader = col.children.find((c) => c.content?.includes("Global"));
+    expect(globalHeader).toBeTruthy();
+    expect(globalHeader!.type).toBe("richText");
   });
 });

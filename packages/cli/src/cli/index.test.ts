@@ -9,14 +9,14 @@ const mockPluginsRun = vi.fn();
 const mockSessionsRun = vi.fn();
 const mockUiRun = vi.fn();
 
-vi.mock("@premierstudio/ai-hooks/cli", () => ({ run: mockHooksRun }));
-vi.mock("@premierstudio/ai-mcp/cli", () => ({ run: mockMcpRun }));
-vi.mock("@premierstudio/ai-skills/cli", () => ({ run: mockSkillsRun }));
-vi.mock("@premierstudio/ai-agents/cli", () => ({ run: mockAgentsRun }));
-vi.mock("@premierstudio/ai-rules/cli", () => ({ run: mockRulesRun }));
+vi.mock("@premierstudio/ai-tools-hooks/cli", () => ({ run: mockHooksRun }));
+vi.mock("@premierstudio/ai-tools-mcp/cli", () => ({ run: mockMcpRun }));
+vi.mock("@premierstudio/ai-tools-skills/cli", () => ({ run: mockSkillsRun }));
+vi.mock("@premierstudio/ai-tools-agents/cli", () => ({ run: mockAgentsRun }));
+vi.mock("@premierstudio/ai-tools-rules/cli", () => ({ run: mockRulesRun }));
 vi.mock("../plugins/cli.js", () => ({ run: mockPluginsRun }));
-vi.mock("@premierstudio/ai-sessions/cli", () => ({ run: mockSessionsRun }));
-vi.mock("@premierstudio/ai-tools-ui/cli", () => ({ run: mockUiRun }));
+vi.mock("@premierstudio/ai-tools-sessions/cli", () => ({ run: mockSessionsRun }));
+vi.mock("@premierstudio/ai-tools-tui/cli", () => ({ run: mockUiRun }));
 
 import { run } from "./index.js";
 

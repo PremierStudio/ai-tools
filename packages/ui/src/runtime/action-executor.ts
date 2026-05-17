@@ -1,6 +1,6 @@
 import type { App } from "@rezi-ui/core";
 import { addToast } from "../toasts.js";
-import { THEME_MAP } from "../theme/index.js";
+import { THEME_MAP, setActiveTheme } from "../theme/index.js";
 import { findKeybindingCollision, savePreferences } from "../preferences.js";
 import { launchTool, buildHandoffLaunchOptions } from "../launcher.js";
 import type { PaneManager } from "../terminal/manager.js";
@@ -17,15 +17,11 @@ type ActionExecutorDeps = {
 };
 
 async function reloadDashboardData(app: App<TuiState>): Promise<void> {
-  const { detectTools, computeConfigHealth, detectMode } = await import("../app.js");
+  const { detectTools, detectMode } = await import("../app.js");
   const { formatSessionRow, listSessions } = await import("../widgets/session-browser.js");
-  const { getEngineStatus } = await import("../widgets/config-dashboard.js");
-  const [tools, configHealth, engines, mode] = await Promise.all([
-    detectTools(),
-    computeConfigHealth(),
-    getEngineStatus(),
-    detectMode(),
-  ]);
+  const { getConfigDashboardData } = await import("../widgets/config-dashboard.js");
+  const [tools, mode] = await Promise.all([detectTools(), detectMode()]);
+  const configData = await getConfigDashboardData(mode);
   let sessions: ReturnType<typeof formatSessionRow>[] = [];
   try {
     const raw = await listSessions({ limit: 200 });
@@ -37,12 +33,29 @@ async function reloadDashboardData(app: App<TuiState>): Promise<void> {
     ...s,
     tools,
     sessions,
-    engines,
-    mode,
-    configHealth,
+    engines: configData.engines,
+    deployments: configData.deployments,
+    manifestHealth: configData.manifestHealth,
+    mode: configData.mode,
+    configHealth: configData.configHealth,
     sessionCount: tools.reduce((sum, t) => sum + t.sessionCount, 0),
     view: "tools",
     inputMode: "dashboard",
+  }));
+}
+
+async function reloadConfigData(app: App<TuiState>): Promise<void> {
+  const { detectMode } = await import("../app.js");
+  const { getConfigDashboardData } = await import("../widgets/config-dashboard.js");
+  const mode = await detectMode();
+  const configData = await getConfigDashboardData(mode);
+  app.update((s) => ({
+    ...s,
+    engines: configData.engines,
+    deployments: configData.deployments,
+    manifestHealth: configData.manifestHealth,
+    mode: configData.mode,
+    configHealth: configData.configHealth,
   }));
 }
 
@@ -190,6 +203,7 @@ export function createActionExecutor({
     },
 
     "apply-settings-theme": async (action) => {
+      setActiveTheme(action.theme);
       app.update((s) => ({ ...s, theme: action.theme }));
       try {
         const resolved = THEME_MAP[action.theme];
@@ -275,13 +289,20 @@ export function createActionExecutor({
       try {
         const { triggerGenerate } = await import("../commands/config-sync.js");
         await triggerGenerate();
+        await reloadConfigData(app);
         app.update((s) => ({
           ...s,
+          configLastAction: { type: "generate", result: "success", message: "Config generated" },
           toasts: addToast(s.toasts, "success", "Config generated"),
         }));
       } catch {
         app.update((s) => ({
           ...s,
+          configLastAction: {
+            type: "generate",
+            result: "error",
+            message: "Config generation failed",
+          },
           toasts: addToast(s.toasts, "error", "Config generation failed"),
         }));
       }
@@ -295,13 +316,16 @@ export function createActionExecutor({
       try {
         const { triggerInstall } = await import("../commands/config-sync.js");
         await triggerInstall();
+        await reloadConfigData(app);
         app.update((s) => ({
           ...s,
+          configLastAction: { type: "install", result: "success", message: "Config installed" },
           toasts: addToast(s.toasts, "success", "Config installed"),
         }));
       } catch {
         app.update((s) => ({
           ...s,
+          configLastAction: { type: "install", result: "error", message: "Config install failed" },
           toasts: addToast(s.toasts, "error", "Config install failed"),
         }));
       }
@@ -314,18 +338,18 @@ export function createActionExecutor({
       }));
       try {
         const { detectTools } = await import("../app.js");
-        const { getEngineStatus } = await import("../widgets/config-dashboard.js");
         const tools = await detectTools();
-        const engines = await getEngineStatus();
+        await reloadConfigData(app);
         app.update((s) => ({
           ...s,
           tools,
-          engines,
+          configLastAction: { type: "refresh", result: "success", message: "Status refreshed" },
           toasts: addToast(s.toasts, "success", "Status refreshed"),
         }));
       } catch {
         app.update((s) => ({
           ...s,
+          configLastAction: { type: "refresh", result: "error", message: "Refresh failed" },
           toasts: addToast(s.toasts, "error", "Refresh failed"),
         }));
       }
@@ -381,6 +405,7 @@ export function createActionExecutor({
 
     "cycle-theme": async (action) => {
       try {
+        setActiveTheme(action.newTheme);
         const resolved = THEME_MAP[action.newTheme];
         if (resolved) {
           setTimeout(() => {
@@ -398,17 +423,97 @@ export function createActionExecutor({
     },
 
     "kill-tool": async (action) => {
-      app.update((s) => ({
-        ...s,
-        toasts: addToast(s.toasts, "info", `Action: ${action.type}`),
-      }));
+      if (!paneManager) {
+        app.update((s) => ({
+          ...s,
+          toasts: addToast(s.toasts, "error", "Terminal panes not available"),
+        }));
+        return;
+      }
+
+      const paneIndices = paneManager.getPanesForTool(action.toolId);
+      if (paneIndices.length === 0) {
+        app.update((s) => ({
+          ...s,
+          toasts: addToast(s.toasts, "info", `No running panes for ${action.toolId}`),
+        }));
+        return;
+      }
+
+      // Close panes in reverse order to preserve indices during removal
+      for (const index of [...paneIndices].toReversed()) {
+        paneManager.closePane(index);
+      }
+
+      const killedCount = paneIndices.length;
+      app.update((s) => {
+        const remaining = s.runningTools.filter((t) => t.toolId !== action.toolId);
+        const noMorePanes = paneManager.getPaneCount() === 0;
+        return {
+          ...s,
+          runningTools: remaining,
+          view: noMorePanes && s.view === "terminal" ? "tools" : s.view,
+          inputMode: noMorePanes && s.inputMode === "terminal" ? "dashboard" : s.inputMode,
+          toasts: addToast(
+            s.toasts,
+            "success",
+            `Killed ${killedCount} pane${killedCount > 1 ? "s" : ""} for ${action.toolId}`,
+          ),
+        };
+      });
     },
 
-    "open-editor": async (action) => {
+    "sync-config": async () => {
       app.update((s) => ({
         ...s,
-        toasts: addToast(s.toasts, "info", `Action: ${action.type}`),
+        toasts: addToast(s.toasts, "info", "Syncing config..."),
       }));
+      try {
+        const { triggerSync } = await import("../commands/config-sync.js");
+        await triggerSync();
+        await reloadConfigData(app);
+        app.update((s) => ({
+          ...s,
+          configLastAction: { type: "sync", result: "success", message: "Config synced" },
+          toasts: addToast(s.toasts, "success", "Config synced"),
+        }));
+      } catch {
+        app.update((s) => ({
+          ...s,
+          configLastAction: { type: "sync", result: "error", message: "Config sync failed" },
+          toasts: addToast(s.toasts, "error", "Config sync failed"),
+        }));
+      }
+    },
+
+    "detect-config": async () => {
+      app.update((s) => ({
+        ...s,
+        toasts: addToast(s.toasts, "info", "Detecting config..."),
+      }));
+      try {
+        const { triggerDetect } = await import("../commands/config-sync.js");
+        await triggerDetect();
+        await reloadConfigData(app);
+        app.update((s) => ({
+          ...s,
+          configLastAction: { type: "detect", result: "success", message: "Detection complete" },
+          toasts: addToast(s.toasts, "success", "Detection complete"),
+        }));
+      } catch {
+        app.update((s) => ({
+          ...s,
+          configLastAction: { type: "detect", result: "error", message: "Detection failed" },
+          toasts: addToast(s.toasts, "error", "Detection failed"),
+        }));
+      }
+    },
+
+    "open-editor": async () => {
+      const { resolve } = await import("node:path");
+      const editor = process.env["EDITOR"] || "vi";
+      const configDir = resolve(process.cwd(), ".ai-tools");
+      await stopLaunchResume(app, { command: editor, args: [configDir] });
     },
 
     "quick-handoff": async (action) => {

@@ -1,5 +1,5 @@
 /**
- * Spacing System for Agentful TUI
+ * Spacing System for the ai-tools TUI
  *
  * Implements Rezi's spacing scale for consistent layouts.
  * All spacing values should use these tokens instead of hardcoded numbers.
@@ -72,8 +72,6 @@ export const PADDING = {
   content: "md" as const,
   // Modals and overlays
   modal: "lg" as const,
-  // Page-level padding
-  page: "md" as const,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -131,8 +129,40 @@ export const GAP = {
   standard: "sm" as const,
   // Relaxed gap (cards, sections)
   relaxed: "md" as const,
-  // Large gap (major sections)
-  large: "lg" as const,
+};
+
+// ─────────────────────────────────────────────────────────────
+// TINT & DIM SCALES
+// ─────────────────────────────────────────────────────────────
+
+/**
+ * Semantic tint strengths for tintBg() calls.
+ * Replaces scattered magic opacity values across views.
+ */
+export const TINT = {
+  /** Empty states, faint backgrounds */
+  subtle: 0.04,
+  /** Alternating row accent, hero bg */
+  light: 0.08,
+  /** Tab bar tints, status bar segments */
+  medium: 0.15,
+  /** Selection highlight, active items */
+  emphasis: 0.22,
+  /** Chip backgrounds, active tab bg */
+  strong: 0.3,
+};
+
+/**
+ * Semantic dim factors for dimColor() calls.
+ * Replaces scattered magic dim values across views.
+ */
+export const DIM = {
+  /** Subtle dimming */
+  subtle: 0.35,
+  /** Medium dimming (icons, secondary elements) */
+  medium: 0.5,
+  /** Strong dimming (very faint elements) */
+  strong: 0.6,
 };
 
 // ─────────────────────────────────────────────────────────────
@@ -160,7 +190,7 @@ export const MARGIN = {
 /**
  * Standard border styles for consistent visual hierarchy
  */
-export const BORDER = {
+export const BORDER_STYLE = {
   // No border
   none: "none" as const,
   // Single line - subtle containers
@@ -203,19 +233,19 @@ export const SHADOW = {
 export const PRESETS = {
   // Card container
   card: {
-    border: BORDER.rounded,
+    border: BORDER_STYLE.none,
     p: PADDING.card,
-    shadow: SHADOW.light,
+    shadow: SHADOW.none,
   },
   // Selected card
   selectedCard: {
-    border: BORDER.heavy,
+    border: BORDER_STYLE.none,
     p: PADDING.card,
-    shadow: SHADOW.medium,
+    shadow: SHADOW.none,
   },
   // Modal overlay
   modal: {
-    border: BORDER.double,
+    border: BORDER_STYLE.double,
     p: PADDING.modal,
     shadow: SHADOW.heavy,
   },
@@ -230,9 +260,33 @@ export const PRESETS = {
   },
   // Content box
   content: {
-    border: BORDER.rounded,
+    border: BORDER_STYLE.none,
     p: PADDING.content,
     flex: 1,
+  },
+  // Empty state container
+  emptyState: {
+    p: PADDING.card,
+  },
+  // Standard table/list row
+  tableRow: {
+    mb: MARGIN.none,
+  },
+  // Selected table/list row
+  selectedTableRow: {
+    mb: MARGIN.none,
+  },
+  // View header row
+  header: {
+    gap: GAP.tight,
+  },
+  // Action hint chip
+  chip: {
+    px: PADDING.compact,
+  },
+  // Tab bar container
+  tabBar: {
+    gap: GAP.none,
   },
 };
 

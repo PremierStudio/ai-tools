@@ -309,9 +309,9 @@ describe("PaneManager", () => {
 
       manager.resize(120, 40);
 
-      // Both terminals should be resized to content area (cols, rows - 2)
-      expect(pane1!.term.resize).toHaveBeenCalledWith(120, 38);
-      expect(pane2!.term.resize).toHaveBeenCalledWith(120, 38);
+      // Both terminals should be resized to the exact provided content area.
+      expect(pane1!.term.resize).toHaveBeenCalledWith(120, 40);
+      expect(pane2!.term.resize).toHaveBeenCalledWith(120, 40);
     });
   });
 

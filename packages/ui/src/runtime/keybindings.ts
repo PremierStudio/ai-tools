@@ -6,7 +6,7 @@ type KeyHandler = (ctx: {
   update: (fn: (s: TuiState) => TuiState) => void;
 }) => void;
 
-type BindKey = (semanticKey: string, ctrl?: boolean) => KeyHandler;
+type BindKeyWithMods = (semanticKey: string, ctrl?: boolean, shift?: boolean) => KeyHandler;
 
 type BindingSpec = {
   actionId: string;
@@ -16,40 +16,44 @@ type BindingSpec = {
   allowCustom?: (trigger: string) => boolean;
 };
 
+const actionKey = (actionId: string): string => `action:${actionId}`;
+
 const OVERRIDABLE_BINDINGS: BindingSpec[] = [
-  { actionId: "quit", defaults: ["q"], semanticKey: "q" },
+  { actionId: "quit", defaults: ["q"], semanticKey: actionKey("quit") },
   {
     actionId: "quit-ctrl",
     defaults: ["ctrl+c"],
-    semanticKey: "c",
+    semanticKey: actionKey("quit-ctrl"),
     ctrl: true,
     allowCustom: (trigger) => trigger === "ctrl+c",
   },
-  { actionId: "tab-next", defaults: ["Tab"], semanticKey: "Tab" },
+  { actionId: "tab-next", defaults: ["Tab"], semanticKey: actionKey("tab-next") },
   {
     actionId: "tab-prev",
     defaults: ["shift+Tab"],
-    semanticKey: "BackTab",
+    semanticKey: actionKey("tab-prev"),
     allowCustom: (trigger) => trigger === "shift+Tab",
   },
-  { actionId: "view-1", defaults: ["1"], semanticKey: "1" },
-  { actionId: "view-2", defaults: ["2"], semanticKey: "2" },
-  { actionId: "view-3", defaults: ["3"], semanticKey: "3" },
-  { actionId: "view-4", defaults: ["4"], semanticKey: "4" },
-  { actionId: "help", defaults: ["?"], semanticKey: "?" },
-  { actionId: "theme-cycle", defaults: ["t"], semanticKey: "t" },
-  { actionId: "sidebar-collapse", defaults: ["["], semanticKey: "[" },
-  { actionId: "sidebar-expand", defaults: ["]"], semanticKey: "]" },
-  { actionId: "sessions-search", defaults: ["/"], semanticKey: "/" },
-  { actionId: "sessions-sort", defaults: ["s"], semanticKey: "s" },
-  { actionId: "sessions-handoff", defaults: ["H"], semanticKey: "H" },
-  { actionId: "detail-handoff", defaults: ["h"], semanticKey: "h" },
-  { actionId: "tools-kill", defaults: ["d"], semanticKey: "d" },
-  { actionId: "config-generate", defaults: ["g"], semanticKey: "g" },
-  { actionId: "config-install", defaults: ["i"], semanticKey: "i" },
-  { actionId: "config-refresh", defaults: ["r"], semanticKey: "r" },
-  { actionId: "config-editor", defaults: ["e"], semanticKey: "e" },
-  { actionId: "terminal", defaults: ["`"], semanticKey: "`" },
+  { actionId: "view-1", defaults: ["1"], semanticKey: actionKey("view-1") },
+  { actionId: "view-2", defaults: ["2"], semanticKey: actionKey("view-2") },
+  { actionId: "view-3", defaults: ["3"], semanticKey: actionKey("view-3") },
+  { actionId: "view-4", defaults: ["4"], semanticKey: actionKey("view-4") },
+  { actionId: "help", defaults: ["?"], semanticKey: actionKey("help") },
+  { actionId: "theme-cycle", defaults: ["t"], semanticKey: actionKey("theme-cycle") },
+  { actionId: "sidebar-collapse", defaults: ["["], semanticKey: actionKey("sidebar-collapse") },
+  { actionId: "sidebar-expand", defaults: ["]"], semanticKey: actionKey("sidebar-expand") },
+  { actionId: "sessions-search", defaults: ["/"], semanticKey: actionKey("sessions-search") },
+  { actionId: "sessions-sort", defaults: ["s"], semanticKey: actionKey("sessions-sort") },
+  { actionId: "sessions-handoff", defaults: ["H"], semanticKey: actionKey("sessions-handoff") },
+  { actionId: "detail-handoff", defaults: ["h"], semanticKey: actionKey("detail-handoff") },
+  { actionId: "tools-kill", defaults: ["d"], semanticKey: actionKey("tools-kill") },
+  { actionId: "config-generate", defaults: ["g"], semanticKey: actionKey("config-generate") },
+  { actionId: "config-install", defaults: ["i"], semanticKey: actionKey("config-install") },
+  { actionId: "config-refresh", defaults: ["r"], semanticKey: actionKey("config-refresh") },
+  { actionId: "config-editor", defaults: ["e"], semanticKey: actionKey("config-editor") },
+  { actionId: "config-sync", defaults: ["s"], semanticKey: actionKey("config-sync") },
+  { actionId: "config-detect", defaults: ["d"], semanticKey: actionKey("config-detect") },
+  { actionId: "terminal", defaults: ["`"], semanticKey: actionKey("terminal") },
 ];
 
 const NON_OVERRIDABLE_BASE_KEYS: Array<{ trigger: string; semanticKey: string }> = [
@@ -58,6 +62,7 @@ const NON_OVERRIDABLE_BASE_KEYS: Array<{ trigger: string; semanticKey: string }>
   { trigger: "Down", semanticKey: "Down" },
   { trigger: "Up", semanticKey: "Up" },
   { trigger: "Enter", semanticKey: "Enter" },
+  { trigger: "shift+Enter", semanticKey: "Enter" },
   { trigger: "Escape", semanticKey: "Escape" },
   { trigger: "Backspace", semanticKey: "Backspace" },
   { trigger: "Left", semanticKey: "Left" },
@@ -75,13 +80,14 @@ function resolveBinding(
 }
 
 export function buildDashboardKeyHandlers(
-  bindKey: BindKey,
+  bindKey: BindKeyWithMods,
   keyOverrides: Record<string, string>,
 ): Record<string, KeyHandler> {
   const handlers: Record<string, KeyHandler> = {};
 
   for (const binding of NON_OVERRIDABLE_BASE_KEYS) {
-    handlers[binding.trigger] = bindKey(binding.semanticKey);
+    const isShift = binding.trigger.startsWith("shift+");
+    handlers[binding.trigger] = bindKey(binding.semanticKey, false, isShift);
   }
 
   for (const spec of OVERRIDABLE_BINDINGS) {

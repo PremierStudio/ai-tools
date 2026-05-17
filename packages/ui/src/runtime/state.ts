@@ -1,5 +1,5 @@
 import type { AppView, InputMode, ToolInfo } from "../types.js";
-import type { EngineStatus } from "../widgets/config-dashboard.js";
+import type { EngineStatus, ToolDeployment, ManifestHealth } from "../widgets/config-dashboard.js";
 import type { SessionRow } from "../widgets/session-browser.js";
 import type { Toast } from "../toasts.js";
 import type { ThemeName } from "../theme/index.js";
@@ -24,6 +24,8 @@ export type DataState = {
   tools: ToolInfo[];
   sessions: SessionRow[];
   engines: EngineStatus[];
+  deployments: ToolDeployment[];
+  manifestHealth: ManifestHealth;
   mode: string;
   configHealth: string;
   sessionCount: number;
@@ -32,6 +34,7 @@ export type DataState = {
 export type SelectionState = {
   selectedToolIndex: number;
   selectedSessionIndex: number;
+  configSelectedIndex: number;
 };
 
 export type SessionState = {
@@ -66,10 +69,17 @@ export type SettingsState = {
   settingsMenu: SettingsMenuState;
 };
 
+export type ConfigLastAction = {
+  type: string;
+  result: "success" | "error";
+  message: string;
+};
+
 export type FeedbackState = {
   toasts: Toast[];
   notification: string | null;
   loading: TuiLoadingState;
+  configLastAction: ConfigLastAction | null;
 };
 
 export type TuiState = NavigationState &

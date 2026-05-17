@@ -147,7 +147,7 @@ describe("CodexAdapter", () => {
     it("generates a runner script and hooks config", async () => {
       const files = await adapter.generate([testHook]);
       expect(files).toHaveLength(2);
-      expect(files[0]?.path).toBe(".codex/hooks/ai-hooks-runner.js");
+      expect(files[0]?.path).toBe(".codex/hooks/ai-tools-hooks-runner.js");
       expect(files[1]?.path).toBe(".codex/hooks.json");
     });
 
@@ -197,7 +197,7 @@ describe("CodexAdapter", () => {
   describe("uninstall", () => {
     it("removes generated Codex hook files", async () => {
       await adapter.uninstall();
-      expect(removeFileSpy).toHaveBeenCalledWith(".codex/hooks/ai-hooks-runner.js");
+      expect(removeFileSpy).toHaveBeenCalledWith(".codex/hooks/ai-tools-hooks-runner.js");
       expect(removeFileSpy).toHaveBeenCalledWith(".codex/hooks.json");
     });
   });

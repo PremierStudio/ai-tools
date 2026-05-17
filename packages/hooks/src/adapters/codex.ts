@@ -107,7 +107,7 @@ class CodexAdapter extends BaseAdapter {
     }
 
     configs.push({
-      path: ".codex/hooks/ai-hooks-runner.js",
+      path: ".codex/hooks/ai-tools-hooks-runner.js",
       content: this.generateRunner(),
       format: "js",
     });
@@ -121,7 +121,7 @@ class CodexAdapter extends BaseAdapter {
         hooks: [
           {
             type: "command",
-            command: `node ${resolve(process.cwd(), ".codex/hooks/ai-hooks-runner.js")} ${event}`,
+            command: `node ${resolve(process.cwd(), ".codex/hooks/ai-tools-hooks-runner.js")} ${event}`,
             timeout: 10,
             statusMessage: `ai-hooks ${event}`,
           },
@@ -148,6 +148,7 @@ class CodexAdapter extends BaseAdapter {
 
   async uninstall(): Promise<void> {
     await this.removeFile(".codex/hooks/ai-hooks-runner.js");
+    await this.removeFile(".codex/hooks/ai-tools-hooks-runner.js");
     await this.removeFile(".codex/hooks.json");
   }
 
@@ -162,7 +163,7 @@ class CodexAdapter extends BaseAdapter {
  *
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
-import { loadConfig, HookEngine } from "@premierstudio/ai-hooks";
+import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks";
 
 const PROJECT_ROOT = "${resolve(process.cwd())}";
 process.chdir(PROJECT_ROOT);

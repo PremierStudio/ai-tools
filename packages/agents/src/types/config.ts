@@ -7,5 +7,5 @@ export type AgentsConfig = {
 export type GeneratedFile = {
   path: string;
   content: string;
-  format: "md" | "json" | "yaml";
+  format: "md" | "json" | "toml" | "yaml";
 };

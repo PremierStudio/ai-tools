@@ -2,18 +2,20 @@
 
 ![Node.js >=22](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)
 ![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178C6?logo=typescript&logoColor=white)
-![100% Coverage](https://img.shields.io/badge/coverage-100%25-brightgreen)
+![Coverage Gate >=80%](https://img.shields.io/badge/coverage_gate-%3E%3D80%25-brightgreen)
 ![License MIT](https://img.shields.io/badge/license-MIT-16A34A)
 
-**Universal configuration and runtime engine for AI coding tools. Define once — works everywhere.**
+**Universal configuration and runtime engine for AI coding tools. Install one package, target many tools.**
 
-`ai-tools` is a monorepo of engines that manage hooks, MCP servers, agents, skills, and rules across 13 AI coding tools. Write your configuration once and adapters translate it into the native format each tool expects.
+`@premierstudio/ai-tools` is the single public package for this project.
+
+This repository still uses multiple internal workspaces so hooks, MCP, agents, skills, rules, sessions, and UI can be developed and tested cleanly. But those workspaces are implementation details. Consumers should install one package and let it orchestrate the rest.
 
 ## Why
 
 Every AI coding tool has its own format for hooks, MCP servers, agents, skills, and rules. If you use more than one tool — or your team does — you're maintaining the same configuration in multiple places.
 
-ai-tools lets you define each configuration surface once. Adapters translate it into the native format for every tool you use: Claude Code, Cursor, Copilot, Gemini CLI, and 9 others.
+ai-tools lets you define each configuration surface once. Adapters translate it into the native format for every tool you use: Claude Code, Codex, OpenCode, VS Code / Copilot, Antigravity CLI, legacy Gemini CLI, and others.
 
 Five engines — one for each configuration surface — plus a unified CLI that orchestrates them all.
 
@@ -29,10 +31,11 @@ graph TD
     CLI --> Skills["<b>ai-skills</b><br/>slash commands"]
     CLI --> Rules["<b>ai-rules</b><br/>project rules"]
 
-    subgraph tools ["13 AI coding tools"]
+    subgraph tools ["14 AI coding tools"]
         CC["Claude Code"]
-        Codex["Codex CLI"]
-        Gemini["Gemini CLI"]
+        Codex["Codex"]
+        Antigravity["Antigravity CLI"]
+        Gemini["Gemini CLI<br/>(legacy)"]
         Cursor["Cursor"]
         Kiro["Kiro"]
         OC["OpenCode"]
@@ -64,21 +67,21 @@ graph TD
 
 | Package | CLI | Description |
 |---------|-----|-------------|
-| [`agentful`](packages/agentful) | `agentful` | Zero-friction wrapper for `npx agentful` |
-| [`@premierstudio/ai-tools`](packages/cli) | `ai-tools` | Unified CLI — routes to all engines |
-| [`@premierstudio/ai-hooks`](packages/hooks) | `ai-hooks` | Hook engine — guardrails, audit trails, runtime control |
-| [`@premierstudio/ai-mcp`](packages/mcp) | `ai-mcp` | MCP server configuration management |
-| [`@premierstudio/ai-agents`](packages/agents) | `ai-agents` | Agent persona definitions |
-| [`@premierstudio/ai-skills`](packages/skills) | `ai-skills` | Slash commands and prompt templates |
-| [`@premierstudio/ai-rules`](packages/rules) | `ai-rules` | Project rules with scoping and priority |
+| [`@premierstudio/ai-tools`](packages/cli) | `ai-tools` | Public package: unified CLI and runtime for all engines |
+| [`packages/hooks`](packages/hooks) | internal | Internal hooks engine implementation (`@premierstudio/ai-tools/hooks`) |
+| [`packages/mcp`](packages/mcp) | internal | Internal MCP engine implementation (`@premierstudio/ai-tools/mcp`) |
+| [`packages/agents`](packages/agents) | internal | Internal agents engine implementation (`@premierstudio/ai-tools/agents`) |
+| [`packages/skills`](packages/skills) | internal | Internal skills engine implementation (`@premierstudio/ai-tools/skills`) |
+| [`packages/rules`](packages/rules) | internal | Internal rules engine implementation (`@premierstudio/ai-tools/rules`) |
 
 ## Supported tools
 
 | Tool | Hooks | MCP | Agents | Skills | Rules |
 |------|:-----:|:---:|:------:|:------:|:-----:|
 | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | &check; | &check; | &check; | &check; | &check; |
-| [Codex CLI](https://github.com/openai/codex) | &check; | &check; | | &check; | &check; |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | &check; | &check; | &check; | &check; | &check; |
+| [Codex](https://openai.com/codex/) | &check; | &check; | &check; | &check; | &check; |
+| [Antigravity CLI](https://www.antigravity.google/product/antigravity-cli) | | | &check; | &check; | &check; |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) legacy | &check; | &check; | &check; | &check; | &check; |
 | [Cursor](https://cursor.com) | &check; | &check; | &check; | &check; | &check; |
 | [Kiro](https://kiro.dev) | &check; | &check; | &check; | &check; | &check; |
 | [OpenCode](https://opencode.ai) | &check; | &check; | &check; | &check; | &check; |
@@ -92,13 +95,15 @@ graph TD
 
 <sub>&ast; VS Code 1.109+ agent hooks use the Claude Code format — the Claude Code adapter output works directly.</sub>
 
+<sub>Antigravity CLI supports native plugins that can bundle MCP servers and hooks. ai-tools currently targets Antigravity workspace skills, rules, and agent templates directly; native Antigravity plugin installation is the next adapter layer.</sub>
+
 ## Quick start
 
 ### Unified CLI
 
 ```bash
 # Run instantly (recommended)
-npx agentful@latest detect
+npx @premierstudio/ai-tools@latest detect
 
 # Install everything
 npm i -D @premierstudio/ai-tools
@@ -114,8 +119,8 @@ ai-tools rules generate && ai-tools rules install
 # Portable plugin bundles
 ai-tools plugins init
 ai-tools plugins detect
-ai-tools plugins plan --tools=cursor,codex,opencode,claude-desktop
-ai-tools plugins install --tools=cursor,codex,opencode
+ai-tools plugins plan --tools=cursor,codex,opencode,claude-code,antigravity-cli
+ai-tools plugins install --tools=cursor,codex,opencode,claude-code
 ```
 
 ### Portable plugin bundles
@@ -126,7 +131,6 @@ Use `definePlugin()` from `@premierstudio/ai-tools` to describe a capability bun
 
 - MCP servers
 - skills
-- rules
 - agents
 - hooks
 
@@ -143,7 +147,7 @@ export default definePlugin({
   name: "Certification Coach",
   version: "0.1.0",
   targets: {
-    include: ["cursor", "codex", "opencode", "claude-code", "claude-desktop"],
+    include: ["cursor", "codex", "opencode", "claude-code", "antigravity-cli"],
   },
   mcpServers: [
     {
@@ -170,41 +174,16 @@ export default definePlugin({
 This is intentionally capability-aware rather than pretending every host has the same extension surface.
 
 - Cursor can consume a broad plugin bundle and supports interactive MCP Apps.
-- Codex can bundle skills, MCP, hooks, and app integrations.
+- Codex can bundle skills, MCP, hooks, custom agents, and app integrations.
 - OpenCode supports MCP plus a native plugin system across terminal, desktop, and IDE surfaces.
+- Antigravity CLI supports `.agents` workspace customizations now; native Antigravity plugin staging is planned for MCP and hooks.
 - Claude Desktop is currently MCP-first in `ai-tools`; rich interactive experiences there come through desktop extensions and remote interactive connectors rather than rules or skills.
 
-Optional convenience installers via `agentful.sh`:
+### Internal engine development
 
 ```bash
-# macOS / Linux
-curl -fsSL https://agentful.sh/install | sh
-
-# Windows PowerShell
-irm https://agentful.sh/install.ps1 | iex
-```
-
-### Or install individual engines
-
-```bash
-# Just hooks
-npm i -D @premierstudio/ai-hooks
-npx ai-hooks init
-npx ai-hooks detect --verbose
-npx ai-hooks generate
-npx ai-hooks install
-
-# Just MCP servers
-npm i -D @premierstudio/ai-mcp
-npx ai-mcp init
-npx ai-mcp generate
-npx ai-mcp install
-
-# Just rules
-npm i -D @premierstudio/ai-rules
-npx ai-rules init
-npx ai-rules generate
-npx ai-rules install
+# This repo still contains separate engine workspaces for development.
+# They are internal implementation details rather than the public install surface.
 ```
 
 Each engine follows the same CLI pattern: `init` → `detect` → `generate` → `install`. Use `import` or `sync` to pull existing tool-specific configs back into the universal format.
@@ -215,7 +194,7 @@ Each engine follows the same CLI pattern: `init` → `detect` → `generate` →
 
 ```ts
 // ai-hooks.config.ts
-import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-hooks";
+import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-tools/hooks";
 
 export default defineConfig({
   extends: [{ hooks: builtinHooks }],
@@ -244,7 +223,7 @@ export default defineConfig({
 
 ```ts
 // ai-mcp.config.ts
-import { defineConfig } from "@premierstudio/ai-mcp";
+import { defineConfig } from "@premierstudio/ai-tools/mcp";
 
 export default defineConfig({
   servers: [
@@ -262,7 +241,7 @@ export default defineConfig({
 
 ```ts
 // ai-rules.config.ts
-import { defineRulesConfig } from "@premierstudio/ai-rules";
+import { defineRulesConfig } from "@premierstudio/ai-tools/rules";
 
 export default defineRulesConfig({
   rules: [
@@ -314,7 +293,7 @@ The hooks engine is the most powerful package — an Express.js-style middleware
 Import the engine directly for building platforms that orchestrate AI agents:
 
 ```ts
-import { HookEngine, builtinHooks } from "@premierstudio/ai-hooks";
+import { HookEngine, builtinHooks } from "@premierstudio/ai-tools/hooks";
 
 const engine = new HookEngine({
   hooks: builtinHooks,
@@ -330,17 +309,18 @@ if (result.blocked) {
 ## Development
 
 ```bash
-git clone https://github.com/PremierStudio/ai-hooks.git
+git clone https://github.com/PremierStudio/ai-tools.git
 cd ai-tools
 npm install
-npm run check   # lint + format + typecheck + test
+npm run check   # lint + format + typecheck + coverage-gated tests
 ```
 
 | Command | What it does |
 |---------|-------------|
-| `npm run check` | Full verification: lint + format + typecheck + test |
+| `npm run check` | Full verification: lint + format + typecheck + coverage-gated tests |
 | `npm run build` | Build all packages via Turborepo |
 | `npm test` | Run all tests (vitest) |
+| `npm run test:coverage` | Run Vitest with the repository coverage gate |
 | `npx vitest run packages/hooks` | Test a single package |
 | `npm run lint` | oxlint |
 | `npm run fmt` | oxfmt (auto-format) |

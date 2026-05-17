@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-vi.mock("@premierstudio/ai-sessions", () => ({
+vi.mock("@premierstudio/ai-tools-sessions", () => ({
   registry: {
     list: () => [],
     get: () => undefined,
@@ -8,7 +8,7 @@ vi.mock("@premierstudio/ai-sessions", () => ({
   },
 }));
 
-vi.mock("@premierstudio/ai-sessions/adapters/all", () => ({}));
+vi.mock("@premierstudio/ai-tools-sessions/adapters/all", () => ({}));
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn().mockReturnValue(false),
@@ -96,7 +96,7 @@ describe("run() - help output", () => {
   it("prints help text for --help", async () => {
     await run(["--help"]);
     const output = allLog();
-    expect(output).toContain("ai-tools-ui");
+    expect(output).toContain("ai-tools-tui");
     expect(output).toContain("USAGE:");
     expect(output).toContain("OPTIONS:");
     expect(output).toContain("KEYBINDINGS:");
@@ -104,7 +104,7 @@ describe("run() - help output", () => {
 
   it("prints help text for -h", async () => {
     await run(["-h"]);
-    expect(allLog()).toContain("ai-tools-ui");
+    expect(allLog()).toContain("ai-tools-tui");
   });
 
   it("help includes --no-pty option", async () => {

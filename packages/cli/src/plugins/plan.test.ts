@@ -1,4 +1,37 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
+
+const mockRegistries = {
+  mcp: {
+    list: () => ["cursor", "codex", "claude-desktop", "opencode", "claude-code"],
+    get: () => undefined,
+    detectAll: async () => [{ id: "cursor" }, { id: "codex" }, { id: "claude-desktop" }],
+  },
+  skills: {
+    list: () => ["cursor", "codex", "opencode", "claude-code"],
+    get: () => undefined,
+    detectAll: async () => [{ id: "cursor" }, { id: "codex" }],
+  },
+  rules: {
+    list: () => ["cursor", "codex", "opencode", "claude-code"],
+    get: () => undefined,
+    detectAll: async () => [{ id: "cursor" }, { id: "codex" }],
+  },
+  agents: {
+    list: () => ["cursor", "codex", "opencode", "claude-code"],
+    get: () => undefined,
+    detectAll: async () => [{ id: "cursor" }, { id: "codex" }],
+  },
+  hooks: {
+    list: () => ["cursor", "codex", "opencode", "claude-code"],
+    get: () => undefined,
+    detectAll: async () => [{ id: "cursor" }, { id: "codex" }],
+  },
+};
+
+vi.mock("./runtime.js", () => ({
+  loadEngineRegistries: async () => mockRegistries,
+  getAllPluginEngines: () => ["mcp", "skills", "rules", "agents", "hooks"],
+}));
 
 import { buildPluginInstallPlan } from "./plan.js";
 
@@ -93,5 +126,30 @@ describe("buildPluginInstallPlan", () => {
 
     const target = plan.targets[0];
     expect(target?.engines.find((item) => item.engine === "hooks")?.status).toBe("ready");
+  });
+
+  it("marks Codex agents as ready once the adapter exists", async () => {
+    const plan = await buildPluginInstallPlan(
+      {
+        id: "cert-coach",
+        name: "Certification Coach",
+        version: "0.1.0",
+        agents: [
+          {
+            id: "reviewer",
+            name: "Reviewer",
+            instructions: "Review correctness and missing tests.",
+          },
+        ],
+      },
+      {
+        tools: ["codex"],
+        force: true,
+        detectedToolsOverride: ["codex"],
+      },
+    );
+
+    const target = plan.targets[0];
+    expect(target?.engines.find((item) => item.engine === "agents")?.status).toBe("ready");
   });
 });

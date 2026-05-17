@@ -52,7 +52,7 @@ describe("CursorSessionAdapter", () => {
         mtime: new Date("2025-01-01T01:00:00Z"),
       } as unknown as Awaited<ReturnType<typeof stat>>);
       vi.mocked(readFile).mockResolvedValue(
-        '{"role":"user","content":"Fix this"}\n' + '{"role":"assistant","content":"On it"}\n',
+        '{"role":"user","content":"Fix this"}\n{"role":"assistant","content":"On it"}\n',
       );
 
       const sessions = await adapter.parseSessions();
@@ -139,7 +139,7 @@ describe("CursorSessionAdapter", () => {
         mtime: new Date("2025-01-01T01:00:00Z"),
       } as unknown as Awaited<ReturnType<typeof stat>>);
       vi.mocked(readFile).mockResolvedValue(
-        '{"role":"unknown","content":"skip"}\n' + '{"role":"user","content":"keep"}\n',
+        '{"role":"unknown","content":"skip"}\n{"role":"user","content":"keep"}\n',
       );
 
       const sessions = await adapter.parseSessions();

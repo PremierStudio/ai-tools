@@ -12,6 +12,7 @@ describe("buildDashboardKeyHandlers", () => {
     expect(handlers["Down"]).toBeDefined();
     expect(handlers["Up"]).toBeDefined();
     expect(handlers["Enter"]).toBeDefined();
+    expect(handlers["shift+Enter"]).toBeDefined();
     expect(handlers["Escape"]).toBeDefined();
     expect(handlers["Left"]).toBeDefined();
     expect(handlers["Right"]).toBeDefined();

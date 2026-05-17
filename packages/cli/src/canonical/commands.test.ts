@@ -25,11 +25,11 @@ const mockSkillsRun = vi.fn();
 const mockAgentsRun = vi.fn();
 const mockRulesRun = vi.fn();
 
-vi.mock("@premierstudio/ai-hooks/cli", () => ({ run: mockHooksRun }));
-vi.mock("@premierstudio/ai-mcp/cli", () => ({ run: mockMcpRun }));
-vi.mock("@premierstudio/ai-skills/cli", () => ({ run: mockSkillsRun }));
-vi.mock("@premierstudio/ai-agents/cli", () => ({ run: mockAgentsRun }));
-vi.mock("@premierstudio/ai-rules/cli", () => ({ run: mockRulesRun }));
+vi.mock("@premierstudio/ai-tools-hooks/cli", () => ({ run: mockHooksRun }));
+vi.mock("@premierstudio/ai-tools-mcp/cli", () => ({ run: mockMcpRun }));
+vi.mock("@premierstudio/ai-tools-skills/cli", () => ({ run: mockSkillsRun }));
+vi.mock("@premierstudio/ai-tools-agents/cli", () => ({ run: mockAgentsRun }));
+vi.mock("@premierstudio/ai-tools-rules/cli", () => ({ run: mockRulesRun }));
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn(),

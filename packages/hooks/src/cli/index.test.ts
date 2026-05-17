@@ -227,9 +227,9 @@ describe("run() - unknown command", () => {
 
 describe("run() - init command", () => {
   it("skips when config already exists", async () => {
-    mockFindConfigFile.mockReturnValue("/project/ai-hooks.config.ts");
+    mockFindConfigFile.mockReturnValue("/project/ai-tools-hooks.config.ts");
     await run(["init"]);
-    expect(allLog()).toContain("Config already exists: /project/ai-hooks.config.ts");
+    expect(allLog()).toContain("Config already exists: /project/ai-tools-hooks.config.ts");
     expect(mockWriteFile).not.toHaveBeenCalled();
   });
 
@@ -252,7 +252,7 @@ describe("run() - init command", () => {
     const firstCall = mockWriteFile.mock.calls[0]!;
     const writtenContent = firstCall[1] as string;
     expect(writtenContent).toContain(
-      'import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-hooks"',
+      'import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-tools-hooks"',
     );
     expect(writtenContent).toContain("builtinHooks");
     expect(writtenContent).toContain("hook(");
@@ -401,7 +401,7 @@ describe("run() - detect command", () => {
     mockRegistryDetectAll.mockResolvedValue([adapter]);
     mockRegistryList.mockReturnValue(["claude-code"]);
     mockRegistryGet.mockReturnValue(adapter);
-    mockFindConfigFile.mockReturnValue("/some/path/ai-hooks.config.ts");
+    mockFindConfigFile.mockReturnValue("/some/path/ai-tools-hooks.config.ts");
 
     await run(["detect"]);
     expect(allLog()).not.toContain('"ai-hooks init"');
@@ -898,7 +898,7 @@ describe("run() - list command", () => {
 
 describe("run() - status command", () => {
   it("shows status header and config path when config exists", async () => {
-    mockFindConfigFile.mockReturnValue("/project/ai-hooks.config.ts");
+    mockFindConfigFile.mockReturnValue("/project/ai-tools-hooks.config.ts");
     mockRegistryDetectAll.mockResolvedValue([]);
     mockLoadConfig.mockResolvedValue({ hooks: [] });
     mockGetHooks.mockReturnValue([]);
@@ -906,7 +906,7 @@ describe("run() - status command", () => {
     await run(["status"]);
     const output = allLog();
     expect(output).toContain("ai-hooks status");
-    expect(output).toContain("Config: /project/ai-hooks.config.ts");
+    expect(output).toContain("Config: /project/ai-tools-hooks.config.ts");
     expect(output).toContain("Tools:  0 detected");
     expect(output).toContain("Hooks:  0 registered");
   });
@@ -954,7 +954,7 @@ describe("run() - status command", () => {
       },
     };
 
-    mockFindConfigFile.mockReturnValue("/project/ai-hooks.config.ts");
+    mockFindConfigFile.mockReturnValue("/project/ai-tools-hooks.config.ts");
     mockRegistryDetectAll.mockResolvedValue([]);
     mockLoadConfig.mockResolvedValue({ hooks: [hookDef] });
     mockGetHooks.mockReturnValue([hookDef]);
@@ -1255,7 +1255,7 @@ describe("run() - edge cases", () => {
 
     const adapter = makeAdapter({ id: "claude-code", name: "Claude Code" });
 
-    mockFindConfigFile.mockReturnValue("/project/ai-hooks.config.ts");
+    mockFindConfigFile.mockReturnValue("/project/ai-tools-hooks.config.ts");
     mockRegistryDetectAll.mockResolvedValue([adapter]);
     mockLoadConfig.mockResolvedValue({ hooks: [hookDef] });
     mockGetHooks.mockReturnValue([hookDef]);
@@ -1263,7 +1263,7 @@ describe("run() - edge cases", () => {
     await run(["status"]);
     const output = allLog();
     expect(output).toContain("ai-hooks status");
-    expect(output).toContain("Config: /project/ai-hooks.config.ts");
+    expect(output).toContain("Config: /project/ai-tools-hooks.config.ts");
     expect(output).toContain("Tools:  1 detected");
     expect(output).toContain("Hooks:  1 registered");
     expect(output).toContain("\u2713 Claude Code (claude-code)");

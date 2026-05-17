@@ -17,6 +17,8 @@ export type KeyAction =
   | { type: "execute-handoff"; sessionId: string; targetTool: string }
   | { type: "generate-config" }
   | { type: "install-config" }
+  | { type: "sync-config" }
+  | { type: "detect-config" }
   | { type: "refresh-status" }
   | { type: "open-editor" }
   | { type: "cycle-theme"; newTheme: ThemeName; keyOverrides: Record<string, string> }

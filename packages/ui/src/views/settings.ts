@@ -25,12 +25,14 @@ import {
   SURFACE,
   TEXT,
   OVERLAY_WIDTH,
-  COLOR_SEPARATOR_DIM,
   dimColor,
+  chipBg,
   getIconChar,
   PADDING,
   GAP,
+  TINT,
 } from "../theme.js";
+import { renderActionHints } from "./utils.js";
 
 // ── State ──────────────────────────────────────────────
 
@@ -146,38 +148,6 @@ export function handleSettingsKey(
   }
 
   // ── Tab-specific ──
-  switch (state.activeTab) {
-    case "theme":
-      return handleThemeKey(state, key);
-    case "general":
-      return handleGeneralKey(state, key);
-  }
-
-  // ── Close (theme / general tabs only) ──
-  if (key === "Escape" || (ctrl && key === "c") || key === "q") {
-    return { state, action: { type: "close" } };
-  }
-
-  // ── Tab switching ──
-  if (key === "1") {
-    return { state: { ...state, activeTab: "theme" }, action: null };
-  }
-  if (key === "2") {
-    return { state: { ...state, activeTab: "keys" }, action: null };
-  }
-  if (key === "3") {
-    return { state: { ...state, activeTab: "general" }, action: null };
-  }
-  if (key === "Left") {
-    const idx = Math.max(0, SETTINGS_TABS.indexOf(state.activeTab) - 1);
-    return { state: { ...state, activeTab: SETTINGS_TABS[idx] ?? "theme" }, action: null };
-  }
-  if (key === "Right") {
-    const idx = Math.min(SETTINGS_TABS.length - 1, SETTINGS_TABS.indexOf(state.activeTab) + 1);
-    return { state: { ...state, activeTab: SETTINGS_TABS[idx] ?? "general" }, action: null };
-  }
-
-  // ── Tab-specific (keys tab already handled above) ──
   switch (state.activeTab) {
     case "theme":
       return handleThemeKey(state, key);
@@ -402,44 +372,27 @@ export function renderSettingsMenu<T>(
       ui.divider({ char: "─" }),
       tabContent,
       ui.divider({ char: "─" }),
-      ui.richText([
-        {
-          text: " 1-3 ",
-          style: { fg: BRAND.accent, bold: true, bg: dimColor(BRAND.base, 0.25) },
-        },
-        { text: ":Tab  ", style: { fg: TEXT.tertiary } },
-        {
-          text: " j/k ",
-          style: { fg: BRAND.accent, bold: true, bg: dimColor(BRAND.base, 0.25) },
-        },
-        { text: ":Navigate  ", style: { fg: TEXT.tertiary } },
-        {
-          text: " Enter ",
-          style: { fg: BRAND.accent, bold: true, bg: dimColor(BRAND.base, 0.25) },
-        },
-        { text: ":Select  ", style: { fg: TEXT.tertiary } },
-        { text: " Esc ", style: { fg: TEXT.tertiary, bold: true } },
-        { text: "/", style: { fg: COLOR_SEPARATOR_DIM } },
-        { text: " q ", style: { fg: TEXT.tertiary, bold: true } },
-        { text: ":Close", style: { fg: TEXT.tertiary } },
+      renderActionHints(ui, [
+        ["1-3", "Tab"],
+        ["j/k", "Navigate"],
+        ["Enter", "Select"],
+        ["Esc/q", "Close"],
       ]),
     ]),
   });
 }
 
 function renderTabBar<T>(ui: Pick<UiKit<T>, "text" | "row" | "richText">, active: SettingsTab): T {
+  const activeBg = dimColor(BRAND.base, TINT.strong);
   const tabs = SETTINGS_TABS.map((tab) => {
     const isActive = tab === active;
     const label = TAB_LABELS[tab];
-    if (isActive) {
-      return ui.richText([
-        {
-          text: ` ${label} `,
-          style: { fg: TEXT.primary, bold: true, bg: dimColor(BRAND.base, 0.3) },
-        },
-      ]);
-    }
-    return ui.text(label, { style: { fg: STATUS.neutral } });
+    return ui.richText([
+      {
+        text: ` ${label} `,
+        style: isActive ? { fg: TEXT.primary, bold: true, bg: activeBg } : { fg: STATUS.neutral },
+      },
+    ]);
   });
   return ui.row({ gap: GAP.standard }, tabs);
 }
@@ -469,17 +422,19 @@ const THEME_BG_COLORS: Record<ThemeName, { r: number; g: number; b: number }> = 
   dracula: { r: 40, g: 42, b: 54 },
 };
 
+const THEME_NAME_WIDTH = 14;
+
 function renderThemeTab<T>(
   ui: Pick<UiKit<T>, "text" | "box" | "column" | "row" | "richText">,
   state: SettingsMenuState,
 ): T {
+  const headerBg = chipBg(BRAND.base);
   const rows = AVAILABLE_THEMES.map((theme) => {
     const isSelected = theme === state.selectedTheme;
     const indicator = isSelected ? getIconChar("select.selected") : " ";
     const desc = THEME_DESCRIPTIONS[theme] ?? "";
     const swatchBg = THEME_BG_COLORS[theme] ?? { r: 40, g: 40, b: 50 };
-    const selBg = dimColor(BRAND.base, 0.18);
-    const rowBg = isSelected ? selBg : undefined;
+    const rowBg = isSelected ? dimColor(BRAND.base, TINT.emphasis) : undefined;
     return ui.richText([
       {
         text: ` ${indicator} `,
@@ -490,7 +445,7 @@ function renderThemeTab<T>(
         },
       },
       {
-        text: theme.padEnd(14),
+        text: theme.padEnd(THEME_NAME_WIDTH),
         style: {
           fg: isSelected ? TEXT.primary : STATUS.neutral,
           bold: isSelected,
@@ -500,16 +455,13 @@ function renderThemeTab<T>(
       { text: "  ", style: { bg: swatchBg } },
       { text: THEME_SWATCHES[theme] ?? "         ", style: { bg: swatchBg } },
       { text: "  ", style: { bg: swatchBg } },
-      { text: "  " + desc, style: { fg: isSelected ? STATUS.warning : TEXT.tertiary } },
+      { text: "  " + desc, style: { fg: isSelected ? BRAND.accent : TEXT.tertiary } },
     ]);
   });
 
-  return ui.column({ gap: GAP.none }, [
+  return ui.column({ gap: GAP.tight }, [
     ui.richText([
-      {
-        text: " Theme ",
-        style: { fg: TEXT.primary, bold: true, bg: dimColor(BRAND.base, 0.25) },
-      },
+      { text: " Theme ", style: { fg: TEXT.primary, bold: true, bg: headerBg } },
       { text: "  j/k: move  Enter: apply", style: { fg: TEXT.tertiary } },
     ]),
     ui.text(""),
@@ -517,8 +469,12 @@ function renderThemeTab<T>(
   ]);
 }
 
+const KEY_LABEL_WIDTH = 22;
+const KEY_DISPLAY_WIDTH = 18;
+const MAX_VISIBLE_BINDINGS = 20;
+
 function renderKeysTab<T>(
-  ui: Pick<UiKit<T>, "text" | "box" | "column" | "row" | "divider">,
+  ui: Pick<UiKit<T>, "text" | "box" | "column" | "row" | "divider" | "richText">,
   state: SettingsMenuState,
   keyOverrides: Record<string, string>,
 ): T {
@@ -531,11 +487,11 @@ function renderKeysTab<T>(
     rows.push(
       ui.text(`Press new key for \u201c${binding?.label ?? "?"}\u201d: `, {
         bold: true,
-        style: { fg: STATUS.warning },
+        style: { fg: BRAND.accent },
       }),
       ui.text("(Esc to cancel)", { dim: true, style: { fg: STATUS.neutral } }),
     );
-    return ui.column({ gap: GAP.none }, rows);
+    return ui.column({ gap: GAP.tight }, rows);
   }
 
   // Search bar
@@ -544,23 +500,23 @@ function renderKeysTab<T>(
       ui.text(`${getIconChar("action.search")} Search:`, { style: { fg: STATUS.info } }),
       ui.text(state.keySearch || "(type to filter)", {
         dim: !state.keySearch,
-        style: { fg: state.keySearch ? STATUS.warning : STATUS.neutral },
+        style: { fg: state.keySearch ? BRAND.accent : STATUS.neutral },
       }),
     ]),
   );
 
   if (filtered.length === 0) {
     rows.push(ui.text("  No keybindings match.", { dim: true, style: { fg: STATUS.neutral } }));
-    return ui.column({ gap: GAP.none }, rows);
+    return ui.column({ gap: GAP.tight }, rows);
   }
 
   let prevContext = "";
-  for (let i = 0; i < Math.min(filtered.length, 20); i++) {
+  for (let i = 0; i < Math.min(filtered.length, MAX_VISIBLE_BINDINGS); i++) {
     const b = filtered[i];
     if (!b) continue;
 
     if (b.context !== prevContext) {
-      if (prevContext) rows.push(ui.text(""));
+      rows.push(ui.text(""));
       const ctx = b.context.charAt(0).toUpperCase() + b.context.slice(1);
       rows.push(ui.text(ctx, { bold: true, style: { fg: STATUS.info } }));
       prevContext = b.context;
@@ -570,8 +526,8 @@ function renderKeysTab<T>(
     const prefix = isSelected ? getIconChar("select.selected") : " ";
     const override = keyOverrides[b.id];
     const keyDisplay = override ? `${b.defaultKey} \u2192 ${override}` : b.defaultKey;
-    const label = b.label.padEnd(22);
-    const key = keyDisplay.padEnd(18);
+    const label = b.label.padEnd(KEY_LABEL_WIDTH);
+    const key = keyDisplay.padEnd(KEY_DISPLAY_WIDTH);
     const desc = b.description ?? "";
 
     rows.push(
@@ -583,9 +539,9 @@ function renderKeysTab<T>(
     );
   }
 
-  if (filtered.length > 20) {
+  if (filtered.length > MAX_VISIBLE_BINDINGS) {
     rows.push(
-      ui.text(`  \u2026 ${filtered.length - 20} more (refine search)`, {
+      ui.text(`  \u2026 ${filtered.length - MAX_VISIBLE_BINDINGS} more (refine search)`, {
         dim: true,
         style: { fg: STATUS.neutral },
       }),
@@ -594,26 +550,34 @@ function renderKeysTab<T>(
 
   rows.push(ui.text(""));
   rows.push(
-    ui.text("j/k: move  Enter/e: rebind  Backspace: clear  (type to search)", {
-      dim: true,
-      style: { fg: STATUS.neutral },
-    }),
+    renderActionHints(ui, [
+      ["j/k", "Move"],
+      ["Enter/e", "Rebind"],
+      ["⌫", "Clear"],
+    ]),
   );
 
-  return ui.column({ gap: GAP.none }, rows);
+  return ui.column({ gap: GAP.tight }, rows);
 }
 
 function renderGeneralTab<T>(
-  ui: Pick<UiKit<T>, "text" | "column" | "row">,
+  ui: Pick<UiKit<T>, "text" | "column" | "row" | "richText">,
   state: SettingsMenuState,
 ): T {
   const badgeOn = state.showPaneBadge;
   const fpsLabel = `${state.fpsCap} fps`;
   const activeLabel = `${Math.floor(state.sessionRefreshActiveMs / 1000)}s`;
   const idleLabel = `${Math.floor(state.sessionRefreshIdleMs / 1000)}s`;
+  const fpsCycle = FPS_OPTIONS.map((v) => `${v}`).join(" \u2192 ");
+  const activeCycle = SESSION_REFRESH_ACTIVE_OPTIONS_MS.map((v) => `${v / 1000}s`).join(" \u2192 ");
+  const idleCycle = SESSION_REFRESH_IDLE_OPTIONS_MS.map((v) => `${v / 1000}s`).join(" \u2192 ");
+  const headerBg = chipBg(BRAND.base);
 
   return ui.column({ gap: GAP.tight }, [
-    ui.text("General Settings", { bold: true, style: { fg: STATUS.info } }),
+    ui.richText([
+      { text: " General ", style: { fg: TEXT.primary, bold: true, bg: headerBg } },
+      { text: "  b/f/a/i: toggle", style: { fg: TEXT.tertiary } },
+    ]),
     ui.text(""),
     ui.row({ gap: GAP.standard }, [
       ui.text("b", { bold: true, style: { fg: STATUS.success } }),
@@ -626,20 +590,20 @@ function renderGeneralTab<T>(
     ui.row({ gap: GAP.standard }, [
       ui.text("f", { bold: true, style: { fg: STATUS.success } }),
       ui.text("Render FPS cap:"),
-      ui.text(`[${fpsLabel}]`, { bold: true, style: { fg: STATUS.warning } }),
-      ui.text("(cycles 15 \u2192 30 \u2192 60)", { dim: true, style: { fg: STATUS.neutral } }),
+      ui.text(`[${fpsLabel}]`, { bold: true, style: { fg: BRAND.accent } }),
+      ui.text(`(cycles ${fpsCycle})`, { dim: true, style: { fg: STATUS.neutral } }),
     ]),
     ui.row({ gap: GAP.standard }, [
       ui.text("a", { bold: true, style: { fg: STATUS.success } }),
       ui.text("Sessions refresh (active view):"),
-      ui.text(`[${activeLabel}]`, { bold: true, style: { fg: STATUS.warning } }),
-      ui.text("(cycles 10s \u2192 15s \u2192 30s)", { dim: true, style: { fg: STATUS.neutral } }),
+      ui.text(`[${activeLabel}]`, { bold: true, style: { fg: BRAND.accent } }),
+      ui.text(`(cycles ${activeCycle})`, { dim: true, style: { fg: STATUS.neutral } }),
     ]),
     ui.row({ gap: GAP.standard }, [
       ui.text("i", { bold: true, style: { fg: STATUS.success } }),
       ui.text("Sessions refresh (idle):"),
-      ui.text(`[${idleLabel}]`, { bold: true, style: { fg: STATUS.warning } }),
-      ui.text("(cycles 30s \u2192 60s \u2192 120s)", { dim: true, style: { fg: STATUS.neutral } }),
+      ui.text(`[${idleLabel}]`, { bold: true, style: { fg: BRAND.accent } }),
+      ui.text(`(cycles ${idleCycle})`, { dim: true, style: { fg: STATUS.neutral } }),
     ]),
     ui.text(""),
     ui.text("Changes take effect immediately.", { dim: true, style: { fg: STATUS.neutral } }),

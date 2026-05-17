@@ -30,11 +30,11 @@ Six packages managed by npm workspaces + Turborepo:
 
 | Package | npm name | Purpose |
 |---------|----------|---------|
-| `packages/hooks` | `@premierstudio/ai-hooks` | Core engine: hook engine, adapters, config loader, built-in hooks |
-| `packages/mcp` | `@premierstudio/ai-mcp` | MCP server configuration management |
-| `packages/agents` | `@premierstudio/ai-agents` | Agent configuration for AI tools |
-| `packages/skills` | `@premierstudio/ai-skills` | Skills/prompts configuration |
-| `packages/rules` | `@premierstudio/ai-rules` | Project rules configuration |
+| `packages/hooks` | `@premierstudio/ai-tools-hooks` | Core engine: hook engine, adapters, config loader, built-in hooks |
+| `packages/mcp` | `@premierstudio/ai-tools-mcp` | MCP server configuration management |
+| `packages/agents` | `@premierstudio/ai-tools-agents` | Agent configuration for AI tools |
+| `packages/skills` | `@premierstudio/ai-tools-skills` | Skills/prompts configuration |
+| `packages/rules` | `@premierstudio/ai-tools-rules` | Project rules configuration |
 | `packages/cli` | `@premierstudio/ai-tools` | Unified CLI routing to all engines |
 
 The `cli` package depends on all others. The other five packages are independent of each other.
@@ -88,6 +88,7 @@ All follow the same adapter-registry-CLI pattern as hooks but without the runtim
 
 - **tsup** builds each package to ESM with declaration maps
 - **Turborepo** orchestrates build order (packages build in dependency order)
-- **semantic-release** on master: analyzes conventional commits, bumps versions, publishes to npm
-- `scripts/sync-versions.js` keeps all workspace package versions in lockstep
-- `scripts/publish-workspaces.js` publishes non-primary packages after the core package
+- **semantic-release** on master: analyzes conventional commits, bumps versions, and publishes `@premierstudio/ai-tools`
+- `scripts/sync-versions.js` keeps the internal workspace versions aligned with the public CLI package
+- `scripts/vendor-cli-bundle.js` and `scripts/clean-cli-bundle.js` bundle internal engines into the published tarball
+- `scripts/run-semantic-release.js` prefers OIDC for existing npm packages and requires a one-time `NPM_TOKEN` only for the initial publish bootstrap

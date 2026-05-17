@@ -29,6 +29,8 @@ jobs:
         with:
           node-version: ${{ env.NODE_VERSION }}
           check-latest: true
+          registry-url: 'https://registry.npmjs.org'
+          package-manager-cache: false
 
       - name: Cache dependencies
         uses: actions/cache@v4
@@ -122,14 +124,14 @@ jobs:
       - name: Build all packages
         run: npm run build
 
-      - name: Run tests
-        run: npm test
+      - name: Run tests with coverage gate
+        run: npm run test:coverage
 
   # ============================================================================
   # STAGE 1.5: NON-BLOCKING CROSS-PLATFORM SMOKE (PRE-PUBLISH)
   # ============================================================================
-  smoke-agentful-preflight:
-    name: Smoke agentful preflight (${{ matrix.os }})
+  smoke-cli-preflight:
+    name: Smoke ai-tools preflight (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     continue-on-error: true
 
@@ -162,20 +164,20 @@ jobs:
       - name: Build CLI package
         run: npm run build --workspace @premierstudio/ai-tools
 
-      - name: Smoke-test local agentful wrapper
+      - name: Smoke-test local ai-tools CLI
         run: |
           node -e "
           const { spawnSync } = require('node:child_process');
-          const result = spawnSync('node', ['packages/agentful/bin.js', '--help'], {
+          const result = spawnSync('node', ['packages/cli/dist/cli/bin.js', '--help'], {
             encoding: 'utf-8',
             shell: true,
           });
           const output = (result.stdout || '') + (result.stderr || '');
-          if (result.status !== 0 || !/agentful\s+-\s+Unified CLI/.test(output)) {
+          if (result.status !== 0 || !/ai-tools\s+-\s+Unified CLI/.test(output)) {
             console.error(output);
             process.exit(1);
           }
-          console.log('agentful preflight smoke test passed');
+          console.log('ai-tools preflight smoke test passed');
           "
 
   # ============================================================================
@@ -257,15 +259,15 @@ jobs:
         run: npm run build
 
       - name: Publish via semantic-release
-        run: npx semantic-release
+        run: node scripts/run-semantic-release.js
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   # ============================================================================
   # STAGE 4: POST-PUBLISH SMOKE TESTS
   # ============================================================================
-  smoke-agentful:
-    name: Smoke agentful (${{ matrix.os }})
+  smoke-cli:
+    name: Smoke ai-tools (${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: [publish-npm]
     if: |
@@ -285,13 +287,13 @@ jobs:
           node-version: ${{ env.NODE_VERSION }}
           check-latest: true
 
-      - name: Wait for npm propagation and smoke-test agentful
+      - name: Wait for npm propagation and smoke-test ai-tools
         run: |
           node -e "
           const { spawnSync } = require('node:child_process');
 
-          function runAgentful() {
-            return spawnSync('npx', ['--yes', 'agentful@latest', '--help'], {
+          function runAiTools() {
+            return spawnSync('npx', ['--yes', '@premierstudio/ai-tools@latest', '--help'], {
               encoding: 'utf-8',
               shell: true,
             });
@@ -299,12 +301,12 @@ jobs:
 
           const maxAttempts = 8;
           for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-            const result = runAgentful();
+            const result = runAiTools();
             const output = (result.stdout || '') + (result.stderr || '');
-            const ok = result.status === 0 && /agentful\s+-\s+Unified CLI/.test(output);
+            const ok = result.status === 0 && /ai-tools\s+-\s+Unified CLI/.test(output);
 
             if (ok) {
-              console.log('agentful smoke test passed');
+              console.log('ai-tools smoke test passed');
               process.exit(0);
             }
 
@@ -315,6 +317,6 @@ jobs:
             }
           }
 
-          console.error('agentful smoke test failed after retries');
+          console.error('ai-tools smoke test failed after retries');
           process.exit(1);
           "

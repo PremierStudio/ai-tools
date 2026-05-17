@@ -273,7 +273,7 @@ describe("DroidAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
       expect(runner).toBeDefined();
-      expect(runner!.path).toBe(".factory/hooks/ai-hooks-runner.js");
+      expect(runner!.path).toBe(".factory/hooks/ai-tools-hooks-runner.js");
     });
 
     it("runner script has correct format", async () => {
@@ -292,7 +292,7 @@ describe("DroidAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
       expect(runner!.content).toContain(
-        'import { loadConfig, HookEngine } from "@premierstudio/ai-hooks"',
+        'import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks"',
       );
     });
 
@@ -475,7 +475,7 @@ describe("DroidAdapter", () => {
       expect(entry.matcher).toBe("*");
       expect(entry.hooks).toHaveLength(1);
       expect(entry.hooks[0]!.type).toBe("command");
-      expect(entry.hooks[0]!.command).toContain("ai-hooks-runner.js");
+      expect(entry.hooks[0]!.command).toContain("ai-tools-hooks-runner.js");
       expect(entry.hooks[0]!.timeout).toBe(30);
     });
 
@@ -668,7 +668,9 @@ describe("DroidAdapter", () => {
         // Should have 2 entries: the existing other-tool + the new ai-hooks
         expect(parsed.hooks.PreToolUse).toHaveLength(2);
         expect(parsed.hooks.PreToolUse![0]!.hooks[0]!.command).toBe("some-other-tool");
-        expect(parsed.hooks.PreToolUse![1]!.hooks[0]!.command).toContain("ai-hooks-runner.js");
+        expect(parsed.hooks.PreToolUse![1]!.hooks[0]!.command).toContain(
+          "ai-tools-hooks-runner.js",
+        );
       });
 
       it("removes old ai-hooks entries before adding new ones", async () => {
@@ -681,7 +683,7 @@ describe("DroidAdapter", () => {
                   hooks: [
                     {
                       type: "command",
-                      command: "node /old/path/ai-hooks-runner.js",
+                      command: "node /old/path/ai-tools-hooks-runner.js",
                       timeout: 30,
                     },
                   ],
@@ -702,7 +704,9 @@ describe("DroidAdapter", () => {
         };
         // Old ai-hooks entry should be replaced, not duplicated
         expect(parsed.hooks.PreToolUse).toHaveLength(1);
-        expect(parsed.hooks.PreToolUse![0]!.hooks[0]!.command).toContain("ai-hooks-runner.js");
+        expect(parsed.hooks.PreToolUse![0]!.hooks[0]!.command).toContain(
+          "ai-tools-hooks-runner.js",
+        );
       });
 
       it("handles existing settings with no hooks field", async () => {

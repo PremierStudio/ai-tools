@@ -8,7 +8,6 @@
     "url": "https://github.com/PremierStudio/ai-tools"
   },
   "bin": {
-    "agentful": "dist/cli/bin.js",
     "ai-tools": "dist/cli/bin.js"
   },
   "files": [
@@ -23,27 +22,67 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./hooks": {
+      "types": "./dist/hooks.d.ts",
+      "import": "./dist/hooks.js"
+    },
+    "./mcp": {
+      "types": "./dist/mcp.d.ts",
+      "import": "./dist/mcp.js"
+    },
+    "./skills": {
+      "types": "./dist/skills.d.ts",
+      "import": "./dist/skills.js"
+    },
+    "./agents": {
+      "types": "./dist/agents.d.ts",
+      "import": "./dist/agents.js"
+    },
+    "./rules": {
+      "types": "./dist/rules.d.ts",
+      "import": "./dist/rules.js"
+    },
+    "./sessions": {
+      "types": "./dist/sessions.d.ts",
+      "import": "./dist/sessions.js"
+    },
+    "./tui": {
+      "types": "./dist/tui.d.ts",
+      "import": "./dist/tui.js"
     }
   },
   "publishConfig": {
-    "access": "public"
+    "access": "public",
+    "provenance": true
   },
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
+    "prepack": "node ../../scripts/vendor-cli-bundle.js",
+    "postpack": "node ../../scripts/clean-cli-bundle.js",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "clean": "node -e \"const { rmSync } = require('node:fs'); rmSync('dist', { recursive: true, force: true });\""
   },
   "dependencies": {
-    "@premierstudio/ai-agents": "1.1.8",
-    "@premierstudio/ai-hooks": "1.1.8",
-    "@premierstudio/ai-mcp": "1.1.8",
-    "@premierstudio/ai-rules": "1.1.8",
-    "@premierstudio/ai-sessions": "1.1.8",
-    "@premierstudio/ai-skills": "1.1.8",
-    "@premierstudio/ai-tools-ui": "1.1.8"
+    "@premierstudio/ai-tools-agents": "1.1.8",
+    "@premierstudio/ai-tools-hooks": "1.1.8",
+    "@premierstudio/ai-tools-mcp": "1.1.8",
+    "@premierstudio/ai-tools-rules": "1.1.8",
+    "@premierstudio/ai-tools-sessions": "1.1.8",
+    "@premierstudio/ai-tools-skills": "1.1.8",
+    "@premierstudio/ai-tools-tui": "1.1.8"
   },
+  "bundledDependencies": [
+    "@premierstudio/ai-tools-agents",
+    "@premierstudio/ai-tools-hooks",
+    "@premierstudio/ai-tools-mcp",
+    "@premierstudio/ai-tools-rules",
+    "@premierstudio/ai-tools-sessions",
+    "@premierstudio/ai-tools-skills",
+    "@premierstudio/ai-tools-tui"
+  ],
   "engines": {
     "node": ">=22.0.0"
   }

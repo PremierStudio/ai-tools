@@ -12,7 +12,7 @@ import type {
  *
  * @example
  * ```ts
- * import { defineConfig, hook } from "@premierstudio/ai-hooks";
+ * import { defineConfig, hook } from "@premierstudio/ai-tools-hooks";
  *
  * export default defineConfig({
  *   hooks: [
