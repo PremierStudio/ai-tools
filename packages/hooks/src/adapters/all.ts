@@ -1,5 +1,6 @@
 // Side-effect imports to register all built-in adapters with the registry.
 import "./claude-code.js";
+import "./codex.js";
 import "./cline.js";
 import "./cursor.js";
 import "./droid.js";

@@ -1,0 +1,97 @@
+import { describe, expect, it } from "vitest";
+
+import { buildPluginInstallPlan } from "./plan.js";
+
+describe("buildPluginInstallPlan", () => {
+  it("marks Cursor as ready for MCP and skills", async () => {
+    const plan = await buildPluginInstallPlan(
+      {
+        id: "cert-coach",
+        name: "Certification Coach",
+        version: "0.1.0",
+        mcpServers: [
+          {
+            id: "cert-coach",
+            name: "Certification Coach",
+            transport: { type: "stdio", command: "npx", args: ["cert-coach-mcp"] },
+          },
+        ],
+        skills: [
+          {
+            id: "study-start",
+            name: "Study Start",
+            content: "Start a study session.",
+          },
+        ],
+      },
+      {
+        tools: ["cursor"],
+        force: true,
+        detectedToolsOverride: ["cursor"],
+      },
+    );
+
+    const cursor = plan.targets[0];
+    expect(cursor?.toolId).toBe("cursor");
+    expect(cursor?.installable).toBe(true);
+    expect(cursor?.engines.find((item) => item.engine === "mcp")?.status).toBe("ready");
+    expect(cursor?.engines.find((item) => item.engine === "skills")?.status).toBe("ready");
+  });
+
+  it("marks Claude Desktop as host-unsupported for skills", async () => {
+    const plan = await buildPluginInstallPlan(
+      {
+        id: "cert-coach",
+        name: "Certification Coach",
+        version: "0.1.0",
+        skills: [
+          {
+            id: "study-start",
+            name: "Study Start",
+            content: "Start a study session.",
+          },
+        ],
+      },
+      {
+        tools: ["claude-desktop"],
+        force: true,
+        detectedToolsOverride: ["claude-desktop"],
+      },
+    );
+
+    const target = plan.targets[0];
+    expect(target?.engines.find((item) => item.engine === "skills")?.status).toBe(
+      "host-unsupported",
+    );
+  });
+
+  it("marks Codex hooks as ready once the adapter exists", async () => {
+    const plan = await buildPluginInstallPlan(
+      {
+        id: "cert-coach",
+        name: "Certification Coach",
+        version: "0.1.0",
+        hooks: [
+          {
+            id: "audit",
+            name: "Audit",
+            description: "Audit prompts",
+            events: ["prompt:submit"],
+            priority: 1,
+            phase: "before",
+            enabled: true,
+            handler: async () => {},
+          },
+        ],
+      },
+      {
+        tools: ["codex"],
+        force: true,
+        detectedToolsOverride: ["codex"],
+      },
+    );
+
+    const target = plan.targets[0];
+    expect(target?.engines.find((item) => item.engine === "hooks")?.status).toBe("ready");
+  });
+});

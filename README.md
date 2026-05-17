@@ -17,6 +17,8 @@ ai-tools lets you define each configuration surface once. Adapters translate it 
 
 Five engines — one for each configuration surface — plus a unified CLI that orchestrates them all.
 
+On top of those engines, `ai-tools` can now act as a portable plugin authoring layer. Instead of hand-authoring separate Cursor plugins, Codex plugins, OpenCode prompts, and Claude-specific MCP config, you can define one capability bundle and let `ai-tools` map it onto the hosts you actually have installed.
+
 ```mermaid
 graph TD
     CLI["<b>ai-tools</b><br/>unified CLI"]
@@ -75,7 +77,7 @@ graph TD
 | Tool | Hooks | MCP | Agents | Skills | Rules |
 |------|:-----:|:---:|:------:|:------:|:-----:|
 | [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | &check; | &check; | &check; | &check; | &check; |
-| [Codex CLI](https://github.com/openai/codex) | | &check; | | &check; | &check; |
+| [Codex CLI](https://github.com/openai/codex) | &check; | &check; | | &check; | &check; |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | &check; | &check; | &check; | &check; | &check; |
 | [Cursor](https://cursor.com) | &check; | &check; | &check; | &check; | &check; |
 | [Kiro](https://kiro.dev) | &check; | &check; | &check; | &check; | &check; |
@@ -108,7 +110,69 @@ ai-tools mcp generate && ai-tools mcp install
 ai-tools skills generate && ai-tools skills install
 ai-tools agents generate && ai-tools agents install
 ai-tools rules generate && ai-tools rules install
+
+# Portable plugin bundles
+ai-tools plugins init
+ai-tools plugins detect
+ai-tools plugins plan --tools=cursor,codex,opencode,claude-desktop
+ai-tools plugins install --tools=cursor,codex,opencode
 ```
+
+### Portable plugin bundles
+
+`ai-tools` now supports a plugin-style authoring model for cross-tool distribution.
+
+Use `definePlugin()` from `@premierstudio/ai-tools` to describe a capability bundle once:
+
+- MCP servers
+- skills
+- rules
+- agents
+- hooks
+
+Then use `ai-tools plugins plan` to see what each target host can actually consume, and `ai-tools plugins install` to deploy supported surfaces into the detected tools on the current machine.
+
+Example:
+
+```ts
+// ai-plugin.config.ts
+import { definePlugin } from "@premierstudio/ai-tools";
+
+export default definePlugin({
+  id: "cert-coach",
+  name: "Certification Coach",
+  version: "0.1.0",
+  targets: {
+    include: ["cursor", "codex", "opencode", "claude-code", "claude-desktop"],
+  },
+  mcpServers: [
+    {
+      id: "cert-coach",
+      name: "Certification Coach",
+      transport: {
+        type: "stdio",
+        command: "npx",
+        args: ["cert-coach-mcp"],
+      },
+    },
+  ],
+  skills: [
+    {
+      id: "study-start",
+      name: "Study Start",
+      description: "Kick off a study session using the certification coach MCP.",
+      content: "Start or resume a study session before answering study requests.",
+    },
+  ],
+});
+```
+
+This is intentionally capability-aware rather than pretending every host has the same extension surface.
+
+- Cursor can consume a broad plugin bundle and supports interactive MCP Apps.
+- Codex can bundle skills, MCP, hooks, and app integrations.
+- OpenCode supports MCP plus a native plugin system across terminal, desktop, and IDE surfaces.
+- Claude Desktop is currently MCP-first in `ai-tools`; rich interactive experiences there come through desktop extensions and remote interactive connectors rather than rules or skills.
 
 Optional convenience installers via `agentful.sh`:
 

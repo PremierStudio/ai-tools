@@ -1,6 +1,6 @@
 function buildHelp(cliName: string): string {
   return `
-${cliName} - Unified CLI for all ai-hooks engines
+${cliName} - Unified CLI for ai-tools engines and portable plugin bundles
 
 USAGE:
   ${cliName} <engine> <command> [options]
@@ -12,6 +12,7 @@ ENGINES:
   skills      Skills/prompts configuration
   agents      Agent configuration
   rules       Project rules configuration
+  plugins     Portable capability bundle planning and install
   sessions    Cross-tool session reading and handoff
 
 CROSS-CUTTING COMMANDS:
@@ -42,6 +43,7 @@ EXAMPLES:
   ${cliName} skills sync                    # Sync skills across tools
   ${cliName} detect                         # Detect across all engines
   ${cliName} sync --dry-run                 # Sync all engines (dry run)
+  ${cliName} plugins plan --tools=cursor,codex,opencode
   ${cliName} hooks init                     # Initialize hooks config
   ${cliName} init                           # Initialize canonical mode
   ${cliName} generate                       # Generate canonical files
@@ -63,12 +65,16 @@ const ENGINES: Record<string, EngineEntry> = {
   skills: { name: "skills", pkg: "@premierstudio/ai-skills/cli", hasSync: true },
   agents: { name: "agents", pkg: "@premierstudio/ai-agents/cli", hasSync: true },
   rules: { name: "rules", pkg: "@premierstudio/ai-rules/cli", hasSync: true },
+  plugins: { name: "plugins", pkg: "./plugins", hasSync: false },
   sessions: { name: "sessions", pkg: "@premierstudio/ai-sessions/cli", hasSync: false },
 };
 
 const ENGINE_NAMES = Object.keys(ENGINES);
 
 async function loadEngine(pkg: string): Promise<{ run: (args: string[]) => Promise<void> }> {
+  if (pkg === "./plugins") {
+    return import("../plugins/cli.js") as Promise<{ run: (args: string[]) => Promise<void> }>;
+  }
   return import(pkg) as Promise<{ run: (args: string[]) => Promise<void> }>;
 }
 

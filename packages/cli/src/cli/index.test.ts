@@ -5,6 +5,7 @@ const mockMcpRun = vi.fn();
 const mockSkillsRun = vi.fn();
 const mockAgentsRun = vi.fn();
 const mockRulesRun = vi.fn();
+const mockPluginsRun = vi.fn();
 const mockSessionsRun = vi.fn();
 const mockUiRun = vi.fn();
 
@@ -13,6 +14,7 @@ vi.mock("@premierstudio/ai-mcp/cli", () => ({ run: mockMcpRun }));
 vi.mock("@premierstudio/ai-skills/cli", () => ({ run: mockSkillsRun }));
 vi.mock("@premierstudio/ai-agents/cli", () => ({ run: mockAgentsRun }));
 vi.mock("@premierstudio/ai-rules/cli", () => ({ run: mockRulesRun }));
+vi.mock("../plugins/cli.js", () => ({ run: mockPluginsRun }));
 vi.mock("@premierstudio/ai-sessions/cli", () => ({ run: mockSessionsRun }));
 vi.mock("@premierstudio/ai-tools-ui/cli", () => ({ run: mockUiRun }));
 
@@ -89,7 +91,7 @@ describe("run() - help output", () => {
   it("includes all engine names in help text", async () => {
     await run(["help"]);
     const output = allLog();
-    for (const name of ["hooks", "mcp", "skills", "agents", "rules", "sessions"]) {
+    for (const name of ["hooks", "mcp", "skills", "agents", "rules", "plugins", "sessions"]) {
       expect(output).toContain(name);
     }
   });
@@ -134,6 +136,11 @@ describe("run() - engine delegation", () => {
     expect(mockRulesRun).toHaveBeenCalledWith(["import"]);
   });
 
+  it("delegates to plugins engine", async () => {
+    await run(["plugins", "plan"]);
+    expect(mockPluginsRun).toHaveBeenCalledWith(["plan"]);
+  });
+
   it("delegates to sessions engine", async () => {
     await run(["sessions", "list"]);
     expect(mockSessionsRun).toHaveBeenCalledWith(["list"]);
@@ -162,7 +169,7 @@ describe("run() - ui delegation", () => {
 // ── Cross-cutting detect ─────────────────────────────────────
 
 describe("run() - cross-cutting detect", () => {
-  it("calls detect on all 6 engines", async () => {
+  it("calls detect on all 7 engines", async () => {
     await run(["detect"]);
 
     expect(mockHooksRun).toHaveBeenCalledWith(["detect"]);
@@ -170,6 +177,7 @@ describe("run() - cross-cutting detect", () => {
     expect(mockSkillsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockAgentsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockRulesRun).toHaveBeenCalledWith(["detect"]);
+    expect(mockPluginsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockSessionsRun).toHaveBeenCalledWith(["detect"]);
   });
 
@@ -181,6 +189,7 @@ describe("run() - cross-cutting detect", () => {
     expect(output).toContain("── skills ──");
     expect(output).toContain("── agents ──");
     expect(output).toContain("── rules ──");
+    expect(output).toContain("── plugins ──");
     expect(output).toContain("── sessions ──");
   });
 
@@ -189,6 +198,7 @@ describe("run() - cross-cutting detect", () => {
 
     expect(mockHooksRun).toHaveBeenCalledWith(["detect", "--tools=claude-code"]);
     expect(mockMcpRun).toHaveBeenCalledWith(["detect", "--tools=claude-code"]);
+    expect(mockPluginsRun).toHaveBeenCalledWith(["detect", "--tools=claude-code"]);
   });
 
   it("catches engine errors and continues", async () => {
@@ -202,6 +212,7 @@ describe("run() - cross-cutting detect", () => {
     expect(mockSkillsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockAgentsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockRulesRun).toHaveBeenCalledWith(["detect"]);
+    expect(mockPluginsRun).toHaveBeenCalledWith(["detect"]);
     expect(mockSessionsRun).toHaveBeenCalledWith(["detect"]);
   });
 });

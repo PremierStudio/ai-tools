@@ -1,6 +1,7 @@
 // Side-effect imports to register all built-in MCP adapters with the registry.
 import "./amp.js";
 import "./claude-code.js";
+import "./claude-desktop.js";
 import "./cline.js";
 import "./codex.js";
 import "./copilot.js";
