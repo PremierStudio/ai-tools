@@ -1,8 +1,81 @@
-import type { AgentDefinition } from "@premierstudio/ai-agents";
-import type { HookDefinition } from "@premierstudio/ai-hooks";
-import type { MCPServerDefinition } from "@premierstudio/ai-mcp";
-import type { RuleDefinition } from "@premierstudio/ai-rules";
-import type { SkillDefinition } from "@premierstudio/ai-skills";
+export type PluginMCPTransport =
+  | { type: "stdio"; command: string; args?: string[]; env?: Record<string, string> }
+  | { type: "sse"; url: string; headers?: Record<string, string> };
+
+export type PluginMCPServerDefinition = {
+  id: string;
+  name: string;
+  description?: string;
+  transport: PluginMCPTransport;
+  enabled?: boolean;
+  tags?: string[];
+};
+
+export type PluginSkillDefinition = {
+  id: string;
+  name: string;
+  description?: string;
+  content: string;
+  tags?: string[];
+  enabled?: boolean;
+};
+
+export type PluginRuleScope =
+  | { type: "always" }
+  | { type: "glob"; patterns: string[] }
+  | { type: "manual" }
+  | { type: "agent"; agentId: string };
+
+export type PluginRuleDefinition = {
+  id: string;
+  name: string;
+  description?: string;
+  content: string;
+  scope: PluginRuleScope;
+  priority?: number;
+  tags?: string[];
+  enabled?: boolean;
+};
+
+export type PluginAgentDefinition = {
+  id: string;
+  name: string;
+  description?: string;
+  instructions: string;
+  model?: string;
+  tools?: string[];
+  tags?: string[];
+  enabled?: boolean;
+};
+
+export type PluginHookEventType =
+  | "session:start"
+  | "session:end"
+  | "prompt:submit"
+  | "prompt:response"
+  | "tool:before"
+  | "tool:after"
+  | "file:read"
+  | "file:write"
+  | "file:edit"
+  | "file:delete"
+  | "shell:before"
+  | "shell:after"
+  | "mcp:before"
+  | "mcp:after"
+  | "notification";
+
+export type PluginHookDefinition = {
+  id: string;
+  name: string;
+  description?: string;
+  events: PluginHookEventType[];
+  handler: (ctx: unknown, next: () => Promise<void>) => Promise<void> | void;
+  priority?: number;
+  phase: "before" | "after";
+  filter?: (event: unknown) => boolean;
+  enabled?: boolean;
+};
 
 export type PluginEngine = "mcp" | "skills" | "rules" | "agents" | "hooks";
 
@@ -19,11 +92,11 @@ export type AiPluginDefinition = {
   version: string;
   description?: string;
   targets?: PluginTargetSelection;
-  mcpServers?: MCPServerDefinition[];
-  skills?: SkillDefinition[];
-  rules?: RuleDefinition[];
-  agents?: AgentDefinition[];
-  hooks?: HookDefinition[];
+  mcpServers?: PluginMCPServerDefinition[];
+  skills?: PluginSkillDefinition[];
+  rules?: PluginRuleDefinition[];
+  agents?: PluginAgentDefinition[];
+  hooks?: PluginHookDefinition[];
 };
 
 export type PluginHostKind = "desktop" | "cli" | "hybrid";
