@@ -78,6 +78,11 @@ async function loadEngine(pkg: string): Promise<{ run: (args: string[]) => Promi
   return import(pkg) as Promise<{ run: (args: string[]) => Promise<void> }>;
 }
 
+async function loadUi(): Promise<{ run: (args: string[]) => Promise<void> }> {
+  const pkg = "@premierstudio/ai-tools-ui/cli";
+  return import(pkg) as Promise<{ run: (args: string[]) => Promise<void> }>;
+}
+
 export async function run(args: string[]): Promise<void> {
   const cliName = process.env.AI_TOOLS_CLI_NAME === "agentful" ? "agentful" : "ai-tools";
   const help = buildHelp(cliName);
@@ -120,7 +125,7 @@ export async function run(args: string[]): Promise<void> {
       return;
 
     case "ui":
-      await (await import("@premierstudio/ai-tools-ui/cli")).run(args.slice(1));
+      await (await loadUi()).run(args.slice(1));
       return;
 
     default:
