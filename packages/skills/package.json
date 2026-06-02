@@ -6,7 +6,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/PremierStudio/ai-tools"
+    "url": "git+https://github.com/PremierStudio/ai-tools.git"
   },
   "bin": {
     "ai-tools-skills": "dist/cli/bin.js"

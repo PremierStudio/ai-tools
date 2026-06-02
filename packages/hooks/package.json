@@ -18,7 +18,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "https://github.com/PremierStudio/ai-tools"
+    "url": "git+https://github.com/PremierStudio/ai-tools.git"
   },
   "bin": {
     "ai-tools-hooks": "dist/cli/bin.js"
