@@ -92,8 +92,16 @@ export function resolveReleaseMode({
   };
 }
 
+export function sanitizeTokenlessReleaseEnv(env) {
+  const releaseEnv = { ...env };
+  delete releaseEnv.NPM_TOKEN;
+  delete releaseEnv.NODE_AUTH_TOKEN;
+  delete releaseEnv.NPM_CONFIG_USERCONFIG;
+  return releaseEnv;
+}
+
 async function main() {
-  const env = { ...process.env };
+  let env = { ...process.env };
   const packageName = await loadPackageName();
   const hasOidcContext = Boolean(env.ACTIONS_ID_TOKEN_REQUEST_URL && env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
   const packageExists = hasOidcContext ? false : await packageExistsOnNpm(packageName);
@@ -115,11 +123,11 @@ async function main() {
 
   if (releaseMode.mode === "publish-oidc") {
     // Avoid stale tokens interfering with OIDC-based publish verification.
-    delete env.NPM_TOKEN;
+    env = sanitizeTokenlessReleaseEnv(env);
     console.log(`Publishing ${packageName} with npm trusted publishing (OIDC).`);
   } else if (releaseMode.mode === "publish-tokenless-existing-package") {
     // Avoid stale tokens interfering with npm's tokenless auth checks.
-    delete env.NPM_TOKEN;
+    env = sanitizeTokenlessReleaseEnv(env);
     console.log(`Publishing existing ${packageName} package without a long-lived npm token.`);
   } else if (releaseMode.mode === "bootstrap-token") {
     console.log(

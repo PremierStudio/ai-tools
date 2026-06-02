@@ -1,6 +1,10 @@
 import { describe, expect, it } from "vitest";
 
-import { isNpmTokenValid, resolveReleaseMode } from "../../../../scripts/run-semantic-release.js";
+import {
+  isNpmTokenValid,
+  resolveReleaseMode,
+  sanitizeTokenlessReleaseEnv,
+} from "../../../../scripts/run-semantic-release.js";
 
 describe("run-semantic-release", () => {
   it("skips initial publish when the bootstrap token is invalid and skipping is allowed", () => {
@@ -62,6 +66,19 @@ describe("run-semantic-release", () => {
     ).toEqual({
       mode: "publish-oidc",
       publishReady: true,
+    });
+  });
+
+  it("removes token fallback environment when publishing without long-lived npm tokens", () => {
+    expect(
+      sanitizeTokenlessReleaseEnv({
+        NPM_TOKEN: "stale-token",
+        NODE_AUTH_TOKEN: "setup-node-placeholder",
+        NPM_CONFIG_USERCONFIG: "/tmp/setup-node-npmrc",
+        ACTIONS_ID_TOKEN_REQUEST_URL: "https://example.test/request",
+      }),
+    ).toEqual({
+      ACTIONS_ID_TOKEN_REQUEST_URL: "https://example.test/request",
     });
   });
 
