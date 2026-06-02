@@ -59,13 +59,18 @@ export async function isNpmTokenValid(token, fetchImpl = fetch) {
 }
 
 export function resolveReleaseMode({
+  hasOidcContext,
   packageExists,
   hasNpmToken,
   npmTokenValid,
   allowMissingInitialNpmToken,
 }) {
-  if (packageExists) {
+  if (hasOidcContext) {
     return { mode: "publish-oidc", publishReady: true };
+  }
+
+  if (packageExists) {
+    return { mode: "publish-tokenless-existing-package", publishReady: true };
   }
 
   if (hasNpmToken && npmTokenValid) {
@@ -88,12 +93,14 @@ export function resolveReleaseMode({
 }
 
 async function main() {
-  const packageName = await loadPackageName();
-  const packageExists = await packageExistsOnNpm(packageName);
   const env = { ...process.env };
+  const packageName = await loadPackageName();
+  const hasOidcContext = Boolean(env.ACTIONS_ID_TOKEN_REQUEST_URL && env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
+  const packageExists = hasOidcContext ? false : await packageExistsOnNpm(packageName);
   const hasNpmToken = Boolean(env.NPM_TOKEN);
-  const npmTokenValid = hasNpmToken ? await isNpmTokenValid(env.NPM_TOKEN) : false;
+  const npmTokenValid = !hasOidcContext && hasNpmToken ? await isNpmTokenValid(env.NPM_TOKEN) : false;
   const releaseMode = resolveReleaseMode({
+    hasOidcContext,
     packageExists,
     hasNpmToken,
     npmTokenValid,
@@ -110,6 +117,10 @@ async function main() {
     // Avoid stale tokens interfering with OIDC-based publish verification.
     delete env.NPM_TOKEN;
     console.log(`Publishing ${packageName} with npm trusted publishing (OIDC).`);
+  } else if (releaseMode.mode === "publish-tokenless-existing-package") {
+    // Avoid stale tokens interfering with npm's tokenless auth checks.
+    delete env.NPM_TOKEN;
+    console.log(`Publishing existing ${packageName} package without a long-lived npm token.`);
   } else if (releaseMode.mode === "bootstrap-token") {
     console.log(
       `Bootstrapping first publish for ${packageName} with NPM_TOKEN because npm trusted publishing cannot create an initial package version yet.`,

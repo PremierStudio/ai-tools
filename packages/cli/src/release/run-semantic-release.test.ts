@@ -6,6 +6,7 @@ describe("run-semantic-release", () => {
   it("skips initial publish when the bootstrap token is invalid and skipping is allowed", () => {
     expect(
       resolveReleaseMode({
+        hasOidcContext: false,
         packageExists: false,
         hasNpmToken: true,
         npmTokenValid: false,
@@ -21,6 +22,7 @@ describe("run-semantic-release", () => {
   it("fails initial publish when the bootstrap token is invalid and skipping is not allowed", () => {
     expect(
       resolveReleaseMode({
+        hasOidcContext: false,
         packageExists: false,
         hasNpmToken: true,
         npmTokenValid: false,
@@ -36,10 +38,26 @@ describe("run-semantic-release", () => {
   it("uses trusted publishing once the npm package already exists", () => {
     expect(
       resolveReleaseMode({
+        hasOidcContext: false,
         packageExists: true,
         hasNpmToken: false,
         npmTokenValid: false,
         allowMissingInitialNpmToken: false,
+      }),
+    ).toEqual({
+      mode: "publish-tokenless-existing-package",
+      publishReady: true,
+    });
+  });
+
+  it("prefers OIDC publishing when the GitHub Actions OIDC context is available", () => {
+    expect(
+      resolveReleaseMode({
+        hasOidcContext: true,
+        packageExists: false,
+        hasNpmToken: true,
+        npmTokenValid: false,
+        allowMissingInitialNpmToken: true,
       }),
     ).toEqual({
       mode: "publish-oidc",
@@ -50,6 +68,7 @@ describe("run-semantic-release", () => {
   it("bootstraps the first publish when a valid token is available", () => {
     expect(
       resolveReleaseMode({
+        hasOidcContext: false,
         packageExists: false,
         hasNpmToken: true,
         npmTokenValid: true,
