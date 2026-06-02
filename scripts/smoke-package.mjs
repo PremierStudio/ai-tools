@@ -1,6 +1,6 @@
 #!/usr/bin/env node
 
-import { mkdtemp, rm, writeFile } from "node:fs/promises";
+import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { existsSync } from "node:fs";
 import { join, resolve } from "node:path";
 import { tmpdir } from "node:os";
@@ -70,8 +70,7 @@ try {
   }
 
   const fixture = join(tempRoot, "fixture");
-  await run("npm", ["init", "-y"], { cwd: tempRoot, capture: true });
-  await run("mkdir", ["-p", fixture], { capture: true });
+  await mkdir(fixture, { recursive: true });
   await writeFile(
     join(fixture, "package.json"),
     JSON.stringify({ name: "ai-tools-smoke-fixture", version: "0.0.0", type: "module" }, null, 2) +

@@ -13,6 +13,12 @@ async function loadPackageName() {
   return packageJson.name;
 }
 
+async function writeGithubOutput(name, value) {
+  if (!process.env.GITHUB_OUTPUT) return;
+  const { appendFile } = await import("node:fs/promises");
+  await appendFile(process.env.GITHUB_OUTPUT, `${name}=${value}\n`, "utf8");
+}
+
 async function packageExistsOnNpm(packageName) {
   const registryUrl = `https://registry.npmjs.org/${encodeURIComponent(packageName)}`;
   const response = await fetch(registryUrl, {
@@ -38,14 +44,27 @@ async function main() {
   const env = { ...process.env };
 
   if (packageExists) {
+    await writeGithubOutput("publish_ready", "true");
     // Avoid stale tokens interfering with OIDC-based publish verification.
     delete env.NPM_TOKEN;
     console.log(`Publishing ${packageName} with npm trusted publishing (OIDC).`);
   } else if (env.NPM_TOKEN) {
+    await writeGithubOutput("publish_ready", "true");
     console.log(
       `Bootstrapping first publish for ${packageName} with NPM_TOKEN because npm trusted publishing cannot create an initial package version yet.`,
     );
+  } else if (env.ALLOW_MISSING_INITIAL_NPM_TOKEN === "true") {
+    await writeGithubOutput("publish_ready", "false");
+    console.log(
+      [
+        `Skipping initial publish bootstrap for ${packageName}.`,
+        "The package does not exist on npm yet and NPM_TOKEN is not configured.",
+        "Add a one-time NPM_TOKEN repository secret to publish the first version, then configure trusted publishing.",
+      ].join(" "),
+    );
+    return;
   } else {
+    await writeGithubOutput("publish_ready", "false");
     console.error(
       [
         `Initial publish bootstrap required for ${packageName}.`,
