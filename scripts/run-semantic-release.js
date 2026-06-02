@@ -3,6 +3,7 @@
 import { spawn } from "node:child_process";
 import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
+import { pathToFileURL } from "node:url";
 
 async function loadPackageName() {
   const packageJsonPath = resolve(process.cwd(), "packages/cli/package.json");
@@ -38,38 +39,105 @@ async function packageExistsOnNpm(packageName) {
   return true;
 }
 
+export async function isNpmTokenValid(token, fetchImpl = fetch) {
+  const response = await fetchImpl("https://registry.npmjs.org/-/whoami", {
+    headers: {
+      accept: "application/json",
+      authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.ok) {
+    return true;
+  }
+
+  if (response.status === 401 || response.status === 403) {
+    return false;
+  }
+
+  throw new Error(`Failed to verify npm token: ${response.status} ${response.statusText}`);
+}
+
+export function resolveReleaseMode({
+  packageExists,
+  hasNpmToken,
+  npmTokenValid,
+  allowMissingInitialNpmToken,
+}) {
+  if (packageExists) {
+    return { mode: "publish-oidc", publishReady: true };
+  }
+
+  if (hasNpmToken && npmTokenValid) {
+    return { mode: "bootstrap-token", publishReady: true };
+  }
+
+  if (allowMissingInitialNpmToken) {
+    return {
+      mode: "skip-initial-publish",
+      publishReady: false,
+      reason: hasNpmToken ? "invalid-token" : "missing-token",
+    };
+  }
+
+  return {
+    mode: "fail-initial-publish",
+    publishReady: false,
+    reason: hasNpmToken ? "invalid-token" : "missing-token",
+  };
+}
+
 async function main() {
   const packageName = await loadPackageName();
   const packageExists = await packageExistsOnNpm(packageName);
   const env = { ...process.env };
+  const hasNpmToken = Boolean(env.NPM_TOKEN);
+  const npmTokenValid = hasNpmToken ? await isNpmTokenValid(env.NPM_TOKEN) : false;
+  const releaseMode = resolveReleaseMode({
+    packageExists,
+    hasNpmToken,
+    npmTokenValid,
+    allowMissingInitialNpmToken: env.ALLOW_MISSING_INITIAL_NPM_TOKEN === "true",
+  });
 
-  if (packageExists) {
+  if (releaseMode.publishReady) {
     await writeGithubOutput("publish_ready", "true");
+  } else {
+    await writeGithubOutput("publish_ready", "false");
+  }
+
+  if (releaseMode.mode === "publish-oidc") {
     // Avoid stale tokens interfering with OIDC-based publish verification.
     delete env.NPM_TOKEN;
     console.log(`Publishing ${packageName} with npm trusted publishing (OIDC).`);
-  } else if (env.NPM_TOKEN) {
-    await writeGithubOutput("publish_ready", "true");
+  } else if (releaseMode.mode === "bootstrap-token") {
     console.log(
       `Bootstrapping first publish for ${packageName} with NPM_TOKEN because npm trusted publishing cannot create an initial package version yet.`,
     );
-  } else if (env.ALLOW_MISSING_INITIAL_NPM_TOKEN === "true") {
-    await writeGithubOutput("publish_ready", "false");
+  } else if (releaseMode.mode === "skip-initial-publish") {
+    const tokenMessage =
+      releaseMode.reason === "invalid-token"
+        ? "NPM_TOKEN is configured but npm rejected it."
+        : "NPM_TOKEN is not configured.";
     console.log(
       [
         `Skipping initial publish bootstrap for ${packageName}.`,
-        "The package does not exist on npm yet and NPM_TOKEN is not configured.",
+        `The package does not exist on npm yet and ${tokenMessage}`,
         "Add a one-time NPM_TOKEN repository secret to publish the first version, then configure trusted publishing.",
       ].join(" "),
     );
     return;
   } else {
-    await writeGithubOutput("publish_ready", "false");
+    const tokenMessage =
+      releaseMode.reason === "invalid-token"
+        ? "The configured NPM_TOKEN is invalid."
+        : "NPM_TOKEN is missing.";
     console.error(
       [
         `Initial publish bootstrap required for ${packageName}.`,
         "npm trusted publishing cannot publish a never-before-published package yet.",
-        "Provide a one-time NPM_TOKEN secret for the first release, then configure trusted publishing and remove the token.",
+        tokenMessage,
+        "Provide a valid one-time NPM_TOKEN secret for the first release, then configure trusted publishing and remove the token.",
       ].join(" "),
     );
     process.exit(1);
@@ -90,7 +158,9 @@ async function main() {
   });
 }
 
-main().catch((error) => {
-  console.error(error instanceof Error ? error.message : String(error));
-  process.exit(1);
-});
+if (process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href) {
+  main().catch((error) => {
+    console.error(error instanceof Error ? error.message : String(error));
+    process.exit(1);
+  });
+}
