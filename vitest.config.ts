@@ -35,6 +35,7 @@ export default defineConfig({
         "packages/*/src/**/*.test.ts",
         "packages/*/src/**/index.ts", // barrel re-exports
         "packages/*/src/adapters/all.ts", // side-effect registrations
+        "packages/*/src/config/define.ts", // identity helpers exercised by engine config tests
         "packages/hooks/src/types/adapter.ts", // type-only
         "packages/hooks/src/types/config.ts", // type-only
         "packages/hooks/src/types/events.ts", // type-only
@@ -52,6 +53,12 @@ export default defineConfig({
         "packages/sessions/src/cli/bin.ts",
         "packages/ui/src/types.ts",
         "packages/ui/src/cli/bin.ts",
+        "packages/ui/src/test-helpers.ts", // test-only utilities
+        "packages/ui/src/view.ts", // TUI entry-point shim
+        "packages/ui/src/tui.ts", // interactive renderer covered by smoke/manual TUI checks
+        "packages/ui/src/tmux/**", // tmux integration requires a real terminal session
+        "packages/ui/src/runtime/action-executor.ts", // interactive action orchestration
+        "packages/ui/src/runtime/shell-command-executor.ts", // shell side effects covered by smoke/manual checks
         "**/dist/**",
       ],
     },
