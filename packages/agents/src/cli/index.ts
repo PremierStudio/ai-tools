@@ -258,8 +258,9 @@ async function loadConfig(configPath?: string): Promise<AgentsConfig> {
   }
 
   const { resolve } = await import("node:path");
+  const { pathToFileURL } = await import("node:url");
   const fullPath = resolve(process.cwd(), path);
-  const mod = await import(fullPath);
+  const mod = await import(pathToFileURL(fullPath).href);
   return mod.default as AgentsConfig;
 }
 

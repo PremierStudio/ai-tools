@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, it } from "vitest";
 
-import { loadPluginConfig } from "./load-config.js";
+import { loadPluginConfig, toPluginConfigModuleSpecifier } from "./load-config.js";
 
 const tempDirs: string[] = [];
 
@@ -41,5 +41,15 @@ describe("loadPluginConfig", () => {
       name: "Release Confidence",
       version: "0.1.0",
     });
+  });
+
+  it("uses a file URL specifier for config imports", async () => {
+    const dir = await mkdtemp(join(tmpdir(), "ai-tools-plugin-config-#"));
+    tempDirs.push(dir);
+    const configPath = join(dir, "ai-plugin.config.mjs");
+
+    await expect(toPluginConfigModuleSpecifier(configPath)).resolves.toMatch(
+      /^file:\/\/\/.*ai-tools-plugin-config-%23.*\/ai-plugin\.config\.mjs$/,
+    );
   });
 });
