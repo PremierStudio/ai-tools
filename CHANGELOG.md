@@ -1,3 +1,12 @@
+## [1.1.10](https://github.com/itz4blitz/ai-tools/compare/v1.1.9...v1.1.10) (2026-08-26)
+
+
+### Bug Fixes
+
+* **ci:** skip formatting the copied CLI README ([1aa5ded](https://github.com/itz4blitz/ai-tools/commit/1aa5ded2655a901fa9ed6ae0024af235133825c6))
+* pin internal workspace deps to the release version ([54702ae](https://github.com/itz4blitz/ai-tools/commit/54702ae53d9785218cc6b7b040b1ec280b7b78d6))
+* track CLI README so npmjs can render it ([3545712](https://github.com/itz4blitz/ai-tools/commit/354571215b1405c94d3209a2639a533260e0f1fe))
+
 ## [1.1.9](https://github.com/itz4blitz/ai-tools/compare/v1.1.8...v1.1.9) (2026-08-26)
 
 
