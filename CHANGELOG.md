@@ -1,3 +1,11 @@
+## [1.1.9](https://github.com/itz4blitz/ai-tools/compare/v1.1.8...v1.1.9) (2026-08-26)
+
+
+### Bug Fixes
+
+* **ci:** skip workspace reify during npm version ([196b350](https://github.com/itz4blitz/ai-tools/commit/196b35046373c518213fc401144ab277f4fe7a11))
+* include README in the published npm package ([ef4637d](https://github.com/itz4blitz/ai-tools/commit/ef4637df4935a0b10d5c5c33034d68e93a473e5e))
+
 ## [1.1.8](https://github.com/itz4blitz/ai-tools/compare/v1.1.7...v1.1.8) (2026-02-14)
 
 
