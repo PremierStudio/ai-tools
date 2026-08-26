@@ -169,10 +169,10 @@ This gives your platform a standard interface for controlling what AI agents can
 
 ## Packages
 
-| Package                         | Description                                                                           |
-| ------------------------------- | ------------------------------------------------------------------------------------- |
-| `@itz4blitz/ai-tools-hooks` | Core engine, 9 built-in adapters, CLI, types, config loader                           |
-| Internal workspaces             | Additional engines, adapters, and packaging support used by `@itz4blitz/ai-tools` |
+| Package                     | Description                                                                       |
+| --------------------------- | --------------------------------------------------------------------------------- |
+| `@itz4blitz/ai-tools-hooks` | Core engine, 9 built-in adapters, CLI, types, config loader                       |
+| Internal workspaces         | Additional engines, adapters, and packaging support used by `@itz4blitz/ai-tools` |
 
 ## Development
 

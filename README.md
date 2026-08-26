@@ -13,7 +13,9 @@ Hooks, MCP servers, skills, agents, and rules all have a different shape in Clau
 npx @itz4blitz/ai-tools@latest detect
 ```
 
-## First-class fleet
+## Hosts
+
+Primary fleet is Claude Code, Cursor, OpenCode, Codex, plus Grok and zcode next. The other adapters still ship.
 
 | Host | Hooks | MCP | Agents | Skills | Rules |
 |------|:-----:|:---:|:------:|:------:|:-----:|
@@ -21,10 +23,20 @@ npx @itz4blitz/ai-tools@latest detect
 | [Cursor](https://cursor.com) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [OpenCode](https://opencode.ai) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [Codex](https://openai.com/codex/) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Grok / grok build | | | | | |
+| zcode | | | | | |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Antigravity CLI](https://www.antigravity.google/product/antigravity-cli) | | | ✓ | ✓ | ✓ |
+| [Kiro](https://kiro.dev) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Cline](https://cline.bot) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Amp](https://ampcode.com) | | ✓ | | ✓ | ✓ |
+| [Factory Droid](https://factory.ai) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [VS Code / Copilot](https://code.visualstudio.com) | ✱ | ✓ | ✓ | ✓ | ✓ |
+| [Continue](https://continue.dev) | | | | ✓ | ✓ |
+| [Roo Code](https://roocode.com) | | ✓ | ✓ | ✓ | ✓ |
+| [Windsurf](https://windsurf.com) | | ✓ | | ✓ | ✓ |
 
-Adapters for other hosts still exist in-tree (Cline, Kiro, Gemini CLI, Copilot, …). They are not the product focus.
-
-Grok and zcode adapters are next.
+<sub>✱ VS Code 1.109+ agent hooks use the Claude Code format. Grok and zcode adapters are not in yet.</sub>
 
 ## 60-second path
 
@@ -60,12 +72,47 @@ npx ai-tools status
 ```
 
 ```mermaid
-graph LR
-  A["ai-*.config.ts<br/>or definePlugin()"] --> B["ai-tools CLI"]
-  B --> C["Claude Code"]
-  B --> D["Cursor"]
-  B --> E["OpenCode"]
-  B --> F["Codex"]
+graph TD
+    CFG["ai-*.config.ts / definePlugin()"] --> CLI["ai-tools CLI"]
+
+    CLI --> Hooks
+    CLI --> MCP
+    CLI --> Agents
+    CLI --> Skills
+    CLI --> Rules
+
+    subgraph fleet ["Primary"]
+        CC["Claude Code"]
+        Cursor["Cursor"]
+        OC["OpenCode"]
+        Codex["Codex"]
+        Grok["Grok / grok build"]
+        Zcode["zcode"]
+    end
+
+    subgraph more ["Also"]
+        Gemini["Gemini CLI"]
+        Copilot["VS Code / Copilot"]
+        Cline["Cline"]
+        Kiro["Kiro"]
+        Antigravity["Antigravity CLI"]
+        Amp["Amp"]
+        Droid["Factory Droid"]
+        Continue["Continue"]
+        Roo["Roo Code"]
+        Windsurf["Windsurf"]
+    end
+
+    Hooks --> fleet
+    MCP --> fleet
+    Agents --> fleet
+    Skills --> fleet
+    Rules --> fleet
+    Hooks --> more
+    MCP --> more
+    Agents --> more
+    Skills --> more
+    Rules --> more
 ```
 
 ## Plugin bundle

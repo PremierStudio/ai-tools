@@ -282,12 +282,8 @@ describe("ClaudeCodeAdapter", () => {
     it("runner script imports from ai-hooks", async () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
-      expect(runner!.content).toContain(
-        'import { loadConfig } from "@itz4blitz/ai-tools-hooks"',
-      );
-      expect(runner!.content).toContain(
-        'import { HookEngine } from "@itz4blitz/ai-tools-hooks"',
-      );
+      expect(runner!.content).toContain('import { loadConfig } from "@itz4blitz/ai-tools-hooks"');
+      expect(runner!.content).toContain('import { HookEngine } from "@itz4blitz/ai-tools-hooks"');
     });
 
     it("runner script reads CLAUDE_HOOK_EVENT env var", async () => {

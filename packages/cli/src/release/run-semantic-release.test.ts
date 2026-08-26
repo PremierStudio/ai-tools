@@ -54,11 +54,27 @@ describe("run-semantic-release", () => {
     });
   });
 
-  it("prefers OIDC publishing when the GitHub Actions OIDC context is available", () => {
+  it("skips OIDC until the package exists when initial-token skip is allowed", () => {
     expect(
       resolveReleaseMode({
         hasOidcContext: true,
         packageExists: false,
+        hasNpmToken: true,
+        npmTokenValid: false,
+        allowMissingInitialNpmToken: true,
+      }),
+    ).toEqual({
+      mode: "skip-initial-publish",
+      publishReady: false,
+      reason: "package-not-on-npm-yet",
+    });
+  });
+
+  it("uses OIDC publishing when GitHub Actions OIDC context is available and the package exists", () => {
+    expect(
+      resolveReleaseMode({
+        hasOidcContext: true,
+        packageExists: true,
         hasNpmToken: true,
         npmTokenValid: false,
         allowMissingInitialNpmToken: true,

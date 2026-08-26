@@ -66,6 +66,13 @@ export function resolveReleaseMode({
   allowMissingInitialNpmToken,
 }) {
   if (hasOidcContext) {
+    if (!packageExists && allowMissingInitialNpmToken) {
+      return {
+        mode: "skip-initial-publish",
+        publishReady: false,
+        reason: "package-not-on-npm-yet",
+      };
+    }
     return { mode: "publish-oidc", publishReady: true };
   }
 
@@ -104,7 +111,7 @@ async function main() {
   let env = { ...process.env };
   const packageName = await loadPackageName();
   const hasOidcContext = Boolean(env.ACTIONS_ID_TOKEN_REQUEST_URL && env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
-  const packageExists = hasOidcContext ? false : await packageExistsOnNpm(packageName);
+  const packageExists = await packageExistsOnNpm(packageName);
   const hasNpmToken = Boolean(env.NPM_TOKEN);
   const npmTokenValid = !hasOidcContext && hasNpmToken ? await isNpmTokenValid(env.NPM_TOKEN) : false;
   const releaseMode = resolveReleaseMode({
