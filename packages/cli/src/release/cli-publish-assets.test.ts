@@ -1,12 +1,9 @@
 import { describe, expect, it } from "vitest";
-import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, resolve } from "node:path";
 
-import {
-  cleanStagedCliPublishAssets,
-  stageCliPublishAssets,
-} from "../../../../scripts/cli-publish-assets.js";
+import { stageCliPublishAssets } from "../../../../scripts/cli-publish-assets.js";
 
 function makeRepo(readme: string): string {
   const root = mkdtempSync(join(tmpdir(), "cli-readme-"));
@@ -36,14 +33,11 @@ describe("stageCliPublishAssets", () => {
   });
 });
 
-describe("cleanStagedCliPublishAssets", () => {
-  it("removes the staged CLI README after packing", () => {
-    const root = makeRepo("# ai-tools\n");
-    stageCliPublishAssets(root);
-
-    cleanStagedCliPublishAssets(root);
-
-    expect(existsSync(join(root, "packages", "cli", "README.md"))).toBe(false);
-    rmSync(root, { recursive: true, force: true });
+describe("published CLI README", () => {
+  it("keeps a CLI README on disk so npm records it on publish", () => {
+    const repo = resolve(import.meta.dirname, "../../../..");
+    expect(readFileSync(join(repo, "packages", "cli", "README.md"), "utf8")).toBe(
+      readFileSync(join(repo, "README.md"), "utf8"),
+    );
   });
 });

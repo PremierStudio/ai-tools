@@ -1,4 +1,3 @@
-packages/cli/README.md
 node_modules/
 dist/
 *.tsbuildinfo
