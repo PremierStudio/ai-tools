@@ -43,7 +43,9 @@ function run(command, args, options = {}) {
 
 function assertIncludes(output, expected) {
   if (!output.includes(expected)) {
-    throw new Error(`Expected output to include ${JSON.stringify(expected)}.\nActual output:\n${output}`);
+    throw new Error(
+      `Expected output to include ${JSON.stringify(expected)}.\nActual output:\n${output}`,
+    );
   }
 }
 
@@ -69,6 +71,9 @@ try {
     throw new Error(`Packed tarball was not created: ${tarballPath}`);
   }
 
+  const listing = await run("tar", ["-tzf", tarballPath], { capture: true });
+  assertIncludes(listing.stdout, "package/README.md");
+
   const fixture = join(tempRoot, "fixture");
   await mkdir(fixture, { recursive: true });
   await writeFile(
@@ -80,7 +85,12 @@ try {
 
   await run("npm", ["install", "--ignore-scripts", tarballPath], { cwd: fixture, capture: true });
 
-  const bin = join(fixture, "node_modules", ".bin", process.platform === "win32" ? "ai-tools.cmd" : "ai-tools");
+  const bin = join(
+    fixture,
+    "node_modules",
+    ".bin",
+    process.platform === "win32" ? "ai-tools.cmd" : "ai-tools",
+  );
 
   const help = await run(bin, ["help"], { cwd: fixture, capture: true });
   assertIncludes(help.stdout, "Unified CLI for ai-tools engines");

@@ -3,6 +3,8 @@
 import { cpSync, existsSync, mkdirSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 
+import { stageCliPublishAssets } from "./cli-publish-assets.js";
+
 const repoRoot = resolve(import.meta.dirname, "..");
 const cliRoot = join(repoRoot, "packages", "cli");
 const vendorRoot = join(cliRoot, "node_modules", "@itz4blitz");
@@ -24,6 +26,7 @@ function writePackageJson(sourcePath, targetPath) {
   writeFileSync(targetPath, JSON.stringify(pkg, null, 2) + "\n", "utf8");
 }
 
+stageCliPublishAssets(repoRoot);
 rmSync(vendorRoot, { recursive: true, force: true });
 mkdirSync(vendorRoot, { recursive: true });
 
