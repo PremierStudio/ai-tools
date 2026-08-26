@@ -7,5 +7,5 @@
   "singleQuote": false,
   "trailingComma": "all",
   "insertFinalNewline": true,
-  "ignorePatterns": ["dist/", "node_modules/", "*.d.ts"]
+  "ignorePatterns": ["dist/", "node_modules/", "*.d.ts", "packages/cli/README.md"]
 }
