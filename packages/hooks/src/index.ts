@@ -2,7 +2,7 @@
 // The main entry point for ai-hooks.
 //
 // Usage:
-//   import { defineConfig, hook, HookEngine } from "@premierstudio/ai-tools-hooks";
+//   import { defineConfig, hook, HookEngine } from "@itz4blitz/ai-tools-hooks";
 
 // Config helpers (used in ai-hooks.config.ts)
 export { defineConfig, hook } from "./config/index.js";

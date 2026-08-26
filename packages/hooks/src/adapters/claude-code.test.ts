@@ -283,10 +283,10 @@ describe("ClaudeCodeAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const runner = configs.find((c) => c.path.includes("runner"));
       expect(runner!.content).toContain(
-        'import { loadConfig } from "@premierstudio/ai-tools-hooks"',
+        'import { loadConfig } from "@itz4blitz/ai-tools-hooks"',
       );
       expect(runner!.content).toContain(
-        'import { HookEngine } from "@premierstudio/ai-tools-hooks"',
+        'import { HookEngine } from "@itz4blitz/ai-tools-hooks"',
       );
     });
 

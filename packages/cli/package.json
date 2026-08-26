@@ -1,11 +1,11 @@
 {
-  "name": "@premierstudio/ai-tools",
+  "name": "@itz4blitz/ai-tools",
   "version": "1.1.8",
   "description": "Unified CLI for all ai-tools engines (hooks, mcp, skills, agents, rules)",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PremierStudio/ai-tools.git"
+    "url": "git+https://github.com/itz4blitz/ai-tools.git"
   },
   "bin": {
     "ai-tools": "dist/cli/bin.js"
@@ -66,22 +66,22 @@
     "clean": "node -e \"const { rmSync } = require('node:fs'); rmSync('dist', { recursive: true, force: true });\""
   },
   "dependencies": {
-    "@premierstudio/ai-tools-agents": "1.1.8",
-    "@premierstudio/ai-tools-hooks": "1.1.8",
-    "@premierstudio/ai-tools-mcp": "1.1.8",
-    "@premierstudio/ai-tools-rules": "1.1.8",
-    "@premierstudio/ai-tools-sessions": "1.1.8",
-    "@premierstudio/ai-tools-skills": "1.1.8",
-    "@premierstudio/ai-tools-tui": "1.1.8"
+    "@itz4blitz/ai-tools-agents": "1.1.8",
+    "@itz4blitz/ai-tools-hooks": "1.1.8",
+    "@itz4blitz/ai-tools-mcp": "1.1.8",
+    "@itz4blitz/ai-tools-rules": "1.1.8",
+    "@itz4blitz/ai-tools-sessions": "1.1.8",
+    "@itz4blitz/ai-tools-skills": "1.1.8",
+    "@itz4blitz/ai-tools-tui": "1.1.8"
   },
   "bundledDependencies": [
-    "@premierstudio/ai-tools-agents",
-    "@premierstudio/ai-tools-hooks",
-    "@premierstudio/ai-tools-mcp",
-    "@premierstudio/ai-tools-rules",
-    "@premierstudio/ai-tools-sessions",
-    "@premierstudio/ai-tools-skills",
-    "@premierstudio/ai-tools-tui"
+    "@itz4blitz/ai-tools-agents",
+    "@itz4blitz/ai-tools-hooks",
+    "@itz4blitz/ai-tools-mcp",
+    "@itz4blitz/ai-tools-rules",
+    "@itz4blitz/ai-tools-sessions",
+    "@itz4blitz/ai-tools-skills",
+    "@itz4blitz/ai-tools-tui"
   ],
   "engines": {
     "node": ">=22.0.0"

@@ -1,1 +1,1 @@
-export * from "@premierstudio/ai-tools-mcp";
+export * from "@itz4blitz/ai-tools-mcp";

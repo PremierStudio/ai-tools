@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 
-vi.mock("@premierstudio/ai-tools-sessions", () => ({
+vi.mock("@itz4blitz/ai-tools-sessions", () => ({
   registry: {
     list: () => [],
     get: () => undefined,
@@ -8,7 +8,7 @@ vi.mock("@premierstudio/ai-tools-sessions", () => ({
   },
 }));
 
-vi.mock("@premierstudio/ai-tools-sessions/adapters/all", () => ({}));
+vi.mock("@itz4blitz/ai-tools-sessions/adapters/all", () => ({}));
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn().mockReturnValue(false),

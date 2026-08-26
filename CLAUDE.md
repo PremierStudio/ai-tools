@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-Universal hook engine and configuration management for AI coding tools. Monorepo (`@premierstudio/*`) providing a unified event/hook system that translates to 9+ AI tool-specific formats (Claude Code, Codex, Cursor, Gemini CLI, Kiro, OpenCode, Cline, Factory Droid, Amp).
+Universal hook engine and configuration management for AI coding tools. Monorepo (`@itz4blitz/*`) providing a unified event/hook system that translates to 9+ AI tool-specific formats (Claude Code, Codex, Cursor, Gemini CLI, Kiro, OpenCode, Cline, Factory Droid, Amp).
 
 ## Commands
 
@@ -30,12 +30,12 @@ Six packages managed by npm workspaces + Turborepo:
 
 | Package | npm name | Purpose |
 |---------|----------|---------|
-| `packages/hooks` | `@premierstudio/ai-tools-hooks` | Core engine: hook engine, adapters, config loader, built-in hooks |
-| `packages/mcp` | `@premierstudio/ai-tools-mcp` | MCP server configuration management |
-| `packages/agents` | `@premierstudio/ai-tools-agents` | Agent configuration for AI tools |
-| `packages/skills` | `@premierstudio/ai-tools-skills` | Skills/prompts configuration |
-| `packages/rules` | `@premierstudio/ai-tools-rules` | Project rules configuration |
-| `packages/cli` | `@premierstudio/ai-tools` | Unified CLI routing to all engines |
+| `packages/hooks` | `@itz4blitz/ai-tools-hooks` | Core engine: hook engine, adapters, config loader, built-in hooks |
+| `packages/mcp` | `@itz4blitz/ai-tools-mcp` | MCP server configuration management |
+| `packages/agents` | `@itz4blitz/ai-tools-agents` | Agent configuration for AI tools |
+| `packages/skills` | `@itz4blitz/ai-tools-skills` | Skills/prompts configuration |
+| `packages/rules` | `@itz4blitz/ai-tools-rules` | Project rules configuration |
+| `packages/cli` | `@itz4blitz/ai-tools` | Unified CLI routing to all engines |
 
 The `cli` package depends on all others. The other five packages are independent of each other.
 
@@ -88,7 +88,7 @@ All follow the same adapter-registry-CLI pattern as hooks but without the runtim
 
 - **tsup** builds each package to ESM with declaration maps
 - **Turborepo** orchestrates build order (packages build in dependency order)
-- **semantic-release** on master: analyzes conventional commits, bumps versions, and publishes `@premierstudio/ai-tools`
+- **semantic-release** on master: analyzes conventional commits, bumps versions, and publishes `@itz4blitz/ai-tools`
 - `scripts/sync-versions.js` keeps the internal workspace versions aligned with the public CLI package
 - `scripts/vendor-cli-bundle.js` and `scripts/clean-cli-bundle.js` bundle internal engines into the published tarball
 - `scripts/run-semantic-release.js` prefers OIDC for existing npm packages and requires a one-time `NPM_TOKEN` only for the initial publish bootstrap

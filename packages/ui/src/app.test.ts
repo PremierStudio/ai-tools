@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
-vi.mock("@premierstudio/ai-tools-sessions", () => {
+vi.mock("@itz4blitz/ai-tools-sessions", () => {
   type InternalMockAdapter = {
     id: string;
     name: string;
@@ -21,10 +21,10 @@ vi.mock("@premierstudio/ai-tools-sessions", () => {
   };
 });
 
-vi.mock("@premierstudio/ai-tools-sessions/adapters/all", () => ({}));
+vi.mock("@itz4blitz/ai-tools-sessions/adapters/all", () => ({}));
 
 import { createInitialState, detectTools, computeConfigHealth, getStatusBarData } from "./app.js";
-import { registry } from "@premierstudio/ai-tools-sessions";
+import { registry } from "@itz4blitz/ai-tools-sessions";
 import type { AppState } from "./types.js";
 
 type MockAdapter = {

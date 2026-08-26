@@ -81,7 +81,7 @@ graph TD
 
 ```bash
 # Install
-npm i -D @premierstudio/ai-tools-hooks
+npm i -D @itz4blitz/ai-tools-hooks
 
 # Initialize config
 npx ai-hooks init
@@ -96,7 +96,7 @@ npx ai-hooks install
 
 ```ts
 // ai-hooks.config.ts
-import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-tools-hooks";
+import { defineConfig, hook, builtinHooks } from "@itz4blitz/ai-tools-hooks";
 
 export default defineConfig({
   extends: [{ hooks: builtinHooks }],
@@ -151,7 +151,7 @@ ai-hooks ships with 4 hooks you can use immediately:
 If you're building a platform that orchestrates AI agents — a PM tool, CI system, or custom control plane — import the engine directly:
 
 ```ts
-import { HookEngine, builtinHooks } from "@premierstudio/ai-tools-hooks";
+import { HookEngine, builtinHooks } from "@itz4blitz/ai-tools-hooks";
 
 const engine = new HookEngine({
   hooks: builtinHooks,
@@ -171,13 +171,13 @@ This gives your platform a standard interface for controlling what AI agents can
 
 | Package                         | Description                                                                           |
 | ------------------------------- | ------------------------------------------------------------------------------------- |
-| `@premierstudio/ai-tools-hooks` | Core engine, 9 built-in adapters, CLI, types, config loader                           |
-| Internal workspaces             | Additional engines, adapters, and packaging support used by `@premierstudio/ai-tools` |
+| `@itz4blitz/ai-tools-hooks` | Core engine, 9 built-in adapters, CLI, types, config loader                           |
+| Internal workspaces             | Additional engines, adapters, and packaging support used by `@itz4blitz/ai-tools` |
 
 ## Development
 
 ```bash
-git clone https://github.com/PremierStudio/ai-tools-hooks.git
+git clone https://github.com/itz4blitz/ai-tools-hooks.git
 cd ai-hooks
 npm install
 npm run check   # lint + format + typecheck + test

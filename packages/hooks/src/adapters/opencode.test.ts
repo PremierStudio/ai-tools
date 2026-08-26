@@ -276,7 +276,7 @@ describe("OpenCodeAdapter", () => {
       const configs = await adapter.generate([testHook]);
       const plugin = configs.find((c) => c.path.includes("ai-tools-hooks-plugin"));
       expect(plugin!.content).toContain(
-        'import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks"',
+        'import { loadConfig, HookEngine } from "@itz4blitz/ai-tools-hooks"',
       );
     });
 
@@ -444,7 +444,7 @@ describe("OpenCodeAdapter", () => {
       const parsed = JSON.parse(pkgJson!.content) as {
         dependencies: Record<string, string>;
       };
-      expect(parsed.dependencies["@premierstudio/ai-tools-hooks"]).toBe("*");
+      expect(parsed.dependencies["@itz4blitz/ai-tools-hooks"]).toBe("*");
     });
 
     it("package.json points main to plugin file", async () => {

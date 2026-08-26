@@ -1,4 +1,4 @@
-import { defineConfig } from "@premierstudio/ai-tools-skills";
+import { defineConfig } from "@itz4blitz/ai-tools-skills";
 
 export default defineConfig({
   skills: [
@@ -76,13 +76,13 @@ Run \`npm run check\` — must pass with 0 errors and 0 warnings.`,
    - \`docs:\`, \`chore:\`, \`style:\`, \`test:\`, \`ci:\` → no release
    - \`BREAKING CHANGE:\` in footer → major release
 
-3. Run \`npm run release:publish:dry\` to preview the \`@premierstudio/ai-tools\` publish
+3. Run \`npm run release:publish:dry\` to preview the \`@itz4blitz/ai-tools\` publish
 
 4. Verify all internal workspace package.json files stay version-aligned with \`packages/cli/package.json\`
 
 5. Check that \`scripts/sync-versions.js\`, \`scripts/vendor-cli-bundle.js\`, \`scripts/clean-cli-bundle.js\`, and \`scripts/run-semantic-release.js\` are intact and unmodified
 
-Report the results: whether \`@premierstudio/ai-tools\` is ready to publish, what version bump is expected, and any repo-side or npm-side blockers.`,
+Report the results: whether \`@itz4blitz/ai-tools\` is ready to publish, what version bump is expected, and any repo-side or npm-side blockers.`,
     },
     {
       id: "run-check",

@@ -5,16 +5,16 @@ import { dirname, join, resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dirname, "..");
 const cliRoot = join(repoRoot, "packages", "cli");
-const vendorRoot = join(cliRoot, "node_modules", "@premierstudio");
+const vendorRoot = join(cliRoot, "node_modules", "@itz4blitz");
 
 const internalPackages = [
-  { name: "@premierstudio/ai-tools-agents", dir: join(repoRoot, "packages", "agents") },
-  { name: "@premierstudio/ai-tools-hooks", dir: join(repoRoot, "packages", "hooks") },
-  { name: "@premierstudio/ai-tools-mcp", dir: join(repoRoot, "packages", "mcp") },
-  { name: "@premierstudio/ai-tools-rules", dir: join(repoRoot, "packages", "rules") },
-  { name: "@premierstudio/ai-tools-sessions", dir: join(repoRoot, "packages", "sessions") },
-  { name: "@premierstudio/ai-tools-skills", dir: join(repoRoot, "packages", "skills") },
-  { name: "@premierstudio/ai-tools-tui", dir: join(repoRoot, "packages", "ui") },
+  { name: "@itz4blitz/ai-tools-agents", dir: join(repoRoot, "packages", "agents") },
+  { name: "@itz4blitz/ai-tools-hooks", dir: join(repoRoot, "packages", "hooks") },
+  { name: "@itz4blitz/ai-tools-mcp", dir: join(repoRoot, "packages", "mcp") },
+  { name: "@itz4blitz/ai-tools-rules", dir: join(repoRoot, "packages", "rules") },
+  { name: "@itz4blitz/ai-tools-sessions", dir: join(repoRoot, "packages", "sessions") },
+  { name: "@itz4blitz/ai-tools-skills", dir: join(repoRoot, "packages", "skills") },
+  { name: "@itz4blitz/ai-tools-tui", dir: join(repoRoot, "packages", "ui") },
 ];
 
 function writePackageJson(sourcePath, targetPath) {

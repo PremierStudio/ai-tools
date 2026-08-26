@@ -1,5 +1,5 @@
 {
-  "name": "@premierstudio/ai-tools-monorepo",
+  "name": "@itz4blitz/ai-tools-monorepo",
   "private": true,
   "type": "module",
   "workspaces": [
@@ -20,8 +20,8 @@
     "audit": "npm audit --audit-level high",
     "check": "npm run audit && npm run lint && npm run fmt:check && npm run typecheck && npm run test:coverage && npm run test:smoke",
     "release:preflight": "npm run check",
-    "release:publish:dry": "npm publish --workspace @premierstudio/ai-tools --access public --dry-run",
-    "release:publish": "npm run check && npm publish --workspace @premierstudio/ai-tools --access public",
+    "release:publish:dry": "npm publish --workspace @itz4blitz/ai-tools --access public --dry-run",
+    "release:publish": "npm run check && npm publish --workspace @itz4blitz/ai-tools --access public",
     "clean": "turbo run clean"
   },
   "devDependencies": {

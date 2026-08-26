@@ -11,7 +11,7 @@
  *
  * DO NOT EDIT - regenerate with: ai-hooks generate
  */
-import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks";
+import { loadConfig, HookEngine } from "@itz4blitz/ai-tools-hooks";
 
 async function readStdin() {
   const chunks = [];

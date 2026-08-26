@@ -39,7 +39,7 @@ class SkillAdapterRegistry {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __premierstudio_skills_registry: SkillAdapterRegistry | undefined;
+  var __itz4blitz_skills_registry: SkillAdapterRegistry | undefined;
 }
 
-export const registry = (globalThis.__premierstudio_skills_registry ??= new SkillAdapterRegistry());
+export const registry = (globalThis.__itz4blitz_skills_registry ??= new SkillAdapterRegistry());

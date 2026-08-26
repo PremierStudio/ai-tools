@@ -1,4 +1,4 @@
-import type { SessionContext, UnifiedSession } from "@premierstudio/ai-tools-sessions";
+import type { SessionContext, UnifiedSession } from "@itz4blitz/ai-tools-sessions";
 
 export async function loadSessionRegistry(): Promise<{
   registry: {
@@ -10,8 +10,8 @@ export async function loadSessionRegistry(): Promise<{
     >;
   };
 }> {
-  const pkg = "@premierstudio/ai-tools-sessions";
-  const adaptersPkg = "@premierstudio/ai-tools-sessions/adapters/all";
+  const pkg = "@itz4blitz/ai-tools-sessions";
+  const adaptersPkg = "@itz4blitz/ai-tools-sessions/adapters/all";
   const mod = await import(pkg);
   await import(adaptersPkg);
 

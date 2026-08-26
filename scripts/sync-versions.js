@@ -44,7 +44,7 @@ for (const entry of entries) {
     const deps = pkg[depType];
     if (!deps) continue;
     for (const [name, range] of Object.entries(deps)) {
-      if (name.startsWith("@premierstudio/") && (range === "workspace:*" || range === "*")) {
+      if (name.startsWith("@itz4blitz/") && (range === "workspace:*" || range === "*")) {
         deps[name] = `^${version}`;
         console.log(`    ${pkg.name} dep ${name} → ^${version}`);
       }

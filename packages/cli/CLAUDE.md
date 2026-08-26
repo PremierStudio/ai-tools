@@ -6,11 +6,11 @@ Unified CLI dispatcher (`ai-tools` binary). Thin routing layer — no domain log
 
 Routes `ai-tools <engine> <command>` to the appropriate engine's CLI:
 
-- `ai-tools hooks <cmd>` → `@premierstudio/ai-tools-hooks/cli`
-- `ai-tools mcp <cmd>` → `@premierstudio/ai-tools-mcp/cli`
-- `ai-tools agents <cmd>` → `@premierstudio/ai-tools-agents/cli`
-- `ai-tools skills <cmd>` → `@premierstudio/ai-tools-skills/cli`
-- `ai-tools rules <cmd>` → `@premierstudio/ai-tools-rules/cli`
+- `ai-tools hooks <cmd>` → `@itz4blitz/ai-tools-hooks/cli`
+- `ai-tools mcp <cmd>` → `@itz4blitz/ai-tools-mcp/cli`
+- `ai-tools agents <cmd>` → `@itz4blitz/ai-tools-agents/cli`
+- `ai-tools skills <cmd>` → `@itz4blitz/ai-tools-skills/cli`
+- `ai-tools rules <cmd>` → `@itz4blitz/ai-tools-rules/cli`
 
 Uses dynamic `import()` for lazy engine loading — only the invoked engine is loaded.
 

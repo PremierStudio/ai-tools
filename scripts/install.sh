@@ -16,4 +16,4 @@ if [ "$NODE_MAJOR" -lt "$REQUIRED_MAJOR" ]; then
 fi
 
 echo "Running ai-tools via npx..."
-npx @premierstudio/ai-tools@latest "$@"
+npx @itz4blitz/ai-tools@latest "$@"

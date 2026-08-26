@@ -52,7 +52,7 @@ try {
 
   const pack = await run(
     "npm",
-    ["pack", "--workspace", "@premierstudio/ai-tools", "--pack-destination", tempRoot],
+    ["pack", "--workspace", "@itz4blitz/ai-tools", "--pack-destination", tempRoot],
     { capture: true },
   );
   const tarballName = pack.stdout
@@ -88,7 +88,7 @@ try {
   await writeFile(
     join(fixture, "ai-plugin.config.mjs"),
     [
-      'import { definePlugin } from "@premierstudio/ai-tools";',
+      'import { definePlugin } from "@itz4blitz/ai-tools";',
       "",
       "export default definePlugin({",
       '  id: "release-confidence",',

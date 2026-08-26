@@ -14,4 +14,4 @@ Interactive terminal dashboard (`ai-tools-tui` binary). Embeds AI coding tools i
 
 - `@rezi-ui/core` + `@rezi-ui/node` — TUI framework
 - `node-pty` — PTY embedding for terminal panes
-- `@premierstudio/ai-tools-sessions` — Session reading and handoff
+- `@itz4blitz/ai-tools-sessions` — Session reading and handoff

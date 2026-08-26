@@ -38,7 +38,7 @@ class MCPAdapterRegistry {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __premierstudio_mcp_registry: MCPAdapterRegistry | undefined;
+  var __itz4blitz_mcp_registry: MCPAdapterRegistry | undefined;
 }
 
-export const registry = (globalThis.__premierstudio_mcp_registry ??= new MCPAdapterRegistry());
+export const registry = (globalThis.__itz4blitz_mcp_registry ??= new MCPAdapterRegistry());

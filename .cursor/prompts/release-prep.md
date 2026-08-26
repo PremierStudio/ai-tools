@@ -12,12 +12,12 @@ Verify the codebase is ready for semantic-release on merge to master.
    - `docs:`, `chore:`, `style:`, `test:`, `ci:` → no release
    - `BREAKING CHANGE:` in footer → major release
 
-3. Run `npm run release:publish:dry` to preview the `@premierstudio/ai-tools` publish
+3. Run `npm run release:publish:dry` to preview the `@itz4blitz/ai-tools` publish
 
 4. Verify all internal workspace `package.json` files remain private implementation details and stay version-aligned with `packages/cli/package.json`
 
 5. Check that `scripts/sync-versions.js`, `scripts/vendor-cli-bundle.js`, `scripts/clean-cli-bundle.js`, and `scripts/run-semantic-release.js` are intact and unmodified
 
-6. If `@premierstudio/ai-tools` has never been published before, ensure a one-time `NPM_TOKEN` secret is available for the bootstrap release. After the first publish, trusted publishing via OIDC should handle future releases.
+6. If `@itz4blitz/ai-tools` has never been published before, ensure a one-time `NPM_TOKEN` secret is available for the bootstrap release. After the first publish, trusted publishing via OIDC should handle future releases.
 
-Report the results: whether `@premierstudio/ai-tools` is ready to publish, what version bump is expected, and any repo-side or npm-side blockers.
+Report the results: whether `@itz4blitz/ai-tools` is ready to publish, what version bump is expected, and any repo-side or npm-side blockers.

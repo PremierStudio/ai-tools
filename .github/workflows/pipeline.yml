@@ -209,6 +209,8 @@ jobs:
       github.ref == 'refs/heads/master' &&
       github.event_name == 'push' &&
       !contains(github.event.head_commit.message, '[skip ci]')
+    # Must match the GitHub Environment named in the npm trusted-publisher config.
+    environment: npm
 
     permissions:
       contents: write
@@ -286,7 +288,7 @@ jobs:
           const { spawnSync } = require('node:child_process');
 
           function runAiTools() {
-            return spawnSync('npx', ['--yes', '@premierstudio/ai-tools@latest', '--help'], {
+            return spawnSync('npx', ['--yes', '@itz4blitz/ai-tools@latest', '--help'], {
               encoding: 'utf-8',
               shell: true,
             });

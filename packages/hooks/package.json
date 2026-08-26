@@ -1,5 +1,5 @@
 {
-  "name": "@premierstudio/ai-tools-hooks",
+  "name": "@itz4blitz/ai-tools-hooks",
   "version": "1.1.8",
   "private": true,
   "description": "Universal hooks framework for AI coding tools. What Express.js is to HTTP, ai-hooks is to AI.",
@@ -18,7 +18,7 @@
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PremierStudio/ai-tools.git"
+    "url": "git+https://github.com/itz4blitz/ai-tools.git"
   },
   "bin": {
     "ai-tools-hooks": "dist/cli/bin.js"

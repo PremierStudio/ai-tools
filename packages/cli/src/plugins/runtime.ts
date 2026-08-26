@@ -66,21 +66,21 @@ async function loadSideEffectModule(packageName: string): Promise<void> {
 
 export async function loadEngineRegistries(): Promise<EngineRegistries> {
   const adapterAllPackages = [
-    "@premierstudio/ai-tools-mcp/adapters/all",
-    "@premierstudio/ai-tools-skills/adapters/all",
-    "@premierstudio/ai-tools-rules/adapters/all",
-    "@premierstudio/ai-tools-agents/adapters/all",
-    "@premierstudio/ai-tools-hooks/adapters/all",
+    "@itz4blitz/ai-tools-mcp/adapters/all",
+    "@itz4blitz/ai-tools-skills/adapters/all",
+    "@itz4blitz/ai-tools-rules/adapters/all",
+    "@itz4blitz/ai-tools-agents/adapters/all",
+    "@itz4blitz/ai-tools-hooks/adapters/all",
   ];
 
   await Promise.all(adapterAllPackages.map((pkg) => loadSideEffectModule(pkg)));
 
   const [mcp, skills, rules, agents, hooks] = await Promise.all([
-    loadRegistryModule<McpAdapter>("@premierstudio/ai-tools-mcp"),
-    loadRegistryModule<SkillsAdapter>("@premierstudio/ai-tools-skills"),
-    loadRegistryModule<RulesAdapter>("@premierstudio/ai-tools-rules"),
-    loadRegistryModule<AgentsAdapter>("@premierstudio/ai-tools-agents"),
-    loadRegistryModule<HooksAdapter>("@premierstudio/ai-tools-hooks"),
+    loadRegistryModule<McpAdapter>("@itz4blitz/ai-tools-mcp"),
+    loadRegistryModule<SkillsAdapter>("@itz4blitz/ai-tools-skills"),
+    loadRegistryModule<RulesAdapter>("@itz4blitz/ai-tools-rules"),
+    loadRegistryModule<AgentsAdapter>("@itz4blitz/ai-tools-agents"),
+    loadRegistryModule<HooksAdapter>("@itz4blitz/ai-tools-hooks"),
   ]);
 
   return {

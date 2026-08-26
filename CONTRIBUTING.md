@@ -5,7 +5,7 @@
 **Requirements:** Node >= 22, npm >= 10
 
 ```bash
-git clone https://github.com/PremierStudio/ai-hooks.git
+git clone https://github.com/itz4blitz/ai-tools.git
 cd ai-hooks
 npm install
 ```
@@ -67,7 +67,7 @@ mkdir -p packages/adapter-{name}/src
 
 Create these files (copy from an existing adapter as template):
 
-- `package.json` — use `@premierstudio/adapter-{name}` as the name
+- `package.json` — use `@itz4blitz/adapter-{name}` as the name
 - `tsconfig.json` — extends `../../tsconfig.base.json`
 - `tsup.config.ts` — standard ESM + DTS build
 
@@ -149,7 +149,7 @@ Use an existing adapter test as your template. Target 100% coverage.
 Add the import to `packages/cli/src/index.ts` so the CLI discovers the adapter:
 
 ```ts
-import "@premierstudio/adapter-{name}";
+import "@itz4blitz/adapter-{name}";
 ```
 
 ### 6. Verify

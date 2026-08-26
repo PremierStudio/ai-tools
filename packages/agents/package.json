@@ -1,12 +1,12 @@
 {
-  "name": "@premierstudio/ai-tools-agents",
+  "name": "@itz4blitz/ai-tools-agents",
   "version": "1.1.8",
   "private": true,
   "description": "Universal agent configuration for AI coding tools",
   "license": "MIT",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/PremierStudio/ai-tools.git"
+    "url": "git+https://github.com/itz4blitz/ai-tools.git"
   },
   "bin": {
     "ai-tools-agents": "dist/cli/bin.js"

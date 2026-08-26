@@ -1,5 +1,5 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import type { SessionContext, UnifiedSession } from "@premierstudio/ai-tools-sessions";
+import type { SessionContext, UnifiedSession } from "@itz4blitz/ai-tools-sessions";
 
 const mockAdapters: Array<{
   id: string;

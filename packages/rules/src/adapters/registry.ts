@@ -41,7 +41,7 @@ class RuleAdapterRegistry {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __premierstudio_rules_registry: RuleAdapterRegistry | undefined;
+  var __itz4blitz_rules_registry: RuleAdapterRegistry | undefined;
 }
 
-export const registry = (globalThis.__premierstudio_rules_registry ??= new RuleAdapterRegistry());
+export const registry = (globalThis.__itz4blitz_rules_registry ??= new RuleAdapterRegistry());

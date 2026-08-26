@@ -1,4 +1,4 @@
-import { defineRulesConfig } from "@premierstudio/ai-tools-rules";
+import { defineRulesConfig } from "@itz4blitz/ai-tools-rules";
 
 export default defineRulesConfig({
   rules: [

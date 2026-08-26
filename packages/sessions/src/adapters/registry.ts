@@ -39,8 +39,8 @@ class SessionAdapterRegistry {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __premierstudio_ai_sessions_registry: SessionAdapterRegistry | undefined;
+  var __itz4blitz_ai_sessions_registry: SessionAdapterRegistry | undefined;
 }
 
-export const registry = (globalThis.__premierstudio_ai_sessions_registry ??=
+export const registry = (globalThis.__itz4blitz_ai_sessions_registry ??=
   new SessionAdapterRegistry());

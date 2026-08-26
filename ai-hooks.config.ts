@@ -1,4 +1,4 @@
-import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-tools-hooks";
+import { defineConfig, hook, builtinHooks } from "@itz4blitz/ai-tools-hooks";
 
 export default defineConfig({
   // Start with built-in security hooks

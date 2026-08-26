@@ -272,7 +272,7 @@ describe("ClineAdapter", () => {
     it("hook script imports from ai-hooks", async () => {
       const configs = await adapter.generate([testHook]);
       expect(configs[0]!.content).toContain(
-        'import { loadConfig, HookEngine } from "@premierstudio/ai-tools-hooks"',
+        'import { loadConfig, HookEngine } from "@itz4blitz/ai-tools-hooks"',
       );
     });
 

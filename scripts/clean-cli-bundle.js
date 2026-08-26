@@ -4,7 +4,7 @@ import { rmSync } from "node:fs";
 import { join, resolve } from "node:path";
 
 const repoRoot = resolve(import.meta.dirname, "..");
-const vendorRoot = join(repoRoot, "packages", "cli", "node_modules", "@premierstudio");
+const vendorRoot = join(repoRoot, "packages", "cli", "node_modules", "@itz4blitz");
 
 rmSync(vendorRoot, { recursive: true, force: true });
 

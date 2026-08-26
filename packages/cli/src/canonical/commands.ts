@@ -15,24 +15,24 @@ type EngineModule = {
 const ENGINES: EngineModule[] = [
   {
     name: "hooks",
-    pkg: "@premierstudio/ai-tools-hooks/cli",
-    configPkg: "@premierstudio/ai-tools-hooks",
+    pkg: "@itz4blitz/ai-tools-hooks/cli",
+    configPkg: "@itz4blitz/ai-tools-hooks",
   },
-  { name: "mcp", pkg: "@premierstudio/ai-tools-mcp/cli", configPkg: "@premierstudio/ai-tools-mcp" },
+  { name: "mcp", pkg: "@itz4blitz/ai-tools-mcp/cli", configPkg: "@itz4blitz/ai-tools-mcp" },
   {
     name: "skills",
-    pkg: "@premierstudio/ai-tools-skills/cli",
-    configPkg: "@premierstudio/ai-tools-skills",
+    pkg: "@itz4blitz/ai-tools-skills/cli",
+    configPkg: "@itz4blitz/ai-tools-skills",
   },
   {
     name: "agents",
-    pkg: "@premierstudio/ai-tools-agents/cli",
-    configPkg: "@premierstudio/ai-tools-agents",
+    pkg: "@itz4blitz/ai-tools-agents/cli",
+    configPkg: "@itz4blitz/ai-tools-agents",
   },
   {
     name: "rules",
-    pkg: "@premierstudio/ai-tools-rules/cli",
-    configPkg: "@premierstudio/ai-tools-rules",
+    pkg: "@itz4blitz/ai-tools-rules/cli",
+    configPkg: "@itz4blitz/ai-tools-rules",
   },
 ];
 

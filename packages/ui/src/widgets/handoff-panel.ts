@@ -1,4 +1,4 @@
-import type { SessionContext } from "@premierstudio/ai-tools-sessions";
+import type { SessionContext } from "@itz4blitz/ai-tools-sessions";
 import { loadSessionRegistry } from "./handoff-runtime.js";
 
 /**

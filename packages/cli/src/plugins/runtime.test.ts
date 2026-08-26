@@ -6,17 +6,17 @@ const rulesRegistry = { list: () => ["codex"], get: () => undefined, detectAll: 
 const agentsRegistry = { list: () => ["codex"], get: () => undefined, detectAll: vi.fn() };
 const hooksRegistry = { list: () => ["codex"], get: () => undefined, detectAll: vi.fn() };
 
-vi.mock("@premierstudio/ai-tools-mcp/adapters/all", () => ({}));
-vi.mock("@premierstudio/ai-tools-skills/adapters/all", () => ({}));
-vi.mock("@premierstudio/ai-tools-rules/adapters/all", () => ({}));
-vi.mock("@premierstudio/ai-tools-agents/adapters/all", () => ({}));
-vi.mock("@premierstudio/ai-tools-hooks/adapters/all", () => ({}));
+vi.mock("@itz4blitz/ai-tools-mcp/adapters/all", () => ({}));
+vi.mock("@itz4blitz/ai-tools-skills/adapters/all", () => ({}));
+vi.mock("@itz4blitz/ai-tools-rules/adapters/all", () => ({}));
+vi.mock("@itz4blitz/ai-tools-agents/adapters/all", () => ({}));
+vi.mock("@itz4blitz/ai-tools-hooks/adapters/all", () => ({}));
 
-vi.mock("@premierstudio/ai-tools-mcp", () => ({ registry: mcpRegistry }));
-vi.mock("@premierstudio/ai-tools-skills", () => ({ registry: skillsRegistry }));
-vi.mock("@premierstudio/ai-tools-rules", () => ({ registry: rulesRegistry }));
-vi.mock("@premierstudio/ai-tools-agents", () => ({ registry: agentsRegistry }));
-vi.mock("@premierstudio/ai-tools-hooks", () => ({ registry: hooksRegistry }));
+vi.mock("@itz4blitz/ai-tools-mcp", () => ({ registry: mcpRegistry }));
+vi.mock("@itz4blitz/ai-tools-skills", () => ({ registry: skillsRegistry }));
+vi.mock("@itz4blitz/ai-tools-rules", () => ({ registry: rulesRegistry }));
+vi.mock("@itz4blitz/ai-tools-agents", () => ({ registry: agentsRegistry }));
+vi.mock("@itz4blitz/ai-tools-hooks", () => ({ registry: hooksRegistry }));
 
 describe("plugin runtime", () => {
   it("loads all engine registries after side-effect adapter modules", async () => {

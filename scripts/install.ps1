@@ -14,4 +14,4 @@ if ($nodeMajor -lt $requiredMajor) {
 }
 
 Write-Host "Running ai-tools via npx..."
-npx @premierstudio/ai-tools@latest @args
+npx @itz4blitz/ai-tools@latest @args

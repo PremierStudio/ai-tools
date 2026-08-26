@@ -7,7 +7,7 @@
 
 **Universal configuration and runtime engine for AI coding tools. Install one package, target many tools.**
 
-`@premierstudio/ai-tools` is the single public package for this project.
+`@itz4blitz/ai-tools` is the single public package for this project.
 
 This repository still uses multiple internal workspaces so hooks, MCP, agents, skills, rules, sessions, and UI can be developed and tested cleanly. But those workspaces are implementation details. Consumers should install one package and let it orchestrate the rest.
 
@@ -67,12 +67,12 @@ graph TD
 
 | Package | CLI | Description |
 |---------|-----|-------------|
-| [`@premierstudio/ai-tools`](packages/cli) | `ai-tools` | Public package: unified CLI and runtime for all engines |
-| [`packages/hooks`](packages/hooks) | internal | Internal hooks engine implementation (`@premierstudio/ai-tools/hooks`) |
-| [`packages/mcp`](packages/mcp) | internal | Internal MCP engine implementation (`@premierstudio/ai-tools/mcp`) |
-| [`packages/agents`](packages/agents) | internal | Internal agents engine implementation (`@premierstudio/ai-tools/agents`) |
-| [`packages/skills`](packages/skills) | internal | Internal skills engine implementation (`@premierstudio/ai-tools/skills`) |
-| [`packages/rules`](packages/rules) | internal | Internal rules engine implementation (`@premierstudio/ai-tools/rules`) |
+| [`@itz4blitz/ai-tools`](packages/cli) | `ai-tools` | Public package: unified CLI and runtime for all engines |
+| [`packages/hooks`](packages/hooks) | internal | Internal hooks engine implementation (`@itz4blitz/ai-tools/hooks`) |
+| [`packages/mcp`](packages/mcp) | internal | Internal MCP engine implementation (`@itz4blitz/ai-tools/mcp`) |
+| [`packages/agents`](packages/agents) | internal | Internal agents engine implementation (`@itz4blitz/ai-tools/agents`) |
+| [`packages/skills`](packages/skills) | internal | Internal skills engine implementation (`@itz4blitz/ai-tools/skills`) |
+| [`packages/rules`](packages/rules) | internal | Internal rules engine implementation (`@itz4blitz/ai-tools/rules`) |
 
 ## Supported tools
 
@@ -103,10 +103,10 @@ graph TD
 
 ```bash
 # Run instantly (recommended)
-npx @premierstudio/ai-tools@latest detect
+npx @itz4blitz/ai-tools@latest detect
 
 # Install everything
-npm i -D @premierstudio/ai-tools
+npm i -D @itz4blitz/ai-tools
 
 # Detect installed tools, generate configs, install them
 ai-tools detect
@@ -127,7 +127,7 @@ ai-tools plugins install --tools=cursor,codex,opencode,claude-code
 
 `ai-tools` now supports a plugin-style authoring model for cross-tool distribution.
 
-Use `definePlugin()` from `@premierstudio/ai-tools` to describe a capability bundle once:
+Use `definePlugin()` from `@itz4blitz/ai-tools` to describe a capability bundle once:
 
 - MCP servers
 - skills
@@ -140,7 +140,7 @@ Example:
 
 ```ts
 // ai-plugin.config.ts
-import { definePlugin } from "@premierstudio/ai-tools";
+import { definePlugin } from "@itz4blitz/ai-tools";
 
 export default definePlugin({
   id: "cert-coach",
@@ -194,7 +194,7 @@ Each engine follows the same CLI pattern: `init` → `detect` → `generate` →
 
 ```ts
 // ai-hooks.config.ts
-import { defineConfig, hook, builtinHooks } from "@premierstudio/ai-tools/hooks";
+import { defineConfig, hook, builtinHooks } from "@itz4blitz/ai-tools/hooks";
 
 export default defineConfig({
   extends: [{ hooks: builtinHooks }],
@@ -223,7 +223,7 @@ export default defineConfig({
 
 ```ts
 // ai-mcp.config.ts
-import { defineConfig } from "@premierstudio/ai-tools/mcp";
+import { defineConfig } from "@itz4blitz/ai-tools/mcp";
 
 export default defineConfig({
   servers: [
@@ -241,7 +241,7 @@ export default defineConfig({
 
 ```ts
 // ai-rules.config.ts
-import { defineRulesConfig } from "@premierstudio/ai-tools/rules";
+import { defineRulesConfig } from "@itz4blitz/ai-tools/rules";
 
 export default defineRulesConfig({
   rules: [
@@ -293,7 +293,7 @@ The hooks engine is the most powerful package — an Express.js-style middleware
 Import the engine directly for building platforms that orchestrate AI agents:
 
 ```ts
-import { HookEngine, builtinHooks } from "@premierstudio/ai-tools/hooks";
+import { HookEngine, builtinHooks } from "@itz4blitz/ai-tools/hooks";
 
 const engine = new HookEngine({
   hooks: builtinHooks,
@@ -309,7 +309,7 @@ if (result.blocked) {
 ## Development
 
 ```bash
-git clone https://github.com/PremierStudio/ai-tools.git
+git clone https://github.com/itz4blitz/ai-tools.git
 cd ai-tools
 npm install
 npm run check   # lint + format + typecheck + coverage-gated tests

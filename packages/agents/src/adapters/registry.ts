@@ -40,7 +40,7 @@ class AgentAdapterRegistry {
 
 declare global {
   // eslint-disable-next-line no-var
-  var __premierstudio_agents_registry: AgentAdapterRegistry | undefined;
+  var __itz4blitz_agents_registry: AgentAdapterRegistry | undefined;
 }
 
-export const registry = (globalThis.__premierstudio_agents_registry ??= new AgentAdapterRegistry());
+export const registry = (globalThis.__itz4blitz_agents_registry ??= new AgentAdapterRegistry());

@@ -85,7 +85,7 @@ async function cmdInit(flags: Flags): Promise<void> {
   const { writeFile, mkdir } = await import("node:fs/promises");
   const { dirname, resolve } = await import("node:path");
 
-  const template = `import { definePlugin } from "@premierstudio/ai-tools";
+  const template = `import { definePlugin } from "@itz4blitz/ai-tools";
 
 export default definePlugin({
   id: "my-plugin",

@@ -60,13 +60,13 @@ type EngineEntry = {
 };
 
 const ENGINES: Record<string, EngineEntry> = {
-  hooks: { name: "hooks", pkg: "@premierstudio/ai-tools-hooks/cli", hasSync: false },
-  mcp: { name: "mcp", pkg: "@premierstudio/ai-tools-mcp/cli", hasSync: true },
-  skills: { name: "skills", pkg: "@premierstudio/ai-tools-skills/cli", hasSync: true },
-  agents: { name: "agents", pkg: "@premierstudio/ai-tools-agents/cli", hasSync: true },
-  rules: { name: "rules", pkg: "@premierstudio/ai-tools-rules/cli", hasSync: true },
+  hooks: { name: "hooks", pkg: "@itz4blitz/ai-tools-hooks/cli", hasSync: false },
+  mcp: { name: "mcp", pkg: "@itz4blitz/ai-tools-mcp/cli", hasSync: true },
+  skills: { name: "skills", pkg: "@itz4blitz/ai-tools-skills/cli", hasSync: true },
+  agents: { name: "agents", pkg: "@itz4blitz/ai-tools-agents/cli", hasSync: true },
+  rules: { name: "rules", pkg: "@itz4blitz/ai-tools-rules/cli", hasSync: true },
   plugins: { name: "plugins", pkg: "./plugins", hasSync: false },
-  sessions: { name: "sessions", pkg: "@premierstudio/ai-tools-sessions/cli", hasSync: false },
+  sessions: { name: "sessions", pkg: "@itz4blitz/ai-tools-sessions/cli", hasSync: false },
 };
 
 const ENGINE_NAMES = Object.keys(ENGINES);
@@ -79,7 +79,7 @@ async function loadEngine(pkg: string): Promise<{ run: (args: string[]) => Promi
 }
 
 async function loadUi(): Promise<{ run: (args: string[]) => Promise<void> }> {
-  const pkg = "@premierstudio/ai-tools-tui/cli";
+  const pkg = "@itz4blitz/ai-tools-tui/cli";
   return import(pkg) as Promise<{ run: (args: string[]) => Promise<void> }>;
 }
 

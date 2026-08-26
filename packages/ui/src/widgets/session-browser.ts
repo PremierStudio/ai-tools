@@ -1,4 +1,4 @@
-import type { UnifiedSession, SessionFilter } from "@premierstudio/ai-tools-sessions";
+import type { UnifiedSession, SessionFilter } from "@itz4blitz/ai-tools-sessions";
 
 function sortAndLimitSessions(
   sessions: UnifiedSession[],
@@ -33,8 +33,8 @@ export type SessionGroup = {
  * List sessions from the session adapter registry.
  */
 export async function listSessions(filter?: SessionFilter): Promise<UnifiedSession[]> {
-  const { registry } = await import("@premierstudio/ai-tools-sessions");
-  await import("@premierstudio/ai-tools-sessions/adapters/all");
+  const { registry } = await import("@itz4blitz/ai-tools-sessions");
+  await import("@itz4blitz/ai-tools-sessions/adapters/all");
 
   const detected = await registry.detectAll();
   const sessions: UnifiedSession[] = [];
@@ -58,8 +58,8 @@ export async function listSessionsIncremental(
   filter: SessionFilter | undefined,
   onProgress: (sessions: UnifiedSession[]) => void,
 ): Promise<UnifiedSession[]> {
-  const { registry } = await import("@premierstudio/ai-tools-sessions");
-  await import("@premierstudio/ai-tools-sessions/adapters/all");
+  const { registry } = await import("@itz4blitz/ai-tools-sessions");
+  await import("@itz4blitz/ai-tools-sessions/adapters/all");
 
   const detected = await registry.detectAll();
   const sessions: UnifiedSession[] = [];
