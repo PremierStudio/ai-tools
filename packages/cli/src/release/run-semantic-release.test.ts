@@ -4,6 +4,7 @@ import {
   isNpmTokenValid,
   resolveReleaseMode,
   sanitizeTokenlessReleaseEnv,
+  withCliNpmVersionEnv,
 } from "../../../../scripts/run-semantic-release.js";
 
 describe("run-semantic-release", () => {
@@ -121,5 +122,17 @@ describe("run-semantic-release", () => {
     await expect(
       isNpmTokenValid("invalid", async () => new Response("{}", { status: 401 })),
     ).resolves.toBe(false);
+  });
+
+  it("stops npm version from reifying unpublished workspace packages", () => {
+    expect(
+      withCliNpmVersionEnv({
+        PATH: "/usr/bin",
+        npm_config_workspaces_update: "true",
+      }),
+    ).toEqual({
+      PATH: "/usr/bin",
+      npm_config_workspaces_update: "false",
+    });
   });
 });

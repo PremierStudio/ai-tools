@@ -107,13 +107,23 @@ export function sanitizeTokenlessReleaseEnv(env) {
   return releaseEnv;
 }
 
+export function withCliNpmVersionEnv(env) {
+  return {
+    ...env,
+    npm_config_workspaces_update: "false",
+  };
+}
+
 async function main() {
   let env = { ...process.env };
   const packageName = await loadPackageName();
-  const hasOidcContext = Boolean(env.ACTIONS_ID_TOKEN_REQUEST_URL && env.ACTIONS_ID_TOKEN_REQUEST_TOKEN);
+  const hasOidcContext = Boolean(
+    env.ACTIONS_ID_TOKEN_REQUEST_URL && env.ACTIONS_ID_TOKEN_REQUEST_TOKEN,
+  );
   const packageExists = await packageExistsOnNpm(packageName);
   const hasNpmToken = Boolean(env.NPM_TOKEN);
-  const npmTokenValid = !hasOidcContext && hasNpmToken ? await isNpmTokenValid(env.NPM_TOKEN) : false;
+  const npmTokenValid =
+    !hasOidcContext && hasNpmToken ? await isNpmTokenValid(env.NPM_TOKEN) : false;
   const releaseMode = resolveReleaseMode({
     hasOidcContext,
     packageExists,
@@ -171,7 +181,7 @@ async function main() {
 
   const child = spawn("npx", ["semantic-release", ...process.argv.slice(2)], {
     stdio: "inherit",
-    env,
+    env: withCliNpmVersionEnv(env),
     shell: process.platform === "win32",
   });
 
