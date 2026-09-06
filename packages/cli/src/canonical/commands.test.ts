@@ -45,6 +45,7 @@ import { addManagedBlock, removeManagedBlock, hasManagedBlock } from "./gitignor
 import { existsSync } from "node:fs";
 import { rm } from "node:fs/promises";
 import { cmdInit, cmdGenerate, cmdInstall, cmdStatus, cmdClean } from "./commands.js";
+import * as canonical from "./index.js";
 
 const mockWriteConfig = vi.mocked(writeConfig);
 const mockIsCanonical = vi.mocked(isCanonical);
@@ -91,6 +92,14 @@ function allError(): string {
 }
 
 // ── cmdInit ─────────────────────────────────────────────────
+
+describe("canonical barrel", () => {
+  it("re-exports config helpers used by the CLI", () => {
+    expect(canonical.writeConfig).toBe(writeConfig);
+    expect(canonical.readManifest).toBe(readManifest);
+    expect(canonical.addManagedBlock).toBe(addManagedBlock);
+  });
+});
 
 describe("cmdInit", () => {
   it("creates config and adds gitignore block", async () => {
@@ -162,10 +171,82 @@ describe("cmdInstall", () => {
   it("installs all engines and updates manifest", async () => {
     mockIsCanonical.mockResolvedValue(true);
     mockReadManifest.mockResolvedValue({ version: 1, entries: [] });
+    mockExistsSync.mockReturnValue(false);
     await cmdInstall([]);
     expect(mockHooksRun).toHaveBeenCalledWith(["install"]);
     expect(mockWriteManifest).toHaveBeenCalled();
     expect(allLog()).toContain("Installed 5 engine(s)");
+  });
+
+  it("replaces an existing manifest entry for the same engine", async () => {
+    mockIsCanonical.mockResolvedValue(true);
+    mockExistsSync.mockReturnValue(false);
+    mockReadManifest.mockResolvedValue({
+      version: 1,
+      entries: [
+        {
+          engine: "hooks",
+          id: "hooks",
+          canonicalPath: ".ai-tools/hooks/",
+          targets: [],
+          updatedAt: "2020-01-01T00:00:00Z",
+        },
+      ],
+    });
+
+    await cmdInstall([]);
+
+    const written = mockWriteManifest.mock.calls[0]?.[0] as {
+      entries: Array<{ engine: string; updatedAt: string }>;
+    };
+    const hooks = written.entries.filter((entry) => entry.engine === "hooks");
+    expect(hooks).toHaveLength(1);
+    expect(hooks[0]?.updatedAt).not.toBe("2020-01-01T00:00:00Z");
+  });
+
+  it("continues installing after an engine throws", async () => {
+    mockIsCanonical.mockResolvedValue(true);
+    mockReadManifest.mockResolvedValue({ version: 1, entries: [] });
+    mockExistsSync.mockReturnValue(false);
+    mockHooksRun.mockRejectedValueOnce(new Error("hooks install failed"));
+    mockMcpRun.mockRejectedValueOnce("mcp exploded");
+
+    await cmdInstall([]);
+
+    expect(allError()).toContain("hooks install failed");
+    expect(allError()).toContain("mcp exploded");
+    expect(mockSkillsRun).toHaveBeenCalled();
+    expect(mockWriteManifest).toHaveBeenCalled();
+  });
+
+  it("records existing tool directories as manifest targets instead of an empty list", async () => {
+    mockIsCanonical.mockResolvedValue(true);
+    mockReadManifest.mockResolvedValue({ version: 1, entries: [] });
+    mockExistsSync.mockImplementation((path: unknown) => {
+      const value = String(path);
+      return value.endsWith("/.claude") || value.endsWith("/.grok") || value.endsWith("/.zcode");
+    });
+
+    await cmdInstall([]);
+
+    const written = mockWriteManifest.mock.calls[0]?.[0] as {
+      entries: Array<{ engine: string; targets: Array<{ adapterId: string; targetPath: string }> }>;
+    };
+    const hooksEntry = written.entries.find((entry) => entry.engine === "hooks");
+    expect(hooksEntry?.targets).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          adapterId: "claude-code",
+          targetPath: ".claude",
+          strategy: "transform",
+          status: "direct",
+        }),
+        expect.objectContaining({ adapterId: "grok", targetPath: ".grok" }),
+        expect.objectContaining({ adapterId: "zcode", targetPath: ".zcode" }),
+      ]),
+    );
+    expect(hooksEntry?.targets).toHaveLength(3);
+    expect(allLog().toLowerCase()).not.toContain("canonical store");
   });
 
   it("respects --dry-run flag", async () => {

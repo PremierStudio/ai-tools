@@ -41,7 +41,10 @@ describe("AmpSkillAdapter", () => {
     it("has correct id", () => expect(adapter.id).toBe("amp"));
     it("has correct name", () => expect(adapter.name).toBe("Amp"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
-    it("has correct config dir", () => expect(adapter.configDir).toBe(".amp/prompts"));
+    it("has correct config dir", () => {
+      // Amp has no SKILL.md loader here (no ~/.amp/skills). Native format is `.amp/prompts/*.md`.
+      expect(adapter.configDir).toBe(".amp/prompts");
+    });
   });
 
   describe("generate", () => {

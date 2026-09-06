@@ -73,6 +73,70 @@ describe("encodeMcpToml / parseMcpToml", () => {
     expect(parseMcpToml(encoded)[0]?.transport).toEqual(remote.transport);
   });
 
+  it("parses inline env and headers tables from host files", () => {
+    const parsed = parseMcpToml(`[mcp_servers.filesystem]
+command = "npx"
+args = ["-y", "server"]
+env = { API_KEY = "secret", OTHER = "x" }
+
+[mcp_servers.linear]
+url = "https://mcp.linear.app/mcp"
+headers = { "Authorization" = "Bearer token", "x-mcp-session-id" = "{{session_id}}" }
+`);
+    expect(parsed.find((s) => s.id === "filesystem")?.transport).toEqual({
+      type: "stdio",
+      command: "npx",
+      args: ["-y", "server"],
+      env: { API_KEY: "secret", OTHER: "x" },
+    });
+    expect(parsed.find((s) => s.id === "linear")?.transport).toEqual({
+      type: "http",
+      url: "https://mcp.linear.app/mcp",
+      headers: { Authorization: "Bearer token", "x-mcp-session-id": "{{session_id}}" },
+    });
+  });
+
+  it("parses Codex http_headers as transport headers", () => {
+    const parsed = parseMcpToml(`[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+http_headers = { "X-Figma-Region" = "us-east-1" }
+`);
+    expect(parsed[0]?.transport).toEqual({
+      type: "http",
+      url: "https://mcp.figma.com/mcp",
+      headers: { "X-Figma-Region": "us-east-1" },
+    });
+  });
+
+  it("parses nested http_headers tables", () => {
+    const parsed = parseMcpToml(`[mcp_servers.figma]
+url = "https://mcp.figma.com/mcp"
+
+[mcp_servers.figma.http_headers]
+X-Figma-Region = "us-east-1"
+`);
+    expect(parsed[0]?.transport).toEqual({
+      type: "http",
+      url: "https://mcp.figma.com/mcp",
+      headers: { "X-Figma-Region": "us-east-1" },
+    });
+  });
+
+  it("parses empty inline env without treating it as a command env", () => {
+    const parsed = parseMcpToml(`[mcp_servers.x]
+command = "x"
+env = {}
+`);
+    expect(parsed[0]?.transport).toEqual({ type: "stdio", command: "x" });
+  });
+
+  it("encodes Codex HTTP remotes with http_headers tables", () => {
+    const encoded = encodeMcpToml([remote], { headerTable: "http_headers" });
+    expect(encoded).toContain("[mcp_servers.linear.http_headers]");
+    expect(encoded).toContain('Authorization = "Bearer token"');
+    expect(parseMcpToml(encoded)[0]?.transport).toEqual(remote.transport);
+  });
+
   it("encodes enabled = false", () => {
     const encoded = encodeMcpToml([{ ...stdio, enabled: false }]);
     expect(encoded).toContain("enabled = false");
@@ -112,5 +176,14 @@ command = "/home/blitz/.local/bin/uvx"
     const stripped = stripMcpTomlTables(`[ui]\nyolo = true\n\n[mcp_servers.x]\ncommand = "x"\n`);
     expect(stripped).toContain("[ui]");
     expect(stripped).not.toContain("mcp_servers");
+  });
+
+  it("re-encodes Codex merges with http_headers", () => {
+    const merged = mergeMcpToml('model = "gpt-5"\n', [remote], ["linear"], {
+      headerTable: "http_headers",
+    });
+    expect(merged).toContain('model = "gpt-5"');
+    expect(merged).toContain("[mcp_servers.linear.http_headers]");
+    expect(merged).not.toContain("[mcp_servers.linear.headers]");
   });
 });

@@ -3,7 +3,7 @@ import { registry } from "./registry.js";
 import type { RuleDefinition, GeneratedFile } from "../types/index.js";
 import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
-import { resolve } from "node:path";
+import { basename, resolve } from "node:path";
 
 export class CursorRuleAdapter extends BaseRuleAdapter {
   readonly id = "cursor";
@@ -14,7 +14,7 @@ export class CursorRuleAdapter extends BaseRuleAdapter {
 
   async generate(rules: RuleDefinition[]): Promise<GeneratedFile[]> {
     return rules.map((rule) => ({
-      path: `${this.configDir}/${rule.id}/RULE.md`,
+      path: `${this.configDir}/${rule.id}.mdc`,
       content: this.formatRule(rule),
       format: "md" as const,
     }));
@@ -29,10 +29,9 @@ export class CursorRuleAdapter extends BaseRuleAdapter {
     const rules: RuleDefinition[] = [];
 
     for (const entry of entries) {
-      const rulePath = resolve(rulesDir, entry, "RULE.md");
-      if (!existsSync(rulePath)) continue;
-      const content = await readFile(rulePath, "utf-8");
-      rules.push(this.parseRule(entry, content));
+      if (!entry.endsWith(".mdc")) continue;
+      const content = await readFile(resolve(rulesDir, entry), "utf-8");
+      rules.push(this.parseRule(basename(entry, ".mdc"), content));
     }
 
     return rules;

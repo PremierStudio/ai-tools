@@ -84,6 +84,11 @@ export interface Adapter {
    * Map a tool's native event name back to universal event type(s).
    */
   mapNativeEvent(nativeEvent: string): HookEventType[];
+
+  /**
+   * Import native hook configs from a project directory into universal definitions.
+   */
+  import?(cwd?: string): Promise<HookDefinition[]>;
 }
 
 /**

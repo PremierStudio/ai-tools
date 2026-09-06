@@ -152,4 +152,59 @@ describe("buildPluginInstallPlan", () => {
     const target = plan.targets[0];
     expect(target?.engines.find((item) => item.engine === "agents")?.status).toBe("ready");
   });
+
+  it("marks zcode hooks as adapter-missing until the hooks registry lists zcode", async () => {
+    const plan = await buildPluginInstallPlan(
+      {
+        id: "cert-coach",
+        name: "Certification Coach",
+        version: "0.1.0",
+        hooks: [
+          {
+            id: "audit",
+            name: "Audit",
+            events: ["prompt:submit"],
+            phase: "before",
+            handler: async () => {},
+          },
+        ],
+      },
+      {
+        tools: ["zcode"],
+        force: true,
+        detectedToolsOverride: ["zcode"],
+      },
+    );
+
+    expect(plan.targets[0]?.host.nativeEngineSupport.hooks).toBe(true);
+    expect(plan.targets[0]?.engines.find((item) => item.engine === "hooks")?.status).toBe(
+      "adapter-missing",
+    );
+  });
+
+  it("marks antigravity-cli MCP as host-unsupported because no MCP adapter exists", async () => {
+    const plan = await buildPluginInstallPlan(
+      {
+        id: "cert-coach",
+        name: "Certification Coach",
+        version: "0.1.0",
+        mcpServers: [
+          {
+            id: "cert-coach",
+            name: "Certification Coach",
+            transport: { type: "stdio", command: "npx" },
+          },
+        ],
+      },
+      {
+        tools: ["antigravity-cli"],
+        force: true,
+        detectedToolsOverride: ["antigravity-cli"],
+      },
+    );
+
+    expect(plan.targets[0]?.engines.find((item) => item.engine === "mcp")?.status).toBe(
+      "host-unsupported",
+    );
+  });
 });

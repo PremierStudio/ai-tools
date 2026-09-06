@@ -19,7 +19,7 @@ class CodexMCPAdapter extends BaseMCPAdapter {
     return [
       {
         path: this.configPath,
-        content: encodeMcpToml(servers),
+        content: encodeMcpToml(servers, { headerTable: "http_headers" }),
         format: "toml",
       },
     ];
@@ -48,6 +48,7 @@ class CodexMCPAdapter extends BaseMCPAdapter {
           await readFile(fullPath, "utf-8"),
           parseMcpToml(file.content),
           managedIds,
+          { headerTable: "http_headers" },
         );
       }
       await mkdir(dirname(fullPath), { recursive: true });

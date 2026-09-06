@@ -57,7 +57,8 @@ describe("parseFlags()", () => {
     const flags = parseFlags(["--help"]);
     expect(flags.help).toBe(true);
     expect(flags.noPty).toBe(false);
-    expect(flags.detach).toBe(false);
+    expect(flags.dev).toBe(false);
+    expect("detach" in flags).toBe(false);
   });
 
   it("parses -h flag", () => {
@@ -69,24 +70,28 @@ describe("parseFlags()", () => {
     const flags = parseFlags(["--no-pty"]);
     expect(flags.noPty).toBe(true);
     expect(flags.help).toBe(false);
+    expect(flags.dev).toBe(false);
   });
 
-  it("parses --detach flag", () => {
-    const flags = parseFlags(["--detach"]);
-    expect(flags.detach).toBe(true);
+  it("parses --dev flag", () => {
+    const flags = parseFlags(["--dev"]);
+    expect(flags.dev).toBe(true);
+    expect(flags.noPty).toBe(false);
   });
 
   it("parses multiple flags", () => {
-    const flags = parseFlags(["--no-pty", "--detach"]);
+    const flags = parseFlags(["--no-pty", "--dev"]);
     expect(flags.noPty).toBe(true);
-    expect(flags.detach).toBe(true);
+    expect(flags.dev).toBe(true);
+    expect("detach" in flags).toBe(false);
   });
 
   it("returns all false for no flags", () => {
     const flags = parseFlags([]);
     expect(flags.help).toBe(false);
     expect(flags.noPty).toBe(false);
-    expect(flags.detach).toBe(false);
+    expect(flags.dev).toBe(false);
+    expect("detach" in flags).toBe(false);
   });
 });
 
@@ -107,14 +112,12 @@ describe("run() - help output", () => {
     expect(allLog()).toContain("ai-tools-tui");
   });
 
-  it("help includes --no-pty option", async () => {
+  it("help includes --no-pty and --dev options", async () => {
     await run(["--help"]);
-    expect(allLog()).toContain("--no-pty");
-  });
-
-  it("help includes --detach option", async () => {
-    await run(["--help"]);
-    expect(allLog()).toContain("--detach");
+    const output = allLog();
+    expect(output).toContain("--no-pty");
+    expect(output).toContain("--dev");
+    expect(output).not.toContain("--detach");
   });
 });
 
@@ -129,15 +132,6 @@ describe("run() - no-pty mode", () => {
     expect(output).toContain("Config:");
     expect(output).toContain("Sessions:");
     expect(output).toContain("Detected tools:");
-  });
-});
-
-// -- run() - detach mode --
-
-describe("run() - detach mode", () => {
-  it("prints not yet implemented message", async () => {
-    await run(["--detach"]);
-    expect(allLog()).toContain("not yet implemented");
   });
 });
 

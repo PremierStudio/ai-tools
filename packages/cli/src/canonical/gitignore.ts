@@ -15,6 +15,11 @@ const MANAGED_BLOCK = `${START_MARKER}
 .codex/
 .kiro/
 .amp/
+.grok/
+.zcode/
+.continue/
+.roo/
+.agents/
 ${END_MARKER}`;
 
 export async function addManagedBlock(cwd?: string): Promise<void> {

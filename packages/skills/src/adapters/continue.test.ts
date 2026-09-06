@@ -41,7 +41,10 @@ describe("ContinueSkillAdapter", () => {
     it("has correct id", () => expect(adapter.id).toBe("continue"));
     it("has correct name", () => expect(adapter.name).toBe("Continue"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
-    it("has correct config dir", () => expect(adapter.configDir).toBe(".continue/prompts"));
+    it("has correct config dir", () => {
+      // Continue has no SKILL.md loader here (no ~/.continue/skills). Native format is `.continue/prompts/*.md`.
+      expect(adapter.configDir).toBe(".continue/prompts");
+    });
   });
 
   describe("generate", () => {

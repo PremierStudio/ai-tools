@@ -62,6 +62,24 @@ describe("CodexMCPAdapter", () => {
       expect(files[0]!.content).toContain('url = "http://localhost:3000"');
     });
 
+    it("writes http remotes with url and http_headers", async () => {
+      const httpServer: MCPServerDefinition = {
+        id: "figma",
+        name: "figma",
+        transport: {
+          type: "http",
+          url: "https://mcp.figma.com/mcp",
+          headers: { "X-Figma-Region": "us-east-1" },
+        },
+      };
+      const files = await adapter.generate([httpServer]);
+      expect(files[0]!.format).toBe("toml");
+      expect(files[0]!.content).toContain("[mcp_servers.figma]");
+      expect(files[0]!.content).toContain('url = "https://mcp.figma.com/mcp"');
+      expect(files[0]!.content).toContain("[mcp_servers.figma.http_headers]");
+      expect(files[0]!.content).toContain('X-Figma-Region = "us-east-1"');
+    });
+
     it("handles empty servers array", async () => {
       const files = await adapter.generate([]);
       expect(files[0]!.content).toBe("");

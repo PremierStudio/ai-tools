@@ -272,7 +272,7 @@ describe("config action handlers", () => {
     expect(app.getState().configLastAction).toEqual({
       type: "sync",
       result: "success",
-      message: "Config synced",
+      message: "MCP servers installed",
     });
   });
 
@@ -289,7 +289,7 @@ describe("config action handlers", () => {
     expect(app.getState().configLastAction).toEqual({
       type: "sync",
       result: "error",
-      message: "Config sync failed",
+      message: "MCP install failed",
     });
   });
 

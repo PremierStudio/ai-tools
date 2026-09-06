@@ -53,7 +53,27 @@ describe("GrokMCPAdapter", () => {
     expect(files[0]?.format).toBe("toml");
     expect(files[0]?.content).toContain("[mcp_servers.context7]");
     expect(files[0]?.content).toContain("[mcp_servers.context7.env]");
+    expect(files[0]?.content).toContain('command = "/home/blitz/.local/bin/op-mcp-run-grok"');
+    expect(files[0]?.content).toContain('args = ["npx", "-y", "@upstash/context7-mcp"]');
     expect(files[0]?.content).not.toContain("mcpServers");
+  });
+
+  it("generates url remotes with headers", async () => {
+    const files = await adapter.generate([
+      {
+        id: "linear",
+        name: "linear",
+        transport: {
+          type: "http",
+          url: "https://mcp.linear.app/mcp",
+          headers: { Authorization: "Bearer token" },
+        },
+      },
+    ]);
+    expect(files[0]?.content).toContain("[mcp_servers.linear]");
+    expect(files[0]?.content).toContain('url = "https://mcp.linear.app/mcp"');
+    expect(files[0]?.content).toContain("[mcp_servers.linear.headers]");
+    expect(files[0]?.content).toContain('Authorization = "Bearer token"');
   });
 
   it("generates quoted tables for names with spaces", async () => {

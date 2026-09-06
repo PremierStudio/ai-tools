@@ -17,7 +17,6 @@ ENGINES:
 
 CROSS-CUTTING COMMANDS:
   detect      Run detect across all engines
-  sync        Run sync across supported engines (hooks excluded)
   help        Show this help message
 
 INTERACTIVE:
@@ -26,7 +25,7 @@ INTERACTIVE:
 CANONICAL MODE COMMANDS:
   init        Initialize .ai-tools/ directory (canonical mode)
   generate    Generate canonical files from engine configs
-  install     Install from canonical store to tool directories
+  install     Install engine configs into detected tool directories
   status      Show installation mode and health
   clean       Remove tool-specific directories
 
@@ -37,12 +36,14 @@ ENGINE COMMANDS:
 OPTIONS:
   --tools     Comma-separated list of tools (forwarded to engine)
   --dry-run   Show what would happen without writing files
+  --layer     user or project (MCP install/sync; forwarded)
 
 EXAMPLES:
   ${cliName} mcp detect                     # Detect MCP-capable tools
-  ${cliName} skills sync                    # Sync skills across tools
+  ${cliName} mcp install --layer=project    # Install from mcp.config.ts
+  ${cliName} mcp sync --layer=project       # Config-scoped MCP install (never copies imports)
+  ${cliName} mcp audit                      # Find PalamHealth user-global leaks
   ${cliName} detect                         # Detect across all engines
-  ${cliName} sync --dry-run                 # Sync all engines (dry run)
   ${cliName} plugins plan --tools=cursor,codex,opencode
   ${cliName} hooks init                     # Initialize hooks config
   ${cliName} init                           # Initialize canonical mode
@@ -56,17 +57,16 @@ EXAMPLES:
 type EngineEntry = {
   name: string;
   pkg: string;
-  hasSync: boolean;
 };
 
 const ENGINES: Record<string, EngineEntry> = {
-  hooks: { name: "hooks", pkg: "@itz4blitz/ai-tools-hooks/cli", hasSync: false },
-  mcp: { name: "mcp", pkg: "@itz4blitz/ai-tools-mcp/cli", hasSync: true },
-  skills: { name: "skills", pkg: "@itz4blitz/ai-tools-skills/cli", hasSync: true },
-  agents: { name: "agents", pkg: "@itz4blitz/ai-tools-agents/cli", hasSync: true },
-  rules: { name: "rules", pkg: "@itz4blitz/ai-tools-rules/cli", hasSync: true },
-  plugins: { name: "plugins", pkg: "./plugins", hasSync: false },
-  sessions: { name: "sessions", pkg: "@itz4blitz/ai-tools-sessions/cli", hasSync: false },
+  hooks: { name: "hooks", pkg: "@itz4blitz/ai-tools-hooks/cli" },
+  mcp: { name: "mcp", pkg: "@itz4blitz/ai-tools-mcp/cli" },
+  skills: { name: "skills", pkg: "@itz4blitz/ai-tools-skills/cli" },
+  agents: { name: "agents", pkg: "@itz4blitz/ai-tools-agents/cli" },
+  rules: { name: "rules", pkg: "@itz4blitz/ai-tools-rules/cli" },
+  plugins: { name: "plugins", pkg: "./plugins" },
+  sessions: { name: "sessions", pkg: "@itz4blitz/ai-tools-sessions/cli" },
 };
 
 const ENGINE_NAMES = Object.keys(ENGINES);
@@ -101,7 +101,13 @@ export async function run(args: string[]): Promise<void> {
       return;
 
     case "sync":
-      await crossCutSync(args.slice(1));
+      console.error(
+        "Unified sync is disabled. It used to copy imported servers between every tool.",
+      );
+      console.error(
+        "Use `ai-tools mcp sync` to install from mcp.config.ts (never copies imports; honors --layer).",
+      );
+      process.exit(1);
       return;
 
     case "init":
@@ -154,21 +160,6 @@ async function crossCutDetect(flags: string[]): Promise<void> {
     try {
       const mod = await loadEngine(engine.pkg);
       await mod.run(["detect", ...flags]);
-    } catch (err) {
-      console.error(`  Error: ${err instanceof Error ? err.message : String(err)}`);
-    }
-  }
-}
-
-async function crossCutSync(flags: string[]): Promise<void> {
-  for (const name of ENGINE_NAMES) {
-    const engine = ENGINES[name];
-    if (!engine || !engine.hasSync) continue;
-
-    console.log(`\n── ${engine.name} ──`);
-    try {
-      const mod = await loadEngine(engine.pkg);
-      await mod.run(["sync", ...flags]);
     } catch (err) {
       console.error(`  Error: ${err instanceof Error ? err.message : String(err)}`);
     }

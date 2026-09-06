@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { BaseMCPAdapter } from "./base.js";
 import { registry } from "./registry.js";
-import type { GeneratedFile, MCPServerDefinition } from "../types/index.js";
+import type { GeneratedFile, MCPServerDefinition, MCPTransport } from "../types/index.js";
 
 type OpenCodeEntry = {
   type?: string;
@@ -12,6 +12,7 @@ type OpenCodeEntry = {
   url?: string;
   enabled?: boolean;
   environment?: Record<string, string>;
+  headers?: Record<string, string>;
   oauth?: Record<string, unknown>;
 };
 
@@ -80,11 +81,15 @@ function toOpenCodeMcp(servers: MCPServerDefinition[]): Record<string, OpenCodeE
         environment: server.transport.env ?? {},
       };
     } else {
-      mcp[server.id] = {
+      const entry: OpenCodeEntry = {
         type: "remote",
         url: server.transport.url,
         enabled: server.enabled !== false,
       };
+      if (server.transport.headers && Object.keys(server.transport.headers).length > 0) {
+        entry.headers = server.transport.headers;
+      }
+      mcp[server.id] = entry;
     }
   }
   return mcp;
@@ -108,10 +113,12 @@ function fromOpenCodeMcp(mcp: Record<string, OpenCodeEntry>): MCPServerDefinitio
         enabled: entry.enabled,
       });
     } else if (entry.url) {
+      const transport: Extract<MCPTransport, { url: string }> = { type: "http", url: entry.url };
+      if (entry.headers) transport.headers = entry.headers;
       servers.push({
         id,
         name: id,
-        transport: { type: "http", url: entry.url },
+        transport,
         enabled: entry.enabled,
       });
     }

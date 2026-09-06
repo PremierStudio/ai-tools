@@ -41,7 +41,10 @@ describe("DroidSkillAdapter", () => {
     it("has correct id", () => expect(adapter.id).toBe("droid"));
     it("has correct name", () => expect(adapter.name).toBe("Droid"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
-    it("has correct config dir", () => expect(adapter.configDir).toBe(".factory/prompts"));
+    it("has correct config dir", () => {
+      // Factory Droid has no SKILL.md loader here (no ~/.factory/skills). Native format is `.factory/prompts/*.md`.
+      expect(adapter.configDir).toBe(".factory/prompts");
+    });
   });
 
   describe("generate", () => {

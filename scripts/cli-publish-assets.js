@@ -10,4 +10,9 @@ export function stageCliPublishAssets(repoRoot) {
   const cliRoot = join(repoRoot, "packages", "cli");
   mkdirSync(cliRoot, { recursive: true });
   cpSync(readmeSource, join(cliRoot, "README.md"));
+
+  const licenseSource = join(repoRoot, "LICENSE");
+  if (existsSync(licenseSource)) {
+    cpSync(licenseSource, join(cliRoot, "LICENSE"));
+  }
 }

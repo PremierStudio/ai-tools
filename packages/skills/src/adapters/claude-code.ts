@@ -3,62 +3,67 @@ import { registry } from "./registry.js";
 import type { SkillDefinition, GeneratedFile } from "../types/index.js";
 import { existsSync } from "node:fs";
 import { readFile, readdir } from "node:fs/promises";
-import { resolve, basename } from "node:path";
+import { resolve } from "node:path";
 
 class ClaudeCodeSkillAdapter extends BaseSkillAdapter {
   readonly id = "claude-code";
   readonly name = "Claude Code";
   readonly nativeSupport = true;
-  readonly configDir = ".claude/commands";
+  readonly configDir = ".claude/skills";
   readonly command = "claude";
 
   async generate(skills: SkillDefinition[]): Promise<GeneratedFile[]> {
     return skills.map((skill) => ({
-      path: `${this.configDir}/${skill.id}.md`,
-      content: this.formatSkill(skill),
+      path: `${this.configDir}/${skill.id}/SKILL.md`,
+      content: formatSkill(skill),
       format: "md" as const,
     }));
   }
 
   async import(cwd?: string): Promise<SkillDefinition[]> {
-    const dir = cwd ?? process.cwd();
-    const skillsDir = resolve(dir, this.configDir);
-    if (!existsSync(skillsDir)) return [];
-
-    const files = await readdir(skillsDir);
-    const skills: SkillDefinition[] = [];
-
-    for (const file of files) {
-      if (!file.endsWith(".md")) continue;
-      const content = await readFile(resolve(skillsDir, file), "utf-8");
-      const id = basename(file, ".md");
-      skills.push(this.parseSkill(id, content));
-    }
-
-    return skills;
+    return importSkillMd(this.configDir, cwd);
   }
+}
 
-  private formatSkill(skill: SkillDefinition): string {
-    let md = `# ${skill.name}\n\n`;
-    if (skill.description) md += `${skill.description}\n\n`;
-    md += skill.content + "\n";
-    return md;
+function formatSkill(skill: SkillDefinition): string {
+  const description = skill.description ?? skill.name;
+  return `---\nname: ${skill.id}\ndescription: ${description}\n---\n\n${skill.content}\n`;
+}
+
+function parseSkill(id: string, raw: string): SkillDefinition {
+  const match = /^---\n([\s\S]*?)\n---\n?([\s\S]*)$/.exec(raw.trim());
+  if (!match) {
+    return { id, name: id, content: raw.trim() };
   }
-
-  private parseSkill(id: string, raw: string): SkillDefinition {
-    const lines = raw.trim().split("\n");
-    let name = id;
-    let contentStart = 0;
-
-    if (lines[0]?.startsWith("# ")) {
-      name = lines[0].slice(2).trim();
-      contentStart = 1;
-      if (lines[contentStart]?.trim() === "") contentStart++;
-    }
-
-    const content = lines.slice(contentStart).join("\n").trim();
-    return { id, name, content };
+  const frontmatter = match[1] ?? "";
+  const body = (match[2] ?? "").trim();
+  let name = id;
+  let description: string | undefined;
+  for (const line of frontmatter.split("\n")) {
+    const colon = line.indexOf(":");
+    if (colon === -1) continue;
+    const key = line.slice(0, colon).trim();
+    const value = line.slice(colon + 1).trim();
+    if (key === "name") name = value;
+    if (key === "description") description = value;
   }
+  return { id, name, description, content: body };
+}
+
+async function importSkillMd(configDir: string, cwd?: string): Promise<SkillDefinition[]> {
+  const dir = cwd ?? process.cwd();
+  const skillsDir = resolve(dir, configDir);
+  if (!existsSync(skillsDir)) return [];
+
+  const entries = await readdir(skillsDir, { withFileTypes: true });
+  const skills: SkillDefinition[] = [];
+  for (const entry of entries) {
+    if (!entry.isDirectory()) continue;
+    const skillPath = resolve(skillsDir, entry.name, "SKILL.md");
+    if (!existsSync(skillPath)) continue;
+    skills.push(parseSkill(entry.name, await readFile(skillPath, "utf-8")));
+  }
+  return skills;
 }
 
 const adapter = new ClaudeCodeSkillAdapter();

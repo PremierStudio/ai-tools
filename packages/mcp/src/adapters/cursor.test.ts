@@ -39,6 +39,9 @@ describe("CursorMCPAdapter", () => {
     it("has correct name", () => expect(adapter.name).toBe("Cursor"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
     it("has correct config path", () => expect(adapter.configPath).toBe(".cursor/mcp.json"));
+    it("has user config path ~/.cursor/mcp.json", () => {
+      expect(adapter.userConfigPath).toMatch(/\.cursor\/mcp\.json$/);
+    });
   });
 
   describe("generate", () => {
@@ -60,7 +63,29 @@ describe("CursorMCPAdapter", () => {
       };
       const files = await adapter.generate([sseServer]);
       const parsed = JSON.parse(files[0]!.content);
+      expect(parsed.mcpServers["sse-server"].type).toBe("sse");
       expect(parsed.mcpServers["sse-server"].url).toBe("http://localhost:3000");
+    });
+
+    it("emits type http for HTTP remotes", async () => {
+      const httpServer: MCPServerDefinition = {
+        id: "http-server",
+        name: "HTTP Server",
+        transport: {
+          type: "http",
+          url: "https://mcp.linear.app/mcp",
+          headers: { Authorization: "Bearer x" },
+        },
+      };
+      const files = await adapter.generate([httpServer]);
+      const parsed = JSON.parse(files[0]!.content) as {
+        mcpServers: Record<string, Record<string, unknown>>;
+      };
+      expect(parsed.mcpServers["http-server"]).toEqual({
+        type: "http",
+        url: "https://mcp.linear.app/mcp",
+        headers: { Authorization: "Bearer x" },
+      });
     });
 
     it("handles empty servers array", async () => {
@@ -119,6 +144,23 @@ describe("CursorMCPAdapter", () => {
       const result = await adapter.import("/test");
       expect(result).toHaveLength(1);
       expect(result[0]!.transport.type).toBe("sse");
+    });
+
+    it("round-trips type http when the host file includes it", async () => {
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readFile).mockResolvedValue(
+        JSON.stringify({
+          mcpServers: {
+            linear: { type: "http", url: "https://mcp.linear.app/mcp", headers: { A: "1" } },
+          },
+        }),
+      );
+      const result = await adapter.import("/test");
+      expect(result[0]!.transport).toEqual({
+        type: "http",
+        url: "https://mcp.linear.app/mcp",
+        headers: { A: "1" },
+      });
     });
 
     it("imports with missing servers key", async () => {

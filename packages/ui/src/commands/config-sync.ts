@@ -23,11 +23,11 @@ export async function triggerInstall(): Promise<string> {
 }
 
 /**
- * Trigger the canonical sync command.
- * Returns a promise that resolves with stdout or rejects with stderr.
+ * Trigger config-scoped MCP sync for detected tools.
+ * Refuses when mcp.config.ts selects no servers (never copies imports).
  */
 export async function triggerSync(): Promise<string> {
-  return execCommand("npx", ["ai-tools", "sync"]);
+  return execCommand("npx", ["ai-tools", "mcp", "sync"]);
 }
 
 /**

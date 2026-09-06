@@ -37,7 +37,7 @@ describe("ZcodeMCPAdapter", () => {
   it("uses ZCode user and project paths", () => {
     expect(adapter.id).toBe("zcode");
     expect(adapter.name).toBe("ZCode");
-    expect(adapter.configPath).toBe(".zcode/mcp.json");
+    expect(adapter.configPath).toBe(".zcode/config.json");
     expect(adapter.userConfigPath).toBe(`${homedir()}/.zcode/cli/config.json`);
     expect(adapter.command).toBe("zcode");
   });
@@ -47,13 +47,47 @@ describe("ZcodeMCPAdapter", () => {
     expect(await adapter.detect("/tmp/empty")).toBe(true);
   });
 
-  it("generates project mcpServers JSON", async () => {
+  it("generates project { mcp: { servers } } JSON, not mcpServers", async () => {
     const files = await adapter.generate([stdio]);
-    expect(files[0]?.path).toBe(".zcode/mcp.json");
+    expect(files[0]?.path).toBe(".zcode/config.json");
     const parsed = JSON.parse(files[0]!.content) as {
-      mcpServers: Record<string, { command: string }>;
+      mcp: { servers: Record<string, { command: string; type: string; args: string[] }> };
     };
-    expect(parsed.mcpServers.github?.command).toBe("/home/blitz/.local/bin/gh-mcp");
+    expect(parsed.mcp.servers.github?.type).toBe("stdio");
+    expect(parsed.mcp.servers.github?.command).toBe("/home/blitz/.local/bin/gh-mcp");
+    expect(parsed.mcp.servers.github?.args).toEqual([]);
+    expect(files[0]!.content).not.toContain("mcpServers");
+  });
+
+  it("emits type http/sse for remotes", async () => {
+    const files = await adapter.generate([
+      {
+        id: "linear",
+        name: "linear",
+        transport: {
+          type: "http",
+          url: "https://mcp.linear.app/mcp",
+          headers: { Authorization: "Bearer x" },
+        },
+      },
+      {
+        id: "events",
+        name: "events",
+        transport: { type: "sse", url: "http://localhost:3000/sse" },
+      },
+    ]);
+    const parsed = JSON.parse(files[0]!.content) as {
+      mcp: { servers: Record<string, Record<string, unknown>> };
+    };
+    expect(parsed.mcp.servers.linear).toEqual({
+      type: "http",
+      url: "https://mcp.linear.app/mcp",
+      headers: { Authorization: "Bearer x" },
+    });
+    expect(parsed.mcp.servers.events).toMatchObject({
+      type: "sse",
+      url: "http://localhost:3000/sse",
+    });
   });
 
   it("imports user mcp.servers without clobbering other config keys", async () => {
@@ -84,23 +118,16 @@ describe("ZcodeMCPAdapter", () => {
     vi.mocked(readFile).mockResolvedValue(
       JSON.stringify({ model: "keep-me", mcp: { servers: {} } }),
     );
-    await adapter.install(
-      [
-        {
-          path: `${homedir()}/.zcode/cli/config.json`,
-          content: JSON.stringify({ mcpServers: { github: { command: "gh-mcp", args: [] } } }),
-          format: "json",
-        },
-      ],
-      "/tmp",
-    );
+    const files = await adapter.generate([stdio]);
+    files[0]!.path = `${homedir()}/.zcode/cli/config.json`;
+    await adapter.install(files, "/tmp");
     const written = JSON.parse(String(vi.mocked(writeFile).mock.calls[0]?.[1])) as {
       model: string;
       mcp: { servers: Record<string, { command: string; type: string }> };
     };
     expect(written.model).toBe("keep-me");
     expect(written.mcp.servers.github?.type).toBe("stdio");
-    expect(written.mcp.servers.github?.command).toBe("gh-mcp");
+    expect(written.mcp.servers.github?.command).toBe("/home/blitz/.local/bin/gh-mcp");
     expect(vi.mocked(mkdir)).toHaveBeenCalled();
   });
 });

@@ -21,7 +21,16 @@ function isUrlTransport(
   return transport.type === "sse" || transport.type === "http";
 }
 
-export function encodeMcpToml(servers: MCPServerDefinition[]): string {
+export type EncodeMcpTomlOptions = {
+  /** Nested table name for HTTP headers. Grok uses `headers`; Codex uses `http_headers`. */
+  headerTable?: "headers" | "http_headers";
+};
+
+export function encodeMcpToml(
+  servers: MCPServerDefinition[],
+  options: EncodeMcpTomlOptions = {},
+): string {
+  const headerTable = options.headerTable ?? "headers";
   const chunks: string[] = [];
   for (const server of servers) {
     const key = tomlKey(server.id);
@@ -50,7 +59,7 @@ export function encodeMcpToml(servers: MCPServerDefinition[]): string {
       const headerKeys = Object.keys(headers);
       if (headerKeys.length > 0) {
         lines.push("");
-        lines.push(`[mcp_servers.${key}.headers]`);
+        lines.push(`[mcp_servers.${key}.${headerTable}]`);
         for (const headerKey of headerKeys) {
           const headerValue = headers[headerKey];
           if (headerValue === undefined) continue;
@@ -94,6 +103,25 @@ function parseTomlValue(raw: string): string | boolean | string[] {
   return value;
 }
 
+const INLINE_PAIR =
+  /(?:("(?:\\.|[^"\\])*")|([A-Za-z0-9_-]+))\s*=\s*(("(?:\\.|[^"\\])*")|true|false|[^,}]+)/g;
+
+function parseInlineTable(raw: string): Record<string, string> | undefined {
+  const value = raw.trim();
+  if (!value.startsWith("{") || !value.endsWith("}")) return undefined;
+  const inner = value.slice(1, -1).trim();
+  const out: Record<string, string> = {};
+  if (inner === "") return out;
+  for (const match of inner.matchAll(INLINE_PAIR)) {
+    const rawKey = match[1] ?? match[2];
+    const rawVal = match[3];
+    if (rawKey === undefined || rawVal === undefined) continue;
+    const parsed = parseTomlValue(rawVal.trim());
+    if (typeof parsed === "string") out[unquoteTomlKey(rawKey)] = parsed;
+  }
+  return out;
+}
+
 const TABLE_HEADER = /^\[([^\]]+)\]\s*$/;
 
 export function parseMcpToml(source: string): MCPServerDefinition[] {
@@ -115,7 +143,20 @@ export function parseMcpToml(source: string): MCPServerDefinition[] {
     const eq = line.indexOf("=");
     if (eq === -1) continue;
     const key = unquoteTomlKey(line.slice(0, eq));
-    const value = parseTomlValue(line.slice(eq + 1));
+    const rawValue = line.slice(eq + 1);
+    if (key === "env" || key === "headers" || key === "http_headers") {
+      const inline = parseInlineTable(rawValue);
+      if (inline) {
+        const nested = `${current}.${key}`;
+        const existing = tables.get(nested) ?? {};
+        for (const [inlineKey, inlineValue] of Object.entries(inline)) {
+          existing[inlineKey] = inlineValue;
+        }
+        tables.set(nested, existing);
+        continue;
+      }
+    }
+    const value = parseTomlValue(rawValue);
     const table = tables.get(current);
     if (!table) continue;
     table[key] = value;
@@ -128,7 +169,10 @@ export function parseMcpToml(source: string): MCPServerDefinition[] {
     const id = parts[1];
     if (id === undefined) continue;
     const envTable = tables.get(`${header}.env`) ?? {};
-    const headerTable = tables.get(`${header}.headers`) ?? {};
+    const headerTable = {
+      ...tables.get(`${header}.headers`),
+      ...tables.get(`${header}.http_headers`),
+    };
     const command = typeof table.command === "string" ? table.command : undefined;
     const url = typeof table.url === "string" ? table.url : undefined;
     const enabled = table.enabled === false ? false : undefined;
@@ -200,13 +244,14 @@ export function mergeMcpToml(
   existing: string,
   servers: MCPServerDefinition[],
   managedIds: string[],
+  options: EncodeMcpTomlOptions = {},
 ): string {
   const current = parseMcpToml(existing);
   const managed = new Set(managedIds);
   const kept = current.filter((server) => !managed.has(server.id));
   const next = [...kept, ...servers];
   const rest = stripMcpTomlTables(existing);
-  const encoded = encodeMcpToml(next);
+  const encoded = encodeMcpToml(next, options);
   if (rest.trim() === "") return encoded;
   if (encoded === "") return `${rest}\n`;
   return `${rest}\n\n${encoded}`;

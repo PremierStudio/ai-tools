@@ -4,7 +4,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, resolve } from "node:path";
 import { BaseMCPAdapter } from "./base.js";
 import { registry } from "./registry.js";
-import type { GeneratedFile, MCPServerDefinition } from "../types/index.js";
+import type { GeneratedFile, MCPServerDefinition, MCPTransport } from "../types/index.js";
 
 type ZcodeServer = {
   type?: string;
@@ -12,6 +12,7 @@ type ZcodeServer = {
   args?: string[];
   env?: Record<string, string>;
   url?: string;
+  headers?: Record<string, string>;
   timeoutMs?: number;
 };
 
@@ -19,7 +20,7 @@ class ZcodeMCPAdapter extends BaseMCPAdapter {
   readonly id = "zcode";
   readonly name = "ZCode";
   readonly nativeSupport = true;
-  readonly configPath = ".zcode/mcp.json";
+  readonly configPath = ".zcode/config.json";
   readonly userConfigPath = `${homedir()}/.zcode/cli/config.json`;
   readonly command = "zcode";
 
@@ -32,7 +33,7 @@ class ZcodeMCPAdapter extends BaseMCPAdapter {
     return [
       {
         path: this.configPath,
-        content: `${JSON.stringify({ mcpServers: toMcpServers(servers) }, null, 2)}\n`,
+        content: `${JSON.stringify({ mcp: { servers: toZcodeServers(servers) } }, null, 2)}\n`,
         format: "json",
       },
     ];
@@ -40,11 +41,11 @@ class ZcodeMCPAdapter extends BaseMCPAdapter {
 
   async import(cwd?: string): Promise<MCPServerDefinition[]> {
     const dir = cwd ?? process.cwd();
-    return this.readMcpServers(resolve(dir, this.configPath));
+    return this.readZcode(resolve(dir, this.configPath));
   }
 
   override async importUser(): Promise<MCPServerDefinition[]> {
-    return this.readUserServers(this.userConfigPath);
+    return this.readZcode(this.userConfigPath);
   }
 
   override async install(files: GeneratedFile[], cwd?: string): Promise<void> {
@@ -52,21 +53,17 @@ class ZcodeMCPAdapter extends BaseMCPAdapter {
     for (const file of files) {
       const fullPath = isAbsolute(file.path) ? file.path : resolve(dir, file.path);
       await mkdir(dirname(fullPath), { recursive: true });
-      if (fullPath.endsWith("config.json") && existsSync(fullPath)) {
+      if (existsSync(fullPath)) {
         const existing = JSON.parse(await readFile(fullPath, "utf-8")) as {
           mcp?: { servers?: Record<string, ZcodeServer> };
         };
         const generated = JSON.parse(file.content) as {
-          mcpServers?: Record<
-            string,
-            { command?: string; args?: string[]; env?: Record<string, string>; url?: string }
-          >;
+          mcp?: { servers?: Record<string, ZcodeServer> };
         };
-        const servers = existing.mcp?.servers ?? {};
-        for (const [id, spec] of Object.entries(generated.mcpServers ?? {})) {
-          servers[id] = toZcodeServer(spec);
-        }
-        existing.mcp = { ...existing.mcp, servers };
+        existing.mcp = {
+          ...existing.mcp,
+          servers: { ...existing.mcp?.servers, ...generated.mcp?.servers },
+        };
         await writeFile(fullPath, `${JSON.stringify(existing, null, 2)}\n`, "utf-8");
         continue;
       }
@@ -74,94 +71,64 @@ class ZcodeMCPAdapter extends BaseMCPAdapter {
     }
   }
 
-  private async readMcpServers(fullPath: string): Promise<MCPServerDefinition[]> {
-    if (!existsSync(fullPath)) return [];
-    const data = JSON.parse(await readFile(fullPath, "utf-8")) as {
-      mcpServers?: Record<string, Record<string, unknown>>;
-    };
-    return fromGeneric(data.mcpServers ?? {});
-  }
-
-  private async readUserServers(fullPath: string): Promise<MCPServerDefinition[]> {
+  private async readZcode(fullPath: string): Promise<MCPServerDefinition[]> {
     if (!existsSync(fullPath)) return [];
     const data = JSON.parse(await readFile(fullPath, "utf-8")) as {
       mcp?: { servers?: Record<string, ZcodeServer> };
     };
-    const servers = data.mcp?.servers ?? {};
-    const out: MCPServerDefinition[] = [];
-    for (const [id, spec] of Object.entries(servers)) {
-      if (spec.command) {
-        out.push({
-          id,
-          name: id,
-          transport: { type: "stdio", command: spec.command, args: spec.args, env: spec.env },
-        });
-      } else if (spec.url) {
-        out.push({ id, name: id, transport: { type: "http", url: spec.url } });
-      }
-    }
-    return out;
+    return fromZcodeServers(data.mcp?.servers ?? {});
   }
 }
 
-function toMcpServers(servers: MCPServerDefinition[]): Record<string, Record<string, unknown>> {
-  const mcpServers: Record<string, Record<string, unknown>> = {};
+function toZcodeServers(servers: MCPServerDefinition[]): Record<string, ZcodeServer> {
+  const out: Record<string, ZcodeServer> = {};
   for (const server of servers) {
-    if (server.transport.type === "stdio") {
-      mcpServers[server.id] = {
-        command: server.transport.command,
-        args: server.transport.args ?? [],
-        env: server.transport.env ?? {},
-      };
-    } else {
-      mcpServers[server.id] = {
-        url: server.transport.url,
-        headers: server.transport.headers ?? {},
-      };
-    }
+    out[server.id] = toZcodeServer(server);
   }
-  return mcpServers;
+  return out;
 }
 
-function toZcodeServer(spec: {
-  command?: string;
-  args?: string[];
-  env?: Record<string, string>;
-  url?: string;
-}): ZcodeServer {
-  if (spec.command) {
-    return { type: "stdio", command: spec.command, args: spec.args ?? [], env: spec.env ?? {} };
+function toZcodeServer(server: MCPServerDefinition): ZcodeServer {
+  if (server.transport.type === "stdio") {
+    const spec: ZcodeServer = {
+      type: "stdio",
+      command: server.transport.command,
+      args: server.transport.args ?? [],
+    };
+    if (server.transport.env && Object.keys(server.transport.env).length > 0) {
+      spec.env = server.transport.env;
+    }
+    return spec;
   }
-  return { type: "http", url: spec.url };
+  const spec: ZcodeServer = {
+    type: server.transport.type,
+    url: server.transport.url,
+  };
+  if (server.transport.headers && Object.keys(server.transport.headers).length > 0) {
+    spec.headers = server.transport.headers;
+  }
+  return spec;
 }
 
-function fromGeneric(mcpServers: Record<string, Record<string, unknown>>): MCPServerDefinition[] {
-  const servers: MCPServerDefinition[] = [];
-  for (const [id, config] of Object.entries(mcpServers)) {
-    if (typeof config.command === "string") {
-      servers.push({
-        id,
-        name: id,
-        transport: {
-          type: "stdio",
-          command: config.command,
-          args: config.args as string[] | undefined,
-          env: config.env as Record<string, string> | undefined,
-        },
-      });
-    } else if (typeof config.url === "string") {
-      servers.push({
-        id,
-        name: id,
-        transport: {
-          type: "http",
-          url: config.url,
-          headers: config.headers as Record<string, string> | undefined,
-        },
-      });
+function fromZcodeServers(servers: Record<string, ZcodeServer>): MCPServerDefinition[] {
+  const out: MCPServerDefinition[] = [];
+  for (const [id, spec] of Object.entries(servers)) {
+    if (typeof spec.command === "string") {
+      const transport: Extract<MCPTransport, { type: "stdio" }> = {
+        type: "stdio",
+        command: spec.command,
+      };
+      if (spec.args) transport.args = spec.args;
+      if (spec.env) transport.env = spec.env;
+      out.push({ id, name: id, transport });
+    } else if (typeof spec.url === "string") {
+      const type = spec.type === "sse" ? "sse" : "http";
+      const transport: Extract<MCPTransport, { url: string }> = { type, url: spec.url };
+      if (spec.headers) transport.headers = spec.headers;
+      out.push({ id, name: id, transport });
     }
   }
-  return servers;
+  return out;
 }
 
 const adapter = new ZcodeMCPAdapter();

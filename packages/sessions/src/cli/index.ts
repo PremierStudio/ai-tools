@@ -24,7 +24,6 @@ OPTIONS:
   --limit     Limit number of results (e.g., --limit=10)
   --since     Filter by date (e.g., --since=2025-01-01)
   --to        Target tool for handoff (e.g., --to=codex)
-  --verbose   Show detailed output
 
 EXAMPLES:
   ai-sessions detect                      # See which AI tools have sessions
@@ -41,7 +40,6 @@ type Flags = {
   limit?: number;
   since?: string;
   to?: string;
-  verbose?: boolean;
 };
 
 export async function run(args: string[]): Promise<void> {
@@ -237,8 +235,6 @@ function parseFlags(args: string[]): Flags {
       flags.since = arg.slice(8);
     } else if (arg.startsWith("--to=")) {
       flags.to = arg.slice(5);
-    } else if (arg === "--verbose") {
-      flags.verbose = true;
     }
   }
 
