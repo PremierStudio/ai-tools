@@ -1,157 +1,103 @@
-# ai-tools
+# @itz4blitz/ai-tools
 
 [![CI](https://github.com/itz4blitz/ai-tools/actions/workflows/pipeline.yml/badge.svg)](https://github.com/itz4blitz/ai-tools/actions/workflows/pipeline.yml)
 [![npm](https://img.shields.io/npm/v/@itz4blitz/ai-tools.svg)](https://www.npmjs.com/package/@itz4blitz/ai-tools)
 ![Node.js >=22](https://img.shields.io/badge/node-%3E%3D22-339933?logo=node.js&logoColor=white)
 ![License MIT](https://img.shields.io/badge/license-MIT-16A34A)
 
-**Write your AI-tool config once. `ai-tools` emits the native files each host actually reads.**
+One CLI that writes the **native** config files each AI coding tool actually loads — MCP servers, skills, agents, rules, and hooks.
 
-Hooks, MCP servers, skills, agents, and rules all have a different shape in Claude Code, Cursor, OpenCode, and Codex. This CLI is the translator — plus a plugin bundle layer so you can ship one capability pack onto the hosts installed on the machine.
+Claude Code, Cursor, Codex, OpenCode, Grok, and ZCode do not share a format. Cursor wants `.cursor/mcp.json` with `"type": "http"`. Grok wants TOML `[mcp_servers]`. ZCode wants `mcp.servers` inside `~/.zcode/cli/config.json`. Skills live in `skills/<id>/SKILL.md` on the hosts that implement Agent Skills, and Cursor rules are flat `*.mdc` files.
+
+`ai-tools` is the translator. You describe the capability once. It emits the files the host reads.
 
 ```bash
-npx @itz4blitz/ai-tools@latest detect
+npm i -D @itz4blitz/ai-tools
+npx ai-tools detect
 ```
 
-## Hosts
+Requires Node 22+.
 
-Primary fleet is Claude Code, Cursor, OpenCode, Codex, plus Grok and zcode next. The other adapters still ship.
+## Do this, not that
 
-| Host | Hooks | MCP | Agents | Skills | Rules |
-|------|:-----:|:---:|:------:|:------:|:-----:|
-| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [Cursor](https://cursor.com) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [OpenCode](https://opencode.ai) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [Codex](https://openai.com/codex/) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Grok / grok build | ✓ | ✓ | ✓ | ✓ | ✓ |
-| zcode | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [Antigravity CLI](https://www.antigravity.google/product/antigravity-cli) | | | ✓ | ✓ | ✓ |
-| [Kiro](https://kiro.dev) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [Cline](https://cline.bot) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [Amp](https://ampcode.com) | | ✓ | | ✓ | ✓ |
-| [Factory Droid](https://factory.ai) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| [VS Code / Copilot](https://code.visualstudio.com) | ✱ | ✓ | ✓ | ✓ | ✓ |
-| [Continue](https://continue.dev) | | | | ✓ | ✓ |
-| [Roo Code](https://roocode.com) | | ✓ | ✓ | ✓ | ✓ |
-| [Windsurf](https://windsurf.com) | | ✓ | | ✓ | ✓ |
+**Install from a config file.** `ai-tools mcp install --layer=project` writes only the servers in `mcp.config.ts` that match the current repo.
 
-<sub>✱ VS Code 1.109+ agent hooks use the Claude Code format. Grok and ZCode adapters cover hooks/MCP/agents/skills/rules.</sub>
+**Do not copy one tool's live config onto every other tool.** That is how org MCP servers and interactive 1Password wrappers leak into user-global Cursor/Grok/ZCode configs. Unified `ai-tools sync` is disabled. `ai-tools mcp sync` is an alias of config-scoped install and **refuses** to run when the config selects nothing.
+
+```bash
+npx ai-tools mcp audit    # scan user-global MCP configs for those leaks
+```
 
 ## 60-second path
 
 ```bash
-npm i -D @itz4blitz/ai-tools
-
-# What is installed on this machine?
-npx ai-tools detect
-
-# One capability bundle → plan → native files
-npx ai-tools plugins init
-npx ai-tools plugins plan --tools=claude-code,cursor,opencode,codex
-npx ai-tools plugins install --tools=claude-code,cursor,opencode,codex
+npx ai-tools detect                         # what is installed on this machine
+npx ai-tools mcp init                       # mcp.config.ts
+# edit mcp.config.ts
+npx ai-tools mcp install --layer=project    # native files for detected hosts
+npx ai-tools mcp audit
 ```
 
-Per-engine flow is the same everywhere: `init` → `detect` → `generate` → `install`.
+Same shape for the other engines:
 
 ```bash
-npx ai-tools hooks generate && npx ai-tools hooks install
-npx ai-tools mcp generate && npx ai-tools mcp install
-npx ai-tools skills generate && npx ai-tools skills install
-npx ai-tools agents generate && npx ai-tools agents install
-npx ai-tools rules generate && npx ai-tools rules install
+npx ai-tools hooks init && npx ai-tools hooks install
+npx ai-tools skills init && npx ai-tools skills install
+npx ai-tools agents init && npx ai-tools agents install
+npx ai-tools rules init && npx ai-tools rules install
 ```
 
-Canonical mode keeps a single store under `.ai-tools/` and installs out from there:
-
-```bash
-npx ai-tools init
-npx ai-tools generate
-npx ai-tools install
-npx ai-tools status
-```
-
-```mermaid
-graph TD
-    CFG["ai-*.config.ts / definePlugin()"] --> CLI["ai-tools CLI"]
-
-    CLI --> Hooks
-    CLI --> MCP
-    CLI --> Agents
-    CLI --> Skills
-    CLI --> Rules
-
-    subgraph fleet ["Primary"]
-        CC["Claude Code"]
-        Cursor["Cursor"]
-        OC["OpenCode"]
-        Codex["Codex"]
-        Grok["Grok / grok build"]
-        Zcode["zcode"]
-    end
-
-    subgraph more ["Also"]
-        Gemini["Gemini CLI"]
-        Copilot["VS Code / Copilot"]
-        Cline["Cline"]
-        Kiro["Kiro"]
-        Antigravity["Antigravity CLI"]
-        Amp["Amp"]
-        Droid["Factory Droid"]
-        Continue["Continue"]
-        Roo["Roo Code"]
-        Windsurf["Windsurf"]
-    end
-
-    Hooks --> fleet
-    MCP --> fleet
-    Agents --> fleet
-    Skills --> fleet
-    Rules --> fleet
-    Hooks --> more
-    MCP --> more
-    Agents --> more
-    Skills --> more
-    Rules --> more
-```
-
-## Plugin bundle
-
-`definePlugin()` is the portable authoring surface. `plugins plan` tells you what each host can actually consume; `plugins install` writes only the supported pieces.
+## MCP config
 
 ```ts
-// ai-plugin.config.ts
-import { definePlugin } from "@itz4blitz/ai-tools";
+// mcp.config.ts
+import { defineConfig } from "@itz4blitz/ai-tools/mcp";
 
-export default definePlugin({
-  id: "release-confidence",
-  name: "Release Confidence",
-  version: "0.1.0",
-  targets: {
-    include: ["claude-code", "cursor", "opencode", "codex"],
-  },
-  mcpServers: [
+export default defineConfig({
+  servers: [
     {
-      id: "example-mcp",
-      name: "Example MCP",
-      transport: { type: "stdio", command: "npx", args: ["-y", "example-mcp"] },
+      id: "github",
+      name: "GitHub",
+      transport: { type: "stdio", command: "npx", args: ["-y", "@modelcontextprotocol/server-github"] },
+      layer: "user",
     },
-  ],
-  skills: [
     {
-      id: "ship-check",
-      name: "Ship Check",
-      content: "Run the failing test first, then the smallest fix that makes it pass.",
+      id: "internal-wiki",
+      name: "Internal wiki",
+      transport: { type: "stdio", command: "wiki-mcp" },
+      layer: "project",
+      whenPathContains: ["internal-wiki", "docs-site"],
     },
   ],
 });
 ```
 
-Hosts are not identical. Cursor and Codex can take a broad bundle. OpenCode has MCP plus a native plugin system. Claude Code is project-level hooks, agents, commands, and MCP.
+| Field | Effect |
+|-------|--------|
+| `layer: "user"` | Eligible for user-global install (`--layer=user`) |
+| `layer: "project"` (default) | Eligible for repo install (`--layer=project`) |
+| `whenPathContains` | Server is skipped unless `process.cwd()` contains one of the fragments |
 
-## Config examples
+Empty config → install/sync/generate **exit 1**. They will not write `{}` over a working host file.
 
-### Hooks
+### What gets written
+
+| Host | Project file | User file |
+|------|----------------|-----------|
+| Cursor | `.cursor/mcp.json` (`mcpServers`, HTTP/SSE include `type`) | `~/.cursor/mcp.json` |
+| Claude Code | `.mcp.json` | `~/.claude.json` |
+| Grok | `.grok/config.toml` `[mcp_servers]` | `~/.grok/config.toml` |
+| Codex | `.codex/config.toml` `[mcp_servers]` | `~/.codex/config.toml` |
+| OpenCode | `opencode.json` `mcp` | `~/.config/opencode/opencode.json` |
+| ZCode | `.zcode/config.json` `mcp.servers` | `~/.zcode/cli/config.json` |
+
+ZCode's leftover `.zcode/mcp.json` is **not** what the CLI reads. This package does not write it.
+
+## Skills, agents, rules, hooks
+
+Where the host implements Agent Skills, generate writes `skills/<id>/SKILL.md` (Grok, ZCode, Cursor, Claude Code, Codex, OpenCode). Hosts that only have prompt files keep those (Amp, Cline, Continue, …).
+
+Cursor rules are flat `.cursor/rules/<id>.mdc`. OpenCode agents are `.opencode/agent/<id>.md` (singular). Grok/ZCode hooks write JSON the host loads and a runner that actually executes `HookEngine` — not a stub `process.exit(0)`.
 
 ```ts
 // ai-hooks.config.ts
@@ -172,106 +118,92 @@ export default defineConfig({
       .priority(10)
       .build(),
   ],
-  settings: { hookTimeout: 5000, failMode: "open", logLevel: "warn" },
 });
 ```
-
-### MCP
-
-```ts
-// mcp.config.ts
-import { defineConfig } from "@itz4blitz/ai-tools/mcp";
-
-export default defineConfig({
-  servers: [
-    {
-      id: "filesystem",
-      name: "filesystem",
-      transport: {
-        type: "stdio",
-        command: "npx",
-        args: ["-y", "@modelcontextprotocol/server-filesystem", "./src"],
-      },
-      layer: "project",
-    },
-    {
-      id: "palamhealth",
-      name: "PalamHealth",
-      transport: { type: "stdio", command: "palamhealth-mcp" },
-      layer: "project",
-      whenPathContains: ["PalamHealth"],
-    },
-  ],
-});
-```
-
-`ai-tools mcp install --layer=project` writes only matching servers. `ai-tools mcp sync` never copies imported servers between tools. `ai-tools mcp audit` reports PalamHealth leaks in user-global configs.
-
-### Rules
-
-```ts
-// ai-rules.config.ts
-import { defineRulesConfig } from "@itz4blitz/ai-tools/rules";
-
-export default defineRulesConfig({
-  rules: [
-    {
-      id: "typescript-strict",
-      name: "typescript-strict",
-      content: "Always use strict TypeScript. No `any` types.",
-      scope: { type: "always" },
-      priority: 1,
-    },
-  ],
-});
-```
-
-## Hooks runtime
-
-Express-style middleware over a 15-event model. Before-events can block; after-events are observe-only.
-
-| Category | Before (blockable) | After |
-|----------|--------------------|-------|
-| Session | `session:start` | `session:end` |
-| Prompt | `prompt:submit` | `prompt:response` |
-| Tool | `tool:before` | `tool:after` |
-| File | `file:read`, `file:write`, `file:edit`, `file:delete` | |
-| Shell | `shell:before` | `shell:after` |
-| MCP | `mcp:before` | `mcp:after` |
-| System | | `notification` |
 
 Built-in guardrails: `block-dangerous-commands`, `scan-secrets`, `protect-sensitive-files`, `audit-shell`.
 
+## Plugin bundle
+
+`definePlugin()` is one file that can carry MCP + skills + agents + rules + hooks. `plugins plan` shows what each host can consume. `plugins install` writes only those pieces, and MCP servers still go through `layer` / `whenPathContains`.
+
 ```ts
-import { HookEngine, builtinHooks } from "@itz4blitz/ai-tools/hooks";
+// ai-plugin.config.ts
+import { definePlugin } from "@itz4blitz/ai-tools";
 
-const engine = new HookEngine({
-  hooks: builtinHooks,
-  settings: { failMode: "closed" },
+export default definePlugin({
+  id: "release-confidence",
+  name: "Release Confidence",
+  version: "0.1.0",
+  targets: { include: ["claude-code", "cursor", "opencode", "codex"] },
+  mcpServers: [
+    {
+      id: "example-mcp",
+      name: "Example MCP",
+      transport: { type: "stdio", command: "npx", args: ["-y", "example-mcp"] },
+    },
+  ],
+  skills: [
+    {
+      id: "ship-check",
+      name: "Ship Check",
+      content: "Run the failing test first, then the smallest fix that makes it pass.",
+    },
+  ],
 });
-
-const result = await engine.isBlocked(event, { name: "my-platform", version: "1.0" });
-if (result.blocked) console.log(result.reason);
 ```
+
+```bash
+npx ai-tools plugins plan --tools=claude-code,cursor,opencode,codex
+npx ai-tools plugins install --tools=claude-code,cursor,opencode,codex
+```
+
+## Hosts
+
+| Host | Hooks | MCP | Agents | Skills | Rules |
+|------|:-----:|:---:|:------:|:------:|:-----:|
+| [Claude Code](https://docs.anthropic.com/en/docs/claude-code) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Cursor](https://cursor.com) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [OpenCode](https://opencode.ai) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Codex](https://openai.com/codex/) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| Grok | ✓ | ✓ | ✓ | ✓ | ✓ |
+| ZCode | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Gemini CLI](https://github.com/google-gemini/gemini-cli) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Antigravity CLI](https://www.antigravity.google/product/antigravity-cli) | | | ✓ | ✓ | ✓ |
+| [Kiro](https://kiro.dev) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Cline](https://cline.bot) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [Amp](https://ampcode.com) | | ✓ | | ✓ | ✓ |
+| [Factory Droid](https://factory.ai) | ✓ | ✓ | ✓ | ✓ | ✓ |
+| [VS Code / Copilot](https://code.visualstudio.com) | ✱ | ✓ | ✓ | ✓ | ✓ |
+| [Continue](https://continue.dev) | | | | ✓ | ✓ |
+| [Roo Code](https://roocode.com) | | ✓ | ✓ | ✓ | ✓ |
+| [Windsurf](https://windsurf.com) | | ✓ | | ✓ | ✓ |
+
+<sub>✱ VS Code 1.109+ agent hooks use the Claude Code format. Empty cells mean this repo has no adapter, not that the host lacks the feature.</sub>
 
 ## CLI
 
 ```text
 ai-tools <engine> <command>
-ai-tools detect | sync | init | generate | install | status | clean
+ai-tools detect | init | generate | install | status | clean | ui
 ```
+
+There is no top-level `sync`. Use `ai-tools mcp install` / `ai-tools mcp sync` from a config file.
 
 | Engine | Job |
 |--------|-----|
-| `hooks` | Lifecycle guardrails |
-| `mcp` | MCP server config |
+| `mcp` | MCP server config, scoped install, audit |
 | `skills` | Skills / prompts |
 | `agents` | Agent personas |
 | `rules` | Project rules |
+| `hooks` | Lifecycle guardrails |
 | `plugins` | Portable bundles |
 | `sessions` | Cross-tool session read / handoff |
+| `ui` | Terminal dashboard |
 
-Public install is **one package**: [`@itz4blitz/ai-tools`](https://www.npmjs.com/package/@itz4blitz/ai-tools). The `packages/*` workspaces in this repo are how the engines are developed; they are not separately published.
+Public install is **one package**: [`@itz4blitz/ai-tools`](https://www.npmjs.com/package/@itz4blitz/ai-tools). Workspaces under `packages/*` are how the engines are developed; they are not published separately.
+
+Canonical mode (`ai-tools init` / `generate` / `install`) still exists for a `.ai-tools/` store. Prefer per-engine `mcp.config.ts` (and friends) unless you already use canonical mode.
 
 ## Develop
 
@@ -284,10 +216,9 @@ npm run check
 
 | Command | What it does |
 |---------|--------------|
-| `npm run check` | lint + format + typecheck + coverage-gated tests + smoke |
+| `npm run check` | production audit + lint + format + typecheck + coverage-gated tests + pack smoke |
 | `npm run build` | Turborepo build |
 | `npm test` | vitest |
-| `npx vitest run packages/hooks` | one package |
 
 See [CONTRIBUTING.md](CONTRIBUTING.md).
 

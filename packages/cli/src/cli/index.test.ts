@@ -104,6 +104,7 @@ describe("run() - help output", () => {
     expect(crossCutting).not.toMatch(/\bsync\b/);
     expect(output).toContain("ai-tools mcp install --layer=project");
     expect(output).toContain("ai-tools mcp sync --layer=project");
+    expect(output).not.toMatch(/PalamHealth/);
   });
 
   it("does not claim canonical install uses a CanonicalStore", async () => {

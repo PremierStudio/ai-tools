@@ -276,6 +276,9 @@ jobs:
         os: [ubuntu-latest, macos-latest, windows-latest]
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
@@ -283,35 +286,8 @@ jobs:
           check-latest: true
 
       - name: Wait for npm propagation and smoke-test ai-tools
-        run: |
-          node -e "
-          const { spawnSync } = require('node:child_process');
-
-          function runAiTools() {
-            return spawnSync('npx', ['--yes', '@itz4blitz/ai-tools@latest', '--help'], {
-              encoding: 'utf-8',
-              shell: true,
-            });
-          }
-
-          const maxAttempts = 8;
-          for (let attempt = 1; attempt <= maxAttempts; attempt += 1) {
-            const result = runAiTools();
-            const output = (result.stdout || '') + (result.stderr || '');
-            const ok = result.status === 0 && /ai-tools\s+-\s+Unified CLI/.test(output);
-
-            if (ok) {
-              console.log('ai-tools smoke test passed');
-              process.exit(0);
-            }
-
-            console.log('attempt ' + attempt + '/' + maxAttempts + ' failed');
-            if (attempt < maxAttempts) {
-              const waitMs = 15000;
-              Atomics.wait(new Int32Array(new SharedArrayBuffer(4)), 0, 0, waitMs);
-            }
-          }
-
-          console.error('ai-tools smoke test failed after retries');
-          process.exit(1);
-          "
+        run: node scripts/smoke-published.mjs
+        env:
+          AI_TOOLS_SMOKE_PACKAGE: "@itz4blitz/ai-tools@latest"
+          AI_TOOLS_SMOKE_ATTEMPTS: "12"
+          AI_TOOLS_SMOKE_WAIT_MS: "15000"

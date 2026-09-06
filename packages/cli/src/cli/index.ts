@@ -42,7 +42,7 @@ EXAMPLES:
   ${cliName} mcp detect                     # Detect MCP-capable tools
   ${cliName} mcp install --layer=project    # Install from mcp.config.ts
   ${cliName} mcp sync --layer=project       # Config-scoped MCP install (never copies imports)
-  ${cliName} mcp audit                      # Find PalamHealth user-global leaks
+  ${cliName} mcp audit                      # Scan user-global MCP configs for leaks
   ${cliName} detect                         # Detect across all engines
   ${cliName} plugins plan --tools=cursor,codex,opencode
   ${cliName} hooks init                     # Initialize hooks config
