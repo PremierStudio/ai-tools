@@ -1,3 +1,10 @@
+## [1.2.1](https://github.com/itz4blitz/ai-tools/compare/v1.2.0...v1.2.1) (2026-09-06)
+
+
+### Bug Fixes
+
+* **ci:** harden published npm smoke and rewrite the README ([657a17d](https://github.com/itz4blitz/ai-tools/commit/657a17db93bf1d73b56e01037e43097ab6e3dba7))
+
 # [1.2.0](https://github.com/itz4blitz/ai-tools/compare/v1.1.10...v1.2.0) (2026-09-06)
 
 
