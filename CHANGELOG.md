@@ -1,3 +1,10 @@
+## [1.2.3](https://github.com/itz4blitz/ai-tools/compare/v1.2.2...v1.2.3) (2026-09-06)
+
+
+### Bug Fixes
+
+* **ci:** stamp the release commit so GitHub does not show pending ([d58f253](https://github.com/itz4blitz/ai-tools/commit/d58f253eafb4efbacc9aca471c9c2aef9f58e3ab))
+
 ## [1.2.2](https://github.com/itz4blitz/ai-tools/compare/v1.2.1...v1.2.2) (2026-09-06)
 
 
