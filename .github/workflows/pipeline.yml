@@ -180,21 +180,7 @@ jobs:
           check-latest: true
 
       - name: Run npm audit
-        run: npm audit --audit-level high
-        continue-on-error: true
-
-      - name: Check for known vulnerabilities
-        run: |
-          AUDIT_OUTPUT=$(npm audit --json || true)
-          HIGH_VULNS=$(echo "$AUDIT_OUTPUT" | jq '.metadata.vulnerabilities.high // 0')
-          CRITICAL_VULNS=$(echo "$AUDIT_OUTPUT" | jq '.metadata.vulnerabilities.critical // 0')
-
-          if [ "$HIGH_VULNS" -gt 0 ] || [ "$CRITICAL_VULNS" -gt 0 ]; then
-            echo "⚠️ Found $HIGH_VULNS high and $CRITICAL_VULNS critical vulnerabilities"
-            echo "Review with: npm audit"
-          else
-            echo "✅ No high or critical vulnerabilities found"
-          fi
+        run: npm audit --omit=dev --audit-level high
 
   # ============================================================================
   # STAGE 3: PUBLISH (main branch only, on push)
