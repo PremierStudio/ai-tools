@@ -38,18 +38,17 @@ describe("CodexMCPAdapter", () => {
     it("has correct id", () => expect(adapter.id).toBe("codex"));
     it("has correct name", () => expect(adapter.name).toBe("Codex"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
-    it("has correct config path", () => expect(adapter.configPath).toBe(".codex/mcp.json"));
+    it("has correct config path", () => expect(adapter.configPath).toBe(".codex/config.toml"));
   });
 
   describe("generate", () => {
-    it("generates valid JSON config", async () => {
+    it("generates native Codex TOML", async () => {
       const files = await adapter.generate([testServer]);
       expect(files).toHaveLength(1);
-      expect(files[0]!.path).toBe(".codex/mcp.json");
-      expect(files[0]!.format).toBe("json");
-      const parsed = JSON.parse(files[0]!.content);
-      expect(parsed.mcpServers["test-server"]).toBeDefined();
-      expect(parsed.mcpServers["test-server"].command).toBe("npx");
+      expect(files[0]!.path).toBe(".codex/config.toml");
+      expect(files[0]!.format).toBe("toml");
+      expect(files[0]!.content).toContain("[mcp_servers.test-server]");
+      expect(files[0]!.content).toContain('command = "npx"');
     });
 
     it("handles SSE transport", async () => {
@@ -59,21 +58,20 @@ describe("CodexMCPAdapter", () => {
         transport: { type: "sse", url: "http://localhost:3000" },
       };
       const files = await adapter.generate([sseServer]);
-      const parsed = JSON.parse(files[0]!.content);
-      expect(parsed.mcpServers["sse-server"].url).toBe("http://localhost:3000");
+      expect(files[0]!.content).toContain("[mcp_servers.sse-server]");
+      expect(files[0]!.content).toContain('url = "http://localhost:3000"');
     });
 
     it("handles empty servers array", async () => {
       const files = await adapter.generate([]);
-      const parsed = JSON.parse(files[0]!.content);
-      expect(Object.keys(parsed.mcpServers)).toHaveLength(0);
+      expect(files[0]!.content).toBe("");
     });
 
     it("handles multiple servers", async () => {
       const servers = [testServer, { ...testServer, id: "server-2", name: "Server 2" }];
       const files = await adapter.generate(servers);
-      const parsed = JSON.parse(files[0]!.content);
-      expect(Object.keys(parsed.mcpServers)).toHaveLength(2);
+      expect(files[0]!.content).toContain("[mcp_servers.test-server]");
+      expect(files[0]!.content).toContain("[mcp_servers.server-2]");
     });
 
     it("generates with optional fields undefined", async () => {
@@ -83,9 +81,8 @@ describe("CodexMCPAdapter", () => {
         transport: { type: "stdio", command: "node" },
       };
       const files = await adapter.generate([server]);
-      const parsed = JSON.parse(files[0]!.content);
-      expect(parsed.mcpServers["minimal"].args).toEqual([]);
-      expect(parsed.mcpServers["minimal"].env).toEqual({});
+      expect(files[0]!.content).toContain('command = "node"');
+      expect(files[0]!.content).not.toContain("args =");
     });
   });
 
@@ -98,11 +95,13 @@ describe("CodexMCPAdapter", () => {
 
     it("imports stdio servers from config", async () => {
       vi.mocked(existsSync).mockReturnValue(true);
-      vi.mocked(readFile).mockResolvedValue(
-        JSON.stringify({
-          mcpServers: { "my-server": { command: "npx", args: ["-y", "test"], env: { A: "1" } } },
-        }),
-      );
+      vi.mocked(readFile).mockResolvedValue(`[mcp_servers.my-server]
+command = "npx"
+args = ["-y", "test"]
+
+[mcp_servers.my-server.env]
+A = "1"
+`);
       const result = await adapter.import("/test");
       expect(result).toHaveLength(1);
       expect(result[0]!.id).toBe("my-server");
@@ -111,19 +110,17 @@ describe("CodexMCPAdapter", () => {
 
     it("imports SSE servers from config", async () => {
       vi.mocked(existsSync).mockReturnValue(true);
-      vi.mocked(readFile).mockResolvedValue(
-        JSON.stringify({
-          mcpServers: { sse: { url: "http://localhost:3000" } },
-        }),
-      );
+      vi.mocked(readFile).mockResolvedValue(`[mcp_servers.sse]
+url = "http://localhost:3000"
+`);
       const result = await adapter.import("/test");
       expect(result).toHaveLength(1);
-      expect(result[0]!.transport.type).toBe("sse");
+      expect(result[0]!.transport.type).toBe("http");
     });
 
     it("imports with missing servers key", async () => {
       vi.mocked(existsSync).mockReturnValue(true);
-      vi.mocked(readFile).mockResolvedValue(JSON.stringify({}));
+      vi.mocked(readFile).mockResolvedValue("[ui]\nyolo = true\n");
       const result = await adapter.import("/test");
       expect(result).toEqual([]);
     });

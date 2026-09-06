@@ -56,6 +56,8 @@ function makeAdapter(overrides: Partial<BaseMCPAdapter> = {}): BaseMCPAdapter {
       vi.fn<(files: GeneratedFile[], cwd?: string) => Promise<void>>().mockResolvedValue(undefined),
     uninstall:
       overrides.uninstall ?? vi.fn<(cwd?: string) => Promise<void>>().mockResolvedValue(undefined),
+    importUser:
+      overrides.importUser ?? vi.fn<() => Promise<MCPServerDefinition[]>>().mockResolvedValue([]),
   } as unknown as BaseMCPAdapter;
 }
 
@@ -149,6 +151,7 @@ describe("run() - help output", () => {
       "import",
       "sync",
       "export",
+      "audit",
       "help",
     ]) {
       expect(output).toContain(cmd);
@@ -533,5 +536,45 @@ describe("run() - error propagation", () => {
     mockRegistryDetectAll.mockResolvedValue([adapter]);
 
     await expect(run(["install"])).rejects.toThrow("install failed");
+  });
+});
+
+describe("run() - audit command", () => {
+  it("reports a clean scan", async () => {
+    const adapter = makeAdapter({
+      id: "cursor",
+      name: "Cursor",
+      importUser: vi.fn<() => Promise<MCPServerDefinition[]>>().mockResolvedValue([
+        {
+          id: "github",
+          name: "github",
+          transport: { type: "stdio", command: "gh-mcp" },
+        },
+      ]),
+    });
+    mockRegistryGetAll.mockReturnValue([adapter]);
+    await run(["audit"]);
+    expect(allLog()).toContain("No PalamHealth user-global MCP leaks found.");
+  });
+
+  it("exits 1 when PalamHealth is in a user-global config", async () => {
+    const adapter = makeAdapter({
+      id: "zcode",
+      name: "ZCode",
+      importUser: vi.fn<() => Promise<MCPServerDefinition[]>>().mockResolvedValue([
+        {
+          id: "outline",
+          name: "outline",
+          transport: {
+            type: "stdio",
+            command: "/home/blitz/.local/bin/op-run-palamhealth",
+          },
+        },
+      ]),
+    });
+    mockRegistryGetAll.mockReturnValue([adapter]);
+    await expect(run(["audit"])).rejects.toThrow("process.exit(1)");
+    expect(allLog()).toContain("interactive-palamhealth-account");
+    expect(exitCode).toBe(1);
   });
 });

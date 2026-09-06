@@ -33,6 +33,8 @@ describe("defineConfig", () => {
           transport: { type: "stdio", command: "node", args: ["server.js"], env: { KEY: "val" } },
           enabled: true,
           tags: ["dev", "test"],
+          layer: "project",
+          whenPathContains: ["PalamHealth"],
         },
       ],
     };
@@ -40,5 +42,7 @@ describe("defineConfig", () => {
     expect(result.servers[0]!.id).toBe("my-server");
     expect(result.servers[0]!.description).toBe("A test server");
     expect(result.servers[0]!.tags).toEqual(["dev", "test"]);
+    expect(result.servers[0]!.layer).toBe("project");
+    expect(result.servers[0]!.whenPathContains).toEqual(["PalamHealth"]);
   });
 });

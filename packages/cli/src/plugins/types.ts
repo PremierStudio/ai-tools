@@ -1,6 +1,7 @@
 export type PluginMCPTransport =
   | { type: "stdio"; command: string; args?: string[]; env?: Record<string, string> }
-  | { type: "sse"; url: string; headers?: Record<string, string> };
+  | { type: "sse"; url: string; headers?: Record<string, string> }
+  | { type: "http"; url: string; headers?: Record<string, string> };
 
 export type PluginMCPServerDefinition = {
   id: string;
@@ -9,6 +10,8 @@ export type PluginMCPServerDefinition = {
   transport: PluginMCPTransport;
   enabled?: boolean;
   tags?: string[];
+  layer?: "user" | "project";
+  whenPathContains?: string[];
 };
 
 export type PluginSkillDefinition = {

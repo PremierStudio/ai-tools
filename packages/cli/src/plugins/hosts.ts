@@ -58,6 +58,26 @@ export const KNOWN_PLUGIN_HOSTS: Record<string, PluginHostInfo> = {
     notes:
       "OpenCode ships as a terminal app, desktop app, and IDE extension with first-class MCP support plus a native plugin system.",
   },
+  grok: {
+    id: "grok",
+    name: "Grok",
+    kind: "cli",
+    nativeEngineSupport: { mcp: true, skills: true, rules: true, agents: true, hooks: true },
+    supportsInteractiveApps: false,
+    supportsNativeBundles: true,
+    notes:
+      "Grok reads project `.grok/config.toml` and user `~/.grok/config.toml`. MCP lives under [mcp_servers]. PalamHealth servers must be project-layer.",
+  },
+  zcode: {
+    id: "zcode",
+    name: "ZCode",
+    kind: "cli",
+    nativeEngineSupport: { mcp: true, skills: true, rules: true, agents: true, hooks: true },
+    supportsInteractiveApps: false,
+    supportsNativeBundles: false,
+    notes:
+      "ZCode user MCP is ~/.zcode/cli/config.json (mcp.servers). Project MCP is .zcode/mcp.json. Do not put PalamHealth in the user file.",
+  },
   "antigravity-cli": {
     id: "antigravity-cli",
     name: "Antigravity CLI",

@@ -1,6 +1,9 @@
+import { homedir } from "node:os";
 import { registry } from "../adapters/registry.js";
 import type { BaseMCPAdapter } from "../adapters/base.js";
 import type { MCPServerDefinition, MCPConfig, GeneratedFile } from "../types/index.js";
+import { filterServers } from "../scope.js";
+import { auditServers } from "../audit.js";
 
 // Import all adapters to register them
 import "../adapters/all.js";
@@ -19,12 +22,14 @@ COMMANDS:
   import      Import MCP servers from an existing tool's config
   sync        Sync MCP servers across all detected tools
   export      Export MCP server definitions as JSON
+  audit       Find PalamHealth / interactive-1Password leaks in user-global configs
   help        Show this help message
 
 OPTIONS:
   --tools     Comma-separated list of tools (e.g., --tools=claude-code,cursor)
   --dry-run   Show what would be generated without writing files
   --force     Skip detection checks for --tools (install even if tool not found)
+  --layer     user or project (default: project). Controls which servers install.
 
 EXAMPLES:
   ai-mcp detect                          # See which AI tools support MCP
@@ -40,6 +45,7 @@ type Flags = {
   config?: string;
   dryRun?: boolean;
   force?: boolean;
+  layer?: "user" | "project";
 };
 
 export async function run(args: string[]): Promise<void> {
@@ -67,6 +73,9 @@ export async function run(args: string[]): Promise<void> {
       break;
     case "export":
       await cmdExport(flags);
+      break;
+    case "audit":
+      await cmdAudit(flags);
       break;
     case "help":
     case "--help":
@@ -148,11 +157,12 @@ async function cmdGenerate(flags: Flags): Promise<void> {
   }
 
   const config = await loadConfig(flags.config);
+  const servers = selectServers(config.servers, flags);
 
   console.log(`Generating MCP configs for ${adapters.length} tool(s)...\n`);
 
   for (const adapter of adapters) {
-    const files = await adapter.generate(config.servers);
+    const files = await adapter.generate(servers);
 
     for (const file of files) {
       if (flags.dryRun) {
@@ -179,18 +189,25 @@ async function cmdInstall(flags: Flags): Promise<void> {
   }
 
   const config = await loadConfig(flags.config);
+  const servers = selectServers(config.servers, flags);
+  const layer = flags.layer ?? "project";
 
   console.log(`Installing MCP servers into ${adapters.length} tool(s)...\n`);
 
   for (const adapter of adapters) {
-    const files = await adapter.generate(config.servers);
+    const files = await adapter.generate(servers);
+    if (layer === "user" && adapter.userConfigPath) {
+      for (const file of files) {
+        file.path = adapter.userConfigPath;
+      }
+    }
 
     if (flags.dryRun) {
       for (const file of files) {
         console.log(`  [dry-run] Would install: ${file.path}`);
       }
     } else {
-      await adapter.install(files);
+      await adapter.install(files, layer === "user" ? homedir() : process.cwd());
       console.log(`  \u2713 ${adapter.name}`);
     }
   }
@@ -272,6 +289,29 @@ async function cmdExport(flags: Flags): Promise<void> {
   console.log(JSON.stringify([...allServers.values()], null, 2));
 }
 
+async function cmdAudit(flags: Flags): Promise<void> {
+  const adapters = flags.tools
+    ? await resolveAdapters({ ...flags, force: true })
+    : registry.getAll();
+
+  const findings = [];
+  for (const adapter of adapters) {
+    const servers = await adapter.importUser();
+    findings.push(...auditServers(adapter.id, servers, "user"));
+  }
+
+  if (findings.length === 0) {
+    console.log("No PalamHealth user-global MCP leaks found.");
+    return;
+  }
+
+  console.log(`Found ${findings.length} MCP leak(s):\n`);
+  for (const finding of findings) {
+    console.log(`  [${finding.kind}] ${finding.tool}/${finding.server}: ${finding.detail}`);
+  }
+  process.exit(1);
+}
+
 // ── Helpers ─────────────────────────────────────────────────
 
 function parseFlags(args: string[]): Flags {
@@ -286,6 +326,9 @@ function parseFlags(args: string[]): Flags {
       flags.dryRun = true;
     } else if (arg === "--force") {
       flags.force = true;
+    } else if (arg.startsWith("--layer=")) {
+      const layer = arg.slice(8);
+      if (layer === "user" || layer === "project") flags.layer = layer;
     }
   }
 
@@ -330,6 +373,13 @@ async function loadConfig(configPath?: string): Promise<MCPConfig> {
   const fullPath = resolve(process.cwd(), path);
   const mod = await import(pathToFileURL(fullPath).href);
   return mod.default as MCPConfig;
+}
+
+function selectServers(servers: MCPServerDefinition[], flags: Flags): MCPServerDefinition[] {
+  return filterServers(servers, {
+    layer: flags.layer ?? "project",
+    cwd: process.cwd(),
+  });
 }
 
 async function writeFiles(files: GeneratedFile[]): Promise<void> {
