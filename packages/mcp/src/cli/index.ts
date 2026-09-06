@@ -22,7 +22,7 @@ COMMANDS:
   import      Import MCP servers from an existing tool's config
   sync        Install servers from mcp.config.ts onto detected tools (never copies imports)
   export      Export MCP server definitions as JSON
-  audit       Find PalamHealth / interactive-1Password leaks in user-global configs
+  audit       Find org-specific / interactive-1Password leaks in user-global configs
   help        Show this help message
 
 OPTIONS:
@@ -37,7 +37,7 @@ EXAMPLES:
   ai-mcp install --tools=claude-code     # Install MCP servers for Claude Code only
   ai-mcp install --layer=project         # Project-scoped install from mcp.config.ts
   ai-mcp sync --layer=project            # Config-scoped install (never copies imports)
-  ai-mcp audit                           # Find PalamHealth leaks in user-global configs
+  ai-mcp audit                           # Scan user-global MCP configs for leaks
   ai-mcp import --tools=claude-code      # Import servers from Claude Code config
   ai-mcp export                          # Export all MCP servers as JSON
 `;
