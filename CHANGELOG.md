@@ -1,3 +1,10 @@
+## [1.2.2](https://github.com/itz4blitz/ai-tools/compare/v1.2.1...v1.2.2) (2026-09-06)
+
+
+### Bug Fixes
+
+* **ci:** keep master HEAD green and write a usable README ([a906749](https://github.com/itz4blitz/ai-tools/commit/a9067491dcccf17c1f1d657ff4cb69eff0163dde))
+
 ## [1.2.1](https://github.com/itz4blitz/ai-tools/compare/v1.2.0...v1.2.1) (2026-09-06)
 
 
