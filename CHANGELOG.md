@@ -1,3 +1,10 @@
+# [1.2.0](https://github.com/itz4blitz/ai-tools/compare/v1.1.10...v1.2.0) (2026-09-06)
+
+
+### Features
+
+* **mcp:** native harness formats, scoped install, and PalamHealth leak guards ([dd53a13](https://github.com/itz4blitz/ai-tools/commit/dd53a138a9911750cd28b10ef3b12ad4785825f6))
+
 ## [Unreleased]
 
 ### Features
