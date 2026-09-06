@@ -23,8 +23,8 @@ Primary fleet is Claude Code, Cursor, OpenCode, Codex, plus Grok and zcode next.
 | [Cursor](https://cursor.com) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [OpenCode](https://opencode.ai) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [Codex](https://openai.com/codex/) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Grok / grok build | | ✓ | | | |
-| zcode | | ✓ | | | |
+| Grok / grok build | ✓ | ✓ | ✓ | ✓ | ✓ |
+| zcode | | ✓ | ✓ | ✓ | ✓ |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [Antigravity CLI](https://www.antigravity.google/product/antigravity-cli) | | | ✓ | ✓ | ✓ |
 | [Kiro](https://kiro.dev) | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -36,7 +36,7 @@ Primary fleet is Claude Code, Cursor, OpenCode, Codex, plus Grok and zcode next.
 | [Roo Code](https://roocode.com) | | ✓ | ✓ | ✓ | ✓ |
 | [Windsurf](https://windsurf.com) | | ✓ | | ✓ | ✓ |
 
-<sub>✱ VS Code 1.109+ agent hooks use the Claude Code format. Grok and ZCode currently ship MCP adapters (TOML / zcode `mcp.servers`); other engines can follow.</sub>
+<sub>✱ VS Code 1.109+ agent hooks use the Claude Code format. Grok adapters cover hooks/MCP/agents/skills/rules. ZCode covers MCP/agents/skills/rules (hooks follow OpenCode plugins, not yet a separate ZCode hook adapter).</sub>
 
 ## 60-second path
 

@@ -23,6 +23,11 @@ class ZcodeMCPAdapter extends BaseMCPAdapter {
   readonly userConfigPath = `${homedir()}/.zcode/cli/config.json`;
   readonly command = "zcode";
 
+  override async detect(cwd?: string): Promise<boolean> {
+    if (await super.detect(cwd)) return true;
+    return existsSync(this.userConfigPath);
+  }
+
   async generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]> {
     return [
       {

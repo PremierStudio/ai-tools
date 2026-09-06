@@ -27,6 +27,10 @@ vi.mock("node:fs/promises", () => ({
   mkdir: (...args: unknown[]) => mockMkdir(...args),
 }));
 
+vi.mock("node:fs", () => ({
+  existsSync: () => false,
+}));
+
 import { run } from "./index.js";
 
 function makeAdapter(overrides: Partial<BaseRuleAdapter> = {}): BaseRuleAdapter {

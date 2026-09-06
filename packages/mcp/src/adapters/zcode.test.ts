@@ -42,6 +42,11 @@ describe("ZcodeMCPAdapter", () => {
     expect(adapter.command).toBe("zcode");
   });
 
+  it("detects ZCode from the user config even without a zcode binary", async () => {
+    vi.mocked(existsSync).mockImplementation((path) => String(path).endsWith("cli/config.json"));
+    expect(await adapter.detect("/tmp/empty")).toBe(true);
+  });
+
   it("generates project mcpServers JSON", async () => {
     const files = await adapter.generate([stdio]);
     expect(files[0]?.path).toBe(".zcode/mcp.json");

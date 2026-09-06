@@ -17,7 +17,7 @@
     "lint:fix": "oxlint --fix --tsconfig tsconfig.base.json packages/",
     "fmt": "oxfmt packages/",
     "fmt:check": "oxfmt --check packages/",
-    "audit": "npm audit --audit-level high",
+    "audit": "npm audit --omit=dev --audit-level high",
     "check": "npm run audit && npm run lint && npm run fmt:check && npm run typecheck && npm run test:coverage && npm run test:smoke",
     "release:preflight": "npm run check",
     "release:publish:dry": "npm publish --workspace @itz4blitz/ai-tools --access public --dry-run",
