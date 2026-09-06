@@ -4,4 +4,3 @@ export type {
   SessionContext,
   SessionFilter,
 } from "./definition.js";
-export type { SessionsConfig, GeneratedFile } from "./config.js";

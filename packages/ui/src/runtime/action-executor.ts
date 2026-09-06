@@ -466,7 +466,7 @@ export function createActionExecutor({
     "sync-config": async () => {
       app.update((s) => ({
         ...s,
-        toasts: addToast(s.toasts, "info", "Syncing config..."),
+        toasts: addToast(s.toasts, "info", "Installing MCP servers..."),
       }));
       try {
         const { triggerSync } = await import("../commands/config-sync.js");
@@ -474,14 +474,14 @@ export function createActionExecutor({
         await reloadConfigData(app);
         app.update((s) => ({
           ...s,
-          configLastAction: { type: "sync", result: "success", message: "Config synced" },
-          toasts: addToast(s.toasts, "success", "Config synced"),
+          configLastAction: { type: "sync", result: "success", message: "MCP servers installed" },
+          toasts: addToast(s.toasts, "success", "MCP servers installed"),
         }));
       } catch {
         app.update((s) => ({
           ...s,
-          configLastAction: { type: "sync", result: "error", message: "Config sync failed" },
-          toasts: addToast(s.toasts, "error", "Config sync failed"),
+          configLastAction: { type: "sync", result: "error", message: "MCP install failed" },
+          toasts: addToast(s.toasts, "error", "MCP install failed"),
         }));
       }
     },

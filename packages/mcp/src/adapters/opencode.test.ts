@@ -38,18 +38,20 @@ describe("OpenCodeMCPAdapter", () => {
     it("has correct id", () => expect(adapter.id).toBe("opencode"));
     it("has correct name", () => expect(adapter.name).toBe("OpenCode"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
-    it("has correct config path", () => expect(adapter.configPath).toBe(".opencode/mcp.json"));
+    it("has correct config path", () => expect(adapter.configPath).toBe("opencode.json"));
   });
 
   describe("generate", () => {
-    it("generates valid JSON config", async () => {
+    it("generates native OpenCode mcp entries", async () => {
       const files = await adapter.generate([testServer]);
       expect(files).toHaveLength(1);
-      expect(files[0]!.path).toBe(".opencode/mcp.json");
+      expect(files[0]!.path).toBe("opencode.json");
       expect(files[0]!.format).toBe("json");
-      const parsed = JSON.parse(files[0]!.content);
-      expect(parsed.mcpServers["test-server"]).toBeDefined();
-      expect(parsed.mcpServers["test-server"].command).toBe("npx");
+      const parsed = JSON.parse(files[0]!.content) as {
+        mcp: Record<string, { type: string; command: string[] }>;
+      };
+      expect(parsed.mcp["test-server"]?.type).toBe("local");
+      expect(parsed.mcp["test-server"]?.command[0]).toBe("npx");
     });
 
     it("handles SSE transport", async () => {
@@ -59,21 +61,45 @@ describe("OpenCodeMCPAdapter", () => {
         transport: { type: "sse", url: "http://localhost:3000" },
       };
       const files = await adapter.generate([sseServer]);
-      const parsed = JSON.parse(files[0]!.content);
-      expect(parsed.mcpServers["sse-server"].url).toBe("http://localhost:3000");
+      const parsed = JSON.parse(files[0]!.content) as {
+        mcp: Record<string, { type: string; url: string }>;
+      };
+      expect(parsed.mcp["sse-server"]?.type).toBe("remote");
+      expect(parsed.mcp["sse-server"]?.url).toBe("http://localhost:3000");
+    });
+
+    it("emits headers on remote MCP entries", async () => {
+      const httpServer: MCPServerDefinition = {
+        id: "linear",
+        name: "linear",
+        transport: {
+          type: "http",
+          url: "https://mcp.linear.app/mcp",
+          headers: { Authorization: "Bearer token" },
+        },
+      };
+      const files = await adapter.generate([httpServer]);
+      const parsed = JSON.parse(files[0]!.content) as {
+        mcp: Record<string, { type: string; url: string; headers?: Record<string, string> }>;
+      };
+      expect(parsed.mcp.linear).toMatchObject({
+        type: "remote",
+        url: "https://mcp.linear.app/mcp",
+        headers: { Authorization: "Bearer token" },
+      });
     });
 
     it("handles empty servers array", async () => {
       const files = await adapter.generate([]);
-      const parsed = JSON.parse(files[0]!.content);
-      expect(Object.keys(parsed.mcpServers)).toHaveLength(0);
+      const parsed = JSON.parse(files[0]!.content) as { mcp: Record<string, unknown> };
+      expect(Object.keys(parsed.mcp)).toHaveLength(0);
     });
 
     it("handles multiple servers", async () => {
       const servers = [testServer, { ...testServer, id: "server-2", name: "Server 2" }];
       const files = await adapter.generate(servers);
-      const parsed = JSON.parse(files[0]!.content);
-      expect(Object.keys(parsed.mcpServers)).toHaveLength(2);
+      const parsed = JSON.parse(files[0]!.content) as { mcp: Record<string, unknown> };
+      expect(Object.keys(parsed.mcp)).toHaveLength(2);
     });
 
     it("generates with optional fields undefined", async () => {
@@ -83,9 +109,11 @@ describe("OpenCodeMCPAdapter", () => {
         transport: { type: "stdio", command: "node" },
       };
       const files = await adapter.generate([server]);
-      const parsed = JSON.parse(files[0]!.content);
-      expect(parsed.mcpServers["minimal"].args).toEqual([]);
-      expect(parsed.mcpServers["minimal"].env).toEqual({});
+      const parsed = JSON.parse(files[0]!.content) as {
+        mcp: Record<string, { command: string[]; environment: Record<string, string> }>;
+      };
+      expect(parsed.mcp["minimal"]?.command).toEqual(["node"]);
+      expect(parsed.mcp["minimal"]?.environment).toEqual({});
     });
   });
 
@@ -100,7 +128,13 @@ describe("OpenCodeMCPAdapter", () => {
       vi.mocked(existsSync).mockReturnValue(true);
       vi.mocked(readFile).mockResolvedValue(
         JSON.stringify({
-          mcpServers: { "my-server": { command: "npx", args: ["-y", "test"], env: { A: "1" } } },
+          mcp: {
+            "my-server": {
+              type: "local",
+              command: ["npx", "-y", "test"],
+              environment: { A: "1" },
+            },
+          },
         }),
       );
       const result = await adapter.import("/test");
@@ -113,12 +147,33 @@ describe("OpenCodeMCPAdapter", () => {
       vi.mocked(existsSync).mockReturnValue(true);
       vi.mocked(readFile).mockResolvedValue(
         JSON.stringify({
-          mcpServers: { sse: { url: "http://localhost:3000" } },
+          mcp: { sse: { type: "remote", url: "http://localhost:3000" } },
         }),
       );
       const result = await adapter.import("/test");
       expect(result).toHaveLength(1);
-      expect(result[0]!.transport.type).toBe("sse");
+      expect(result[0]!.transport.type).toBe("http");
+    });
+
+    it("imports remote headers", async () => {
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readFile).mockResolvedValue(
+        JSON.stringify({
+          mcp: {
+            linear: {
+              type: "remote",
+              url: "https://mcp.linear.app/mcp",
+              headers: { Authorization: "Bearer token" },
+            },
+          },
+        }),
+      );
+      const result = await adapter.import("/test");
+      expect(result[0]!.transport).toEqual({
+        type: "http",
+        url: "https://mcp.linear.app/mcp",
+        headers: { Authorization: "Bearer token" },
+      });
     });
 
     it("imports with missing servers key", async () => {

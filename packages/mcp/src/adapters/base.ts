@@ -1,13 +1,15 @@
 import type { MCPServerDefinition, GeneratedFile } from "../types/index.js";
 import { existsSync } from "node:fs";
 import { readFile, writeFile, mkdir, rm } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, isAbsolute, resolve } from "node:path";
 
 export abstract class BaseMCPAdapter {
   abstract readonly id: string;
   abstract readonly name: string;
   abstract readonly nativeSupport: boolean;
   abstract readonly configPath: string;
+  /** Absolute user-global config path when this host has one. */
+  readonly userConfigPath?: string;
 
   /** Whether this adapter can use symlinks ("symlink") or needs file transformation ("transform"). */
   readonly installStrategy: "symlink" | "transform" = "transform";
@@ -17,6 +19,12 @@ export abstract class BaseMCPAdapter {
 
   abstract generate(servers: MCPServerDefinition[]): Promise<GeneratedFile[]>;
   abstract import(cwd?: string): Promise<MCPServerDefinition[]>;
+
+  /** Read the user-global config. Defaults to import(homedir()). */
+  async importUser(): Promise<MCPServerDefinition[]> {
+    const { homedir } = await import("node:os");
+    return this.import(homedir());
+  }
 
   async detect(cwd?: string): Promise<boolean> {
     const dir = cwd ?? process.cwd();
@@ -39,7 +47,7 @@ export abstract class BaseMCPAdapter {
   async install(files: GeneratedFile[], cwd?: string): Promise<void> {
     const dir = cwd ?? process.cwd();
     for (const file of files) {
-      const fullPath = resolve(dir, file.path);
+      const fullPath = isAbsolute(file.path) ? file.path : resolve(dir, file.path);
       await mkdir(dirname(fullPath), { recursive: true });
       await writeFile(fullPath, file.content, "utf-8");
     }

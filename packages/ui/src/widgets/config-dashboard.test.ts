@@ -2,15 +2,22 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 
 vi.mock("node:fs", () => ({
   existsSync: vi.fn().mockReturnValue(false),
+  readFileSync: vi.fn(),
 }));
 
 vi.mock("node:path", () => ({
   resolve: (...args: string[]) => args.join("/"),
 }));
 
-import { getEngineStatus, formatEngineRow } from "./config-dashboard.js";
-import type { EngineStatus } from "./config-dashboard.js";
-import { existsSync } from "node:fs";
+import {
+  computeManifestHealth,
+  formatEngineRow,
+  getConfigDashboardData,
+  getEngineStatus,
+  getToolDeployments,
+} from "./config-dashboard.js";
+import type { EngineStatus, ToolDeployment } from "./config-dashboard.js";
+import { existsSync, readFileSync } from "node:fs";
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -72,6 +79,118 @@ describe("getEngineStatus()", () => {
     const statuses = await getEngineStatus();
     const configured = statuses.filter((s) => s.configured);
     expect(configured).toHaveLength(2);
+  });
+
+  it("marks engine as configured from .ai-tools/<file> when cwd has no config", async () => {
+    (existsSync as ReturnType<typeof vi.fn>).mockImplementation((path: unknown) => {
+      const value = String(path);
+      return value.endsWith("/.ai-tools") || value.includes("/.ai-tools/ai-rules.config.ts");
+    });
+
+    const statuses = await getEngineStatus();
+    const rules = statuses.find((s) => s.engine === "rules");
+    expect(rules?.configured).toBe(true);
+    expect(rules?.configPath).toContain("/.ai-tools/ai-rules.config.ts");
+  });
+
+  it("marks engine as configured from .ai-tools/<engine>.json", async () => {
+    (existsSync as ReturnType<typeof vi.fn>).mockImplementation((path: unknown) => {
+      const value = String(path);
+      return value.endsWith("/.ai-tools") || value.endsWith("/.ai-tools/mcp.json");
+    });
+
+    const statuses = await getEngineStatus();
+    const mcp = statuses.find((s) => s.engine === "mcp");
+    expect(mcp?.configured).toBe(true);
+    expect(mcp?.configPath).toContain("/.ai-tools/mcp.json");
+  });
+});
+
+describe("getToolDeployments()", () => {
+  it("returns [] when the manifest is missing", async () => {
+    (existsSync as ReturnType<typeof vi.fn>).mockReturnValue(false);
+    expect(await getToolDeployments()).toEqual([]);
+  });
+
+  it("returns [] when the manifest is invalid JSON", async () => {
+    (existsSync as ReturnType<typeof vi.fn>).mockReturnValue(true);
+    (readFileSync as ReturnType<typeof vi.fn>).mockReturnValue("{not json");
+    expect(await getToolDeployments()).toEqual([]);
+  });
+
+  it("flattens manifest targets into deployments", async () => {
+    (existsSync as ReturnType<typeof vi.fn>).mockReturnValue(true);
+    (readFileSync as ReturnType<typeof vi.fn>).mockReturnValue(
+      JSON.stringify({
+        version: 1,
+        entries: [
+          {
+            engine: "mcp",
+            id: "github",
+            canonicalPath: ".ai-tools/mcp.json",
+            updatedAt: "t",
+            targets: [
+              {
+                adapterId: "cursor",
+                targetPath: ".cursor/mcp.json",
+                strategy: "transform",
+                status: "direct",
+              },
+              {
+                adapterId: "zcode",
+                targetPath: ".zcode/config.json",
+                strategy: "symlink",
+                status: "stale",
+              },
+            ],
+          },
+        ],
+      }),
+    );
+
+    expect(await getToolDeployments()).toEqual([
+      {
+        adapterId: "cursor",
+        targetPath: ".cursor/mcp.json",
+        strategy: "transform",
+        status: "direct",
+      },
+      {
+        adapterId: "zcode",
+        targetPath: ".zcode/config.json",
+        strategy: "symlink",
+        status: "stale",
+      },
+    ]);
+  });
+});
+
+describe("computeManifestHealth()", () => {
+  it("counts linked, direct, stale, and missing targets", async () => {
+    (existsSync as ReturnType<typeof vi.fn>).mockReturnValue(true);
+    const deployments: ToolDeployment[] = [
+      { adapterId: "a", targetPath: "a", strategy: "transform", status: "linked" },
+      { adapterId: "b", targetPath: "b", strategy: "transform", status: "direct" },
+      { adapterId: "c", targetPath: "c", strategy: "symlink", status: "stale" },
+      { adapterId: "d", targetPath: "d", strategy: "symlink", status: "missing" },
+    ];
+    expect(await computeManifestHealth(deployments)).toEqual({
+      exists: true,
+      entryCount: 4,
+      linkedCount: 2,
+      staleCount: 1,
+      missingCount: 1,
+    });
+  });
+});
+
+describe("getConfigDashboardData()", () => {
+  it("reports error when canonical mode has no manifest", async () => {
+    (existsSync as ReturnType<typeof vi.fn>).mockReturnValue(false);
+    const data = await getConfigDashboardData("canonical");
+    expect(data.configHealth).toBe("error");
+    expect(data.manifestHealth.exists).toBe(false);
+    expect(data.deployments).toEqual([]);
   });
 });
 

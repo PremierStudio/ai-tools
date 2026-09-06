@@ -6,10 +6,26 @@ import type {
   InstallPluginOptions,
   InstallPluginResult,
   PluginEngine,
+  PluginMCPServerDefinition,
 } from "./types.js";
+
+type PluginLayer = NonNullable<PluginMCPServerDefinition["layer"]>;
 
 function uniquePaths(paths: string[]): string[] {
   return [...new Set(paths)];
+}
+
+function filterPluginServers(
+  servers: PluginMCPServerDefinition[],
+  ctx: { layer: PluginLayer; cwd: string },
+): PluginMCPServerDefinition[] {
+  return servers.filter((server) => {
+    const layer = server.layer ?? "project";
+    if (layer !== ctx.layer) return false;
+    const fragments = server.whenPathContains ?? [];
+    if (fragments.length === 0) return true;
+    return fragments.some((fragment) => ctx.cwd.includes(fragment));
+  });
 }
 
 async function installEngine(
@@ -22,7 +38,12 @@ async function installEngine(
     case "mcp": {
       const adapter = registries.mcp.get(toolId);
       if (!adapter) throw new Error(`Missing MCP adapter for ${toolId}`);
-      const files = await adapter.generate(plugin.mcpServers ?? []);
+      const servers = filterPluginServers(plugin.mcpServers ?? [], {
+        layer: "project",
+        cwd: process.cwd(),
+      });
+      if (servers.length === 0) return [];
+      const files = await adapter.generate(servers);
       await adapter.install(files);
       return files.map((file) => file.path);
     }
@@ -77,6 +98,7 @@ export async function installPluginBundle(
         const filePaths = uniquePaths(
           await installEngine(registries, plugin, engine.engine, target.toolId),
         );
+        if (filePaths.length === 0) continue;
         installed.push({
           toolId: target.toolId,
           toolName: target.toolName,

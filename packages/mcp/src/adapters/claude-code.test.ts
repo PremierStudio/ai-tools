@@ -16,7 +16,8 @@ vi.mock("node:fs/promises", () => ({
 }));
 
 import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { mkdir, readFile, writeFile } from "node:fs/promises";
+import { homedir } from "node:os";
 import { ClaudeCodeMCPAdapter } from "./claude-code.js";
 import type { MCPServerDefinition } from "../types/index.js";
 
@@ -39,6 +40,9 @@ describe("ClaudeCodeMCPAdapter", () => {
     it("has correct name", () => expect(adapter.name).toBe("Claude Code"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
     it("has correct config path", () => expect(adapter.configPath).toBe(".mcp.json"));
+    it("uses ~/.claude.json for user MCP, not ~/.mcp.json", () => {
+      expect(adapter.userConfigPath).toBe(`${homedir()}/.claude.json`);
+    });
   });
 
   describe("generate", () => {
@@ -60,7 +64,22 @@ describe("ClaudeCodeMCPAdapter", () => {
       };
       const files = await adapter.generate([sseServer]);
       const parsed = JSON.parse(files[0]!.content);
+      expect(parsed.mcpServers["sse-server"].type).toBe("sse");
       expect(parsed.mcpServers["sse-server"].url).toBe("http://localhost:3000");
+    });
+
+    it("emits type http for HTTP remotes", async () => {
+      const httpServer: MCPServerDefinition = {
+        id: "http-server",
+        name: "HTTP Server",
+        transport: { type: "http", url: "https://mcp.linear.app/mcp" },
+      };
+      const files = await adapter.generate([httpServer]);
+      const parsed = JSON.parse(files[0]!.content) as {
+        mcpServers: Record<string, { type?: string; url?: string }>;
+      };
+      expect(parsed.mcpServers["http-server"]?.type).toBe("http");
+      expect(parsed.mcpServers["http-server"]?.url).toBe("https://mcp.linear.app/mcp");
     });
 
     it("handles empty servers array", async () => {
@@ -132,6 +151,62 @@ describe("ClaudeCodeMCPAdapter", () => {
       vi.mocked(existsSync).mockReturnValue(false);
       const result = await adapter.import();
       expect(result).toEqual([]);
+    });
+
+    it("imports user MCP from ~/.claude.json mcpServers", async () => {
+      vi.mocked(existsSync).mockImplementation((path) => String(path).endsWith(".claude.json"));
+      vi.mocked(readFile).mockResolvedValue(
+        JSON.stringify({
+          theme: "keep-me",
+          mcpServers: {
+            screenpipe: { command: "bun", args: ["x", "screenpipe-mcp@latest"] },
+          },
+        }),
+      );
+      const result = await adapter.importUser();
+      expect(result).toHaveLength(1);
+      expect(result[0]!.id).toBe("screenpipe");
+      expect(result[0]!.transport.type).toBe("stdio");
+    });
+
+    it("round-trips type http from host files", async () => {
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readFile).mockResolvedValue(
+        JSON.stringify({
+          mcpServers: { docs: { type: "http", url: "https://code.claude.com/docs/mcp" } },
+        }),
+      );
+      const result = await adapter.import("/test");
+      expect(result[0]!.transport.type).toBe("http");
+    });
+  });
+
+  describe("install merge", () => {
+    it("does not clobber unrelated ~/.claude.json keys", async () => {
+      vi.mocked(existsSync).mockReturnValue(true);
+      vi.mocked(readFile).mockResolvedValue(
+        JSON.stringify({ theme: "dark", mcpServers: { keep: { command: "old" } } }),
+      );
+      await adapter.install(
+        [
+          {
+            path: `${homedir()}/.claude.json`,
+            content: JSON.stringify({
+              mcpServers: { github: { command: "gh-mcp", args: [] } },
+            }),
+            format: "json",
+          },
+        ],
+        "/tmp",
+      );
+      const written = JSON.parse(String(vi.mocked(writeFile).mock.calls[0]?.[1])) as {
+        theme: string;
+        mcpServers: Record<string, { command: string }>;
+      };
+      expect(written.theme).toBe("dark");
+      expect(written.mcpServers.keep?.command).toBe("old");
+      expect(written.mcpServers.github?.command).toBe("gh-mcp");
+      expect(vi.mocked(mkdir)).toHaveBeenCalled();
     });
   });
 });

@@ -45,25 +45,6 @@ export type { ThemeName, UiPreferences } from "./preferences.js";
 export { launchTool, buildLaunchOptions, buildHandoffLaunchOptions } from "./launcher.js";
 export type { LaunchOptions, LaunchResult, SpawnFn } from "./launcher.js";
 
-// Spawn strategies (tmux wrapper for embedded tools)
-export {
-  checkSpawnStrategies,
-  getRecommendedStrategy,
-  spawnTool,
-  isTmuxRecommended,
-} from "./spawn/index.js";
-export type { SpawnStrategy, SpawnResult, SpawnConfig } from "./spawn/index.js";
-
-// Command palette
-export {
-  getActionCommands,
-  getSessionCommands,
-  getToolCommands,
-  getAllCommands,
-  filterCommands,
-} from "./command-palette.js";
-export type { CommandItem } from "./command-palette.js";
-
 // View modules
 export { renderToolsView, getToolsKeyHints } from "./views/tools.js";
 export type { ToolsViewState } from "./views/tools.js";

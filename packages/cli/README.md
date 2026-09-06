@@ -23,8 +23,8 @@ Primary fleet is Claude Code, Cursor, OpenCode, Codex, plus Grok and zcode next.
 | [Cursor](https://cursor.com) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [OpenCode](https://opencode.ai) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [Codex](https://openai.com/codex/) | ✓ | ✓ | ✓ | ✓ | ✓ |
-| Grok / grok build | | | | | |
-| zcode | | | | | |
+| Grok / grok build | ✓ | ✓ | ✓ | ✓ | ✓ |
+| zcode | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [Gemini CLI](https://github.com/google-gemini/gemini-cli) | ✓ | ✓ | ✓ | ✓ | ✓ |
 | [Antigravity CLI](https://www.antigravity.google/product/antigravity-cli) | | | ✓ | ✓ | ✓ |
 | [Kiro](https://kiro.dev) | ✓ | ✓ | ✓ | ✓ | ✓ |
@@ -36,7 +36,7 @@ Primary fleet is Claude Code, Cursor, OpenCode, Codex, plus Grok and zcode next.
 | [Roo Code](https://roocode.com) | | ✓ | ✓ | ✓ | ✓ |
 | [Windsurf](https://windsurf.com) | | ✓ | | ✓ | ✓ |
 
-<sub>✱ VS Code 1.109+ agent hooks use the Claude Code format. Grok and zcode adapters are not in yet.</sub>
+<sub>✱ VS Code 1.109+ agent hooks use the Claude Code format. Grok and ZCode adapters cover hooks/MCP/agents/skills/rules.</sub>
 
 ## 60-second path
 
@@ -179,20 +179,33 @@ export default defineConfig({
 ### MCP
 
 ```ts
-// ai-mcp.config.ts
+// mcp.config.ts
 import { defineConfig } from "@itz4blitz/ai-tools/mcp";
 
 export default defineConfig({
   servers: [
     {
+      id: "filesystem",
       name: "filesystem",
-      command: "npx",
-      args: ["-y", "@modelcontextprotocol/server-filesystem", "./src"],
-      transport: "stdio",
+      transport: {
+        type: "stdio",
+        command: "npx",
+        args: ["-y", "@modelcontextprotocol/server-filesystem", "./src"],
+      },
+      layer: "project",
+    },
+    {
+      id: "palamhealth",
+      name: "PalamHealth",
+      transport: { type: "stdio", command: "palamhealth-mcp" },
+      layer: "project",
+      whenPathContains: ["PalamHealth"],
     },
   ],
 });
 ```
+
+`ai-tools mcp install --layer=project` writes only matching servers. `ai-tools mcp sync` never copies imported servers between tools. `ai-tools mcp audit` reports PalamHealth leaks in user-global configs.
 
 ### Rules
 
@@ -203,9 +216,10 @@ import { defineRulesConfig } from "@itz4blitz/ai-tools/rules";
 export default defineRulesConfig({
   rules: [
     {
+      id: "typescript-strict",
       name: "typescript-strict",
       content: "Always use strict TypeScript. No `any` types.",
-      scope: "always",
+      scope: { type: "always" },
       priority: 1,
     },
   ],

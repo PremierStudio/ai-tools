@@ -41,7 +41,11 @@ describe("GeminiCliSkillAdapter", () => {
     it("has correct id", () => expect(adapter.id).toBe("gemini-cli"));
     it("has correct name", () => expect(adapter.name).toBe("Gemini CLI"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
-    it("has correct config dir", () => expect(adapter.configDir).toBe(".gemini/prompts"));
+    it("has correct config dir", () => {
+      // Gemini CLI custom prompts live at `.gemini/prompts/*.md` (observed in this repo).
+      // Agent Skills, if used, go through `.agents/skills/<id>/SKILL.md` (antigravity-cli).
+      expect(adapter.configDir).toBe(".gemini/prompts");
+    });
   });
 
   describe("generate", () => {

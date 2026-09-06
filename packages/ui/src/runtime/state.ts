@@ -54,8 +54,6 @@ export type HandoffState = {
 };
 
 export type OverlayState = {
-  commandPaletteOpen: boolean;
-  commandPaletteQuery: string;
   helpOpen: boolean;
 };
 

@@ -1,3 +1,19 @@
+## [Unreleased]
+
+### Features
+
+* **mcp:** Grok and ZCode adapters with native formats (`.grok/config.toml`, `.zcode/mcp.json`, `~/.zcode/cli/config.json`)
+* **mcp:** `layer` and `whenPathContains` so PalamHealth servers stay project-local
+* **mcp:** `audit` finds PalamHealth / interactive-1Password leaks in user-global configs
+* **mcp:** `sync` installs from `mcp.config.ts` only and no longer union-copies imported servers between tools
+
+### Bug Fixes
+
+* **plugins:** host capability flags match actual adapters (zcode hooks true after the ZCode hook adapter landed; antigravity no longer claims missing MCP/hooks; add cline, droid, amp, continue, gemini-cli, roo-code)
+* **plugins:** install honors `layer`/`whenPathContains` instead of copying every MCP server onto a host
+* **cli:** canonical `install` records tool-directory targets instead of `targets: []`
+* add an MIT `LICENSE` file to match the published badge
+
 ## [1.1.10](https://github.com/itz4blitz/ai-tools/compare/v1.1.9...v1.1.10) (2026-08-26)
 
 

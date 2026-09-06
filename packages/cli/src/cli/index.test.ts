@@ -95,6 +95,23 @@ describe("run() - help output", () => {
       expect(output).toContain(name);
     }
   });
+
+  it("does not advertise unified sync as a cross-cutting command", async () => {
+    await run(["help"]);
+    const output = allLog();
+    const crossCutting = output.split("CROSS-CUTTING COMMANDS:")[1]?.split("INTERACTIVE:")[0] ?? "";
+    expect(crossCutting).toContain("detect");
+    expect(crossCutting).not.toMatch(/\bsync\b/);
+    expect(output).toContain("ai-tools mcp install --layer=project");
+    expect(output).toContain("ai-tools mcp sync --layer=project");
+  });
+
+  it("does not claim canonical install uses a CanonicalStore", async () => {
+    await run(["help"]);
+    const output = allLog();
+    expect(output).not.toMatch(/canonical store/i);
+    expect(output).toContain("Install engine configs into detected tool directories");
+  });
 });
 
 // ── Unknown command ──────────────────────────────────────────
@@ -219,46 +236,42 @@ describe("run() - cross-cutting detect", () => {
 
 // ── Cross-cutting sync ───────────────────────────────────────
 
-describe("run() - cross-cutting sync", () => {
-  it("calls sync on 4 engines (skips hooks and sessions)", async () => {
-    await run(["sync"]);
+describe("run() - unified sync is decommissioned", () => {
+  it("refuses unified sync instead of union-copying across engines", async () => {
+    await expect(run(["sync"])).rejects.toThrow("process.exit(1)");
 
+    expect(allError()).toBe(
+      [
+        "Unified sync is disabled. It used to copy imported servers between every tool.",
+        "Use `ai-tools mcp sync` to install from mcp.config.ts (never copies imports; honors --layer).",
+      ].join("\n"),
+    );
+    expect(exitCode).toBe(1);
     expect(mockHooksRun).not.toHaveBeenCalled();
+    expect(mockMcpRun).not.toHaveBeenCalled();
+    expect(mockSkillsRun).not.toHaveBeenCalled();
+    expect(mockAgentsRun).not.toHaveBeenCalled();
+    expect(mockRulesRun).not.toHaveBeenCalled();
+    expect(mockPluginsRun).not.toHaveBeenCalled();
     expect(mockSessionsRun).not.toHaveBeenCalled();
-    expect(mockMcpRun).toHaveBeenCalledWith(["sync"]);
-    expect(mockSkillsRun).toHaveBeenCalledWith(["sync"]);
-    expect(mockAgentsRun).toHaveBeenCalledWith(["sync"]);
-    expect(mockRulesRun).toHaveBeenCalledWith(["sync"]);
   });
 
-  it("prints engine headers for sync-capable engines only", async () => {
-    await run(["sync"]);
-    const output = allLog();
-    expect(output).not.toContain("── hooks ──");
-    expect(output).not.toContain("── sessions ──");
-    expect(output).toContain("── mcp ──");
-    expect(output).toContain("── skills ──");
-    expect(output).toContain("── agents ──");
-    expect(output).toContain("── rules ──");
+  it("refuses unified sync even with --dry-run", async () => {
+    await expect(run(["sync", "--dry-run"])).rejects.toThrow("process.exit(1)");
+    expect(allError()).toContain("Unified sync is disabled");
+    expect(mockMcpRun).not.toHaveBeenCalled();
+    expect(mockSkillsRun).not.toHaveBeenCalled();
+    expect(mockAgentsRun).not.toHaveBeenCalled();
+    expect(mockRulesRun).not.toHaveBeenCalled();
   });
 
-  it("forwards flags to each engine", async () => {
-    await run(["sync", "--dry-run"]);
-
-    expect(mockMcpRun).toHaveBeenCalledWith(["sync", "--dry-run"]);
-    expect(mockSkillsRun).toHaveBeenCalledWith(["sync", "--dry-run"]);
-  });
-
-  it("catches engine errors and continues", async () => {
-    mockMcpRun.mockRejectedValueOnce(new Error("mcp failed"));
-
-    await run(["sync"]);
-
-    expect(allError()).toContain("Error: mcp failed");
-    // Other engines still called
-    expect(mockSkillsRun).toHaveBeenCalledWith(["sync"]);
-    expect(mockAgentsRun).toHaveBeenCalledWith(["sync"]);
-    expect(mockRulesRun).toHaveBeenCalledWith(["sync"]);
+  it("still delegates engine-level mcp sync (config-scoped) to the mcp engine", async () => {
+    await run(["mcp", "sync", "--layer=project", "--dry-run"]);
+    expect(mockMcpRun).toHaveBeenCalledTimes(1);
+    expect(mockMcpRun).toHaveBeenCalledWith(["sync", "--layer=project", "--dry-run"]);
+    expect(mockSkillsRun).not.toHaveBeenCalled();
+    expect(mockAgentsRun).not.toHaveBeenCalled();
+    expect(mockRulesRun).not.toHaveBeenCalled();
   });
 });
 

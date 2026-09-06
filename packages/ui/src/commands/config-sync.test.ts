@@ -13,7 +13,7 @@ vi.mock("node:path", () => ({
   resolve: (...args: string[]) => args.join("/"),
 }));
 
-import { triggerGenerate, triggerInstall, getCanonicalStatus } from "./config-sync.js";
+import { triggerGenerate, triggerInstall, triggerSync, getCanonicalStatus } from "./config-sync.js";
 import { execFile } from "node:child_process";
 import { existsSync, readdirSync } from "node:fs";
 
@@ -130,6 +130,84 @@ describe("triggerInstall()", () => {
     );
 
     await expect(triggerInstall()).rejects.toThrow("Install error");
+  });
+});
+
+// -- triggerSync --
+
+describe("triggerSync()", () => {
+  it("calls npx ai-tools mcp sync, not union sync or empty install", async () => {
+    (execFile as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        cmd: string,
+        args: string[],
+        opts: unknown,
+        cb: (err: Error | null, stdout: string, stderr: string) => void,
+      ) => {
+        void cmd;
+        void args;
+        void opts;
+        cb(null, "Sync complete!", "");
+      },
+    );
+
+    const result = await triggerSync();
+    expect(result).toBe("Sync complete!");
+    expect(execFile).toHaveBeenCalledTimes(1);
+    expect(execFile).toHaveBeenCalledWith(
+      "npx",
+      ["ai-tools", "mcp", "sync"],
+      expect.objectContaining({ cwd: process.cwd() }),
+      expect.any(Function),
+    );
+    expect(execFile).not.toHaveBeenCalledWith(
+      "npx",
+      ["ai-tools", "sync"],
+      expect.anything(),
+      expect.any(Function),
+    );
+    expect(execFile).not.toHaveBeenCalledWith(
+      "npx",
+      ["ai-tools", "mcp", "install"],
+      expect.anything(),
+      expect.any(Function),
+    );
+  });
+
+  it("rejects on error with stderr", async () => {
+    (execFile as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        cmd: string,
+        args: string[],
+        opts: unknown,
+        cb: (err: Error | null, stdout: string, stderr: string) => void,
+      ) => {
+        void cmd;
+        void args;
+        void opts;
+        cb(new Error("sync failed"), "", "MCP install error");
+      },
+    );
+
+    await expect(triggerSync()).rejects.toThrow("MCP install error");
+  });
+
+  it("rejects with error message when stderr is empty", async () => {
+    (execFile as unknown as ReturnType<typeof vi.fn>).mockImplementation(
+      (
+        cmd: string,
+        args: string[],
+        opts: unknown,
+        cb: (err: Error | null, stdout: string, stderr: string) => void,
+      ) => {
+        void cmd;
+        void args;
+        void opts;
+        cb(new Error("command failed"), "", "");
+      },
+    );
+
+    await expect(triggerSync()).rejects.toThrow("command failed");
   });
 });
 

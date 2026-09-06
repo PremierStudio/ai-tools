@@ -185,7 +185,7 @@ describe("renderConfigView", () => {
     expect(String(vnode.props?.title)).toContain("g:Generate");
     expect(String(vnode.props?.title)).toContain("i:Install");
     expect(String(vnode.props?.title)).toContain("r:Refresh");
-    expect(String(vnode.props?.title)).toContain("s:Sync");
+    expect(String(vnode.props?.title)).toContain("s:MCP install");
     expect(String(vnode.props?.title)).toContain("d:Detect");
   });
 
@@ -382,7 +382,7 @@ describe("renderConfigView", () => {
     const texts = allText(vnode);
     expect(texts.some((t) => t.includes(":Generate"))).toBe(true);
     expect(texts.some((t) => t.includes(":Install"))).toBe(true);
-    expect(texts.some((t) => t.includes(":Sync"))).toBe(true);
+    expect(texts.some((t) => t.includes(":MCP install"))).toBe(true);
     expect(texts.some((t) => t.includes(":Detect"))).toBe(true);
     expect(texts.some((t) => t.includes(":Refresh"))).toBe(true);
     expect(texts.some((t) => t.includes(":$EDITOR"))).toBe(true);
@@ -396,7 +396,7 @@ describe("getConfigKeyHints", () => {
     const hints = getConfigKeyHints({});
     expect(hints).toContain("g:Generate");
     expect(hints).toContain("i:Install");
-    expect(hints).toContain("s:Sync");
+    expect(hints).toContain("s:MCP install");
     expect(hints).toContain("d:Detect");
     expect(hints).toContain("r:Refresh");
     expect(hints).toContain("e:$EDITOR");
@@ -405,7 +405,7 @@ describe("getConfigKeyHints", () => {
   it("respects key overrides", () => {
     const hints = getConfigKeyHints({ "config-generate": "G", "config-sync": "S" });
     expect(hints).toContain("G:Generate");
-    expect(hints).toContain("S:Sync");
+    expect(hints).toContain("S:MCP install");
     // Non-overridden keys keep defaults
     expect(hints).toContain("i:Install");
   });

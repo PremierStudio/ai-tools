@@ -75,7 +75,7 @@ function buildConfigTitle(overrides: Record<string, string>): string {
   const s = resolveKeyHint("config-sync", overrides, "s");
   const d = resolveKeyHint("config-detect", overrides, "d");
   const r = resolveKeyHint("config-refresh", overrides, "r");
-  return `  ${getIconChar("nav.config")} Config  [${g}:Generate  ${i}:Install  ${s}:Sync  ${d}:Detect  ${r}:Refresh]  `;
+  return `  ${getIconChar("nav.config")} Config  [${g}:Generate  ${i}:Install  ${s}:MCP install  ${d}:Detect  ${r}:Refresh]  `;
 }
 
 /**
@@ -324,7 +324,7 @@ export function renderConfigView<T>(ui: UiKit<T>, state: ConfigViewState): T {
       [
         ["config-generate", "Generate", "g"],
         ["config-install", "Install", "i"],
-        ["config-sync", "Sync", "s"],
+        ["config-sync", "MCP install", "s"],
         ["config-detect", "Detect", "d"],
         ["config-refresh", "Refresh", "r"],
         ["config-editor", "$EDITOR", "e"],
@@ -370,7 +370,7 @@ export function getConfigKeyHints(overrides: Record<string, string>): string {
     [
       ["config-generate", "Generate", "g"],
       ["config-install", "Install", "i"],
-      ["config-sync", "Sync", "s"],
+      ["config-sync", "MCP install", "s"],
       ["config-detect", "Detect", "d"],
       ["config-refresh", "Refresh", "r"],
       ["config-editor", "$EDITOR", "e"],

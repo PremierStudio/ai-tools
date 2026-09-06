@@ -94,6 +94,12 @@ try {
 
   const help = await run(bin, ["help"], { cwd: fixture, capture: true });
   assertIncludes(help.stdout, "Unified CLI for ai-tools engines");
+  assertIncludes(help.stdout, "--layer");
+  assertIncludes(help.stdout, "sessions");
+
+  const mcpHelp = await run(bin, ["mcp", "help"], { cwd: fixture, capture: true });
+  assertIncludes(mcpHelp.stdout, "audit");
+  assertIncludes(mcpHelp.stdout, "--layer");
 
   await writeFile(
     join(fixture, "ai-plugin.config.mjs"),
@@ -145,7 +151,7 @@ try {
       "plugins",
       "plan",
       "--config=ai-plugin.config.mjs",
-      "--tools=codex,opencode,claude-code,antigravity-cli",
+      "--tools=codex,opencode,claude-code,antigravity-cli,grok,zcode",
       "--force",
     ],
     { cwd: fixture, capture: true },
@@ -155,6 +161,8 @@ try {
   assertIncludes(plan.stdout, "OpenCode");
   assertIncludes(plan.stdout, "Claude Code");
   assertIncludes(plan.stdout, "Antigravity CLI");
+  assertIncludes(plan.stdout, "Grok");
+  assertIncludes(plan.stdout, "ZCode");
   assertIncludes(plan.stdout, "agents: ready");
 
   const installDryRun = await run(

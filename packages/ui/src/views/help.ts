@@ -87,7 +87,7 @@ export function renderHelpOverlay<T>(
       sectionHeader(ui, getIconChar("nav.config"), "Config"),
       hint(ui, "g", "Generate config"),
       hint(ui, "i", "Install config"),
-      hint(ui, "s", "Sync config"),
+      hint(ui, "s", "Install MCP servers"),
       hint(ui, "d", "Detect engines"),
       hint(ui, "r", "Refresh status"),
       hint(ui, "e", "Open in $EDITOR"),

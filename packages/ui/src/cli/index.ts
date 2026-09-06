@@ -8,7 +8,6 @@ USAGE:
 OPTIONS:
   --help, -h    Show this help message
   --no-pty      Disable PTY embedding (use simple output mode)
-  --detach      Run in background
   --dev         Hot State-Preserving Reload (HSR) mode — run alongside
                 \`npm run dev\` (tsup --watch) in a separate terminal.
                 Edits to any view file are live-swapped without losing state.
@@ -35,7 +34,6 @@ KEYBINDINGS:
 export type CliFlags = {
   help: boolean;
   noPty: boolean;
-  detach: boolean;
   dev: boolean;
 };
 
@@ -43,7 +41,6 @@ export function parseFlags(args: string[]): CliFlags {
   return {
     help: args.includes("--help") || args.includes("-h"),
     noPty: args.includes("--no-pty"),
-    detach: args.includes("--detach"),
     dev: args.includes("--dev"),
   };
 }
@@ -106,11 +103,6 @@ export async function run(args: string[]): Promise<void> {
     for (const line of lines) {
       console.log(`  ${line}`);
     }
-    return;
-  }
-
-  if (flags.detach) {
-    console.log("Detach mode is not yet implemented.");
     return;
   }
 

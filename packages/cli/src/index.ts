@@ -4,7 +4,15 @@ export { buildPluginInstallPlan } from "./plugins/plan.js";
 export { installPluginBundle } from "./plugins/install.js";
 export { KNOWN_PLUGIN_HOSTS, getPluginHostInfo } from "./plugins/hosts.js";
 
-export const ENGINE_NAMES = ["hooks", "mcp", "skills", "agents", "rules", "plugins"] as const;
+export const ENGINE_NAMES = [
+  "hooks",
+  "mcp",
+  "skills",
+  "agents",
+  "rules",
+  "plugins",
+  "sessions",
+] as const;
 
 export type EngineName = (typeof ENGINE_NAMES)[number];
 export type {

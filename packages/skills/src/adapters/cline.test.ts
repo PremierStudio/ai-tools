@@ -41,7 +41,10 @@ describe("ClineSkillAdapter", () => {
     it("has correct id", () => expect(adapter.id).toBe("cline"));
     it("has correct name", () => expect(adapter.name).toBe("Cline"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
-    it("has correct config dir", () => expect(adapter.configDir).toBe(".cline/prompts"));
+    it("has correct config dir", () => {
+      // Cline has no SKILL.md loader here (no ~/.cline/skills). Native format is `.cline/prompts/*.md`.
+      expect(adapter.configDir).toBe(".cline/prompts");
+    });
   });
 
   describe("generate", () => {

@@ -33,7 +33,12 @@ export default defineConfig({
       ],
       exclude: [
         "packages/*/src/**/*.test.ts",
-        "packages/*/src/**/index.ts", // barrel re-exports
+        "packages/*/src/index.ts", // package barrels
+        "packages/*/src/adapters/index.ts",
+        "packages/*/src/store/index.ts",
+        "packages/*/src/config/index.ts",
+        "packages/*/src/hooks/index.ts",
+        "packages/*/src/types/index.ts",
         "packages/*/src/adapters/all.ts", // side-effect registrations
         "packages/*/src/config/define.ts", // identity helpers exercised by engine config tests
         "packages/hooks/src/types/adapter.ts", // type-only
@@ -52,13 +57,12 @@ export default defineConfig({
         "packages/sessions/src/types/*.ts",
         "packages/sessions/src/cli/bin.ts",
         "packages/ui/src/types.ts",
+        "packages/ui/src/runtime/types.ts", // type-only
+        "packages/ui/src/runtime/state.ts", // type-only
+        "packages/ui/src/terminal/index.ts", // barrel re-exports
         "packages/ui/src/cli/bin.ts",
         "packages/ui/src/test-helpers.ts", // test-only utilities
         "packages/ui/src/view.ts", // TUI entry-point shim
-        "packages/ui/src/tui.ts", // interactive renderer covered by smoke/manual TUI checks
-        "packages/ui/src/tmux/**", // tmux integration requires a real terminal session
-        "packages/ui/src/runtime/action-executor.ts", // interactive action orchestration
-        "packages/ui/src/runtime/shell-command-executor.ts", // shell side effects covered by smoke/manual checks
         "**/dist/**",
       ],
     },

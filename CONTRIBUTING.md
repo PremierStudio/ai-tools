@@ -31,6 +31,7 @@ packages/
   skills/
   rules/
   sessions/
+  ui/         # interactive TUI (not a separately published engine)
 ```
 
 ## Conventions

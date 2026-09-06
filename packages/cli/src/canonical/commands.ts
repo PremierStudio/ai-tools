@@ -36,17 +36,33 @@ const ENGINES: EngineModule[] = [
   },
 ];
 
-const TOOL_DIRS = [
-  ".claude",
-  ".cursor",
-  ".opencode",
-  ".gemini",
-  ".cline",
-  ".factory",
-  ".codex",
-  ".kiro",
-  ".amp",
+const TOOL_TARGETS: Array<{ dir: string; adapterId: string }> = [
+  { dir: ".claude", adapterId: "claude-code" },
+  { dir: ".cursor", adapterId: "cursor" },
+  { dir: ".opencode", adapterId: "opencode" },
+  { dir: ".gemini", adapterId: "gemini-cli" },
+  { dir: ".cline", adapterId: "cline" },
+  { dir: ".factory", adapterId: "droid" },
+  { dir: ".codex", adapterId: "codex" },
+  { dir: ".kiro", adapterId: "kiro" },
+  { dir: ".amp", adapterId: "amp" },
+  { dir: ".grok", adapterId: "grok" },
+  { dir: ".zcode", adapterId: "zcode" },
+  { dir: ".continue", adapterId: "continue" },
+  { dir: ".roo", adapterId: "roo-code" },
+  { dir: ".agents", adapterId: "antigravity-cli" },
 ];
+
+const TOOL_DIRS = TOOL_TARGETS.map((target) => target.dir);
+
+function presentToolTargets(cwd: string): ManifestTarget[] {
+  return TOOL_TARGETS.filter((target) => existsSync(resolve(cwd, target.dir))).map((target) => ({
+    adapterId: target.adapterId,
+    targetPath: target.dir,
+    strategy: "transform" as const,
+    status: "direct" as const,
+  }));
+}
 
 function hasFlag(flags: string[], flag: string): boolean {
   return flags.includes(flag);
@@ -80,7 +96,7 @@ export async function cmdInit(flags: string[]): Promise<void> {
   console.log("Initialized .ai-tools/ in canonical mode.");
   console.log("");
   console.log("Next steps:");
-  console.log("  1. Run: ai-tools generate   (write canonical files from config)");
+  console.log("  1. Run: ai-tools generate   (write engine files from configs)");
   console.log("  2. Run: ai-tools install    (install to tool directories)");
   console.log("  3. Run: ai-tools status     (check installation health)");
 }
@@ -96,7 +112,7 @@ export async function cmdGenerate(flags: string[]): Promise<void> {
     return;
   }
 
-  console.log("Generating canonical files...\n");
+  console.log("Generating engine files from configs...\n");
 
   for (const engine of ENGINES) {
     try {
@@ -127,10 +143,11 @@ export async function cmdInstall(flags: string[]): Promise<void> {
     return;
   }
 
-  console.log("Installing from canonical store...\n");
+  console.log("Installing engine configs into tool directories...\n");
 
   const manifest = await readManifest();
   let totalInstalled = 0;
+  const cwd = process.cwd();
 
   for (const engine of ENGINES) {
     try {
@@ -143,12 +160,11 @@ export async function cmdInstall(flags: string[]): Promise<void> {
         await mod.run(installArgs);
         totalInstalled++;
 
-        // Record in manifest
         const entry: ManifestEntry = {
           engine: engine.name,
           id: engine.name,
           canonicalPath: `.ai-tools/${engine.name}/`,
-          targets: [],
+          targets: presentToolTargets(cwd),
           updatedAt: new Date().toISOString(),
         };
 

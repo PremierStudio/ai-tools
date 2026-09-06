@@ -70,8 +70,6 @@ export function createInitialTuiState(): TuiState {
     handoffTargetTool: null,
     handoffPreview: null,
     selectedTargetIndex: 0,
-    commandPaletteOpen: false,
-    commandPaletteQuery: "",
     helpOpen: false,
     settingsOpen: false,
     settingsMenu: createSettingsMenuState("dark"),

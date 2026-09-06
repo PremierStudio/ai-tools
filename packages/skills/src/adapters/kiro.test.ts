@@ -41,7 +41,10 @@ describe("KiroSkillAdapter", () => {
     it("has correct id", () => expect(adapter.id).toBe("kiro"));
     it("has correct name", () => expect(adapter.name).toBe("Kiro"));
     it("has native support", () => expect(adapter.nativeSupport).toBe(true));
-    it("has correct config dir", () => expect(adapter.configDir).toBe(".kiro/prompts"));
+    it("has correct config dir", () => {
+      // Kiro has no SKILL.md loader here (no ~/.kiro/skills). Native format is `.kiro/prompts/*.md`.
+      expect(adapter.configDir).toBe(".kiro/prompts");
+    });
   });
 
   describe("generate", () => {

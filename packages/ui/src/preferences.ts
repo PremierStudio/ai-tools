@@ -231,10 +231,10 @@ export const DEFAULT_KEYBINDINGS: KeybindingDef[] = [
   },
   {
     id: "config-sync",
-    label: "Sync config",
+    label: "Install MCP servers",
     defaultKey: "s",
     context: "config",
-    description: "Sync generated configs into target locations",
+    description: "Run ai-tools mcp sync from mcp.config.ts for detected tools",
   },
   {
     id: "config-detect",

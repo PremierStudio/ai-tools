@@ -7,5 +7,5 @@ export type MCPConfig = {
 export type GeneratedFile = {
   path: string;
   content: string;
-  format: "json" | "yaml" | "jsonc";
+  format: "json" | "yaml" | "jsonc" | "toml";
 };

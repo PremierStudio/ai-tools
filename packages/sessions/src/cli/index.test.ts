@@ -126,6 +126,22 @@ describe("run() - help output", () => {
     await run([]);
     expect(allLog()).toContain("ai-sessions");
   });
+
+  it("lists only implemented commands and options", async () => {
+    await run(["help"]);
+    const output = allLog();
+    expect(output).toContain("detect");
+    expect(output).toContain("list");
+    expect(output).toContain("context");
+    expect(output).toContain("handoff");
+    expect(output).toContain("scan");
+    expect(output).toContain("--tool");
+    expect(output).toContain("--limit");
+    expect(output).toContain("--since");
+    expect(output).toContain("--to");
+    expect(output).not.toContain("--verbose");
+    expect(output).not.toContain("canonical");
+  });
 });
 
 // -- Unknown command --

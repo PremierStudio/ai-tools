@@ -77,6 +77,19 @@ describe("renderHelpOverlay", () => {
     expect(header).toBeTruthy();
   });
 
+  it("describes s as MCP install, not union sync", () => {
+    const vnode = renderHelpOverlay(mockUi) as {
+      children: [{ children: Array<{ content?: string; children?: Array<{ content?: string }> }> }];
+    };
+    const col = vnode.children[0]!;
+    const allText = col.children.flatMap((c) =>
+      "children" in c && Array.isArray(c.children) ? c.children : [c],
+    );
+    const mcpHint = allText.find((c) => c.content?.includes("Install MCP servers"));
+    expect(mcpHint).toBeTruthy();
+    expect(allText.some((c) => c.content?.includes("Sync config"))).toBe(false);
+  });
+
   it("includes quit keybinding", () => {
     const vnode = renderHelpOverlay(mockUi) as {
       children: [{ children: Array<{ content: string }> }];

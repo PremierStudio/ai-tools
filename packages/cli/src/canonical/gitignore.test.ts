@@ -30,6 +30,12 @@ afterEach(() => {
 describe("addManagedBlock", () => {
   it("creates .gitignore with managed block when file does not exist", async () => {
     mockExistsSync.mockReturnValue(false);
+    await addManagedBlock();
+    expect(mockWriteFile).toHaveBeenCalledWith(
+      expect.stringContaining(".gitignore"),
+      expect.stringContaining("ai-tools managed"),
+      "utf-8",
+    );
     await addManagedBlock("/test");
     expect(mockWriteFile).toHaveBeenCalledWith(
       expect.stringContaining(".gitignore"),
@@ -39,6 +45,8 @@ describe("addManagedBlock", () => {
     const written = mockWriteFile.mock.calls[0]?.[1] as string;
     expect(written).toContain(".claude/");
     expect(written).toContain(".cursor/");
+    expect(written).toContain(".grok/");
+    expect(written).toContain(".zcode/");
     expect(written).toContain("end ai-tools managed");
   });
 
@@ -97,6 +105,13 @@ describe("removeManagedBlock", () => {
     expect(written).not.toContain("ai-tools managed");
   });
 
+  it("does nothing when the start marker is present without the end marker", async () => {
+    mockExistsSync.mockReturnValue(true);
+    mockReadFile.mockResolvedValue("# ── ai-tools managed (canonical mode) ──\n.claude/\n");
+    await removeManagedBlock("/test");
+    expect(mockWriteFile).not.toHaveBeenCalled();
+  });
+
   it("handles file with only managed block", async () => {
     const content =
       "# ── ai-tools managed (canonical mode) ──\n.claude/\n# ── end ai-tools managed ──\n";
@@ -129,7 +144,7 @@ describe("hasManagedBlock", () => {
     mockReadFile.mockResolvedValue(
       "# ── ai-tools managed (canonical mode) ──\n.claude/\n# ── end ai-tools managed ──\n",
     );
-    const result = await hasManagedBlock("/test");
+    const result = await hasManagedBlock();
     expect(result).toBe(true);
   });
 });
