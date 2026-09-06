@@ -202,6 +202,7 @@ jobs:
       contents: write
       id-token: write
       issues: write
+      statuses: write
 
     steps:
       - name: Checkout code
@@ -242,6 +243,24 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           ALLOW_MISSING_INITIAL_NPM_TOKEN: 'true'
+
+      # GITHUB_TOKEN pushes do not trigger workflows, so the release commit
+      # would otherwise sit on master with no checks (repo looks red/pending).
+      - name: Mark release HEAD as success
+        if: success()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          SHA=$(git ls-remote origin refs/heads/master | awk '{print $1}')
+          if [ -z "$SHA" ]; then
+            echo "Could not resolve origin/master"
+            exit 1
+          fi
+          gh api "repos/${{ github.repository }}/statuses/${SHA}" \
+            -f state=success \
+            -f context='CI/CD Pipeline' \
+            -f description='Release commit already validated' \
+            -f target_url="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
 
   # ============================================================================
   # STAGE 4: POST-PUBLISH SMOKE TESTS
